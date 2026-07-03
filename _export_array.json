@@ -1,0 +1,94 @@
+{
+    "alignment": {
+        "horizontal": "center",
+        "justifyLastLine": null,
+        "indent": 0,
+        "readOrder": 0,
+        "shrinkToFit": false,
+        "textRotation": 0,
+        "vertical": "center",
+        "wrapText": true
+    },
+    "borders": {
+        "bottom": {
+            "borderStyle": "thin",
+            "color": {
+                "argb": "FF000000",
+                "theme": -1
+            }
+        },
+        "diagonal": {
+            "borderStyle": "none",
+            "color": {
+                "argb": "FF000000",
+                "theme": -1
+            }
+        },
+        "diagonalDirection": 0,
+        "left": {
+            "borderStyle": "thin",
+            "color": {
+                "argb": "FF000000",
+                "theme": -1
+            }
+        },
+        "right": {
+            "borderStyle": "thin",
+            "color": {
+                "argb": "FF000000",
+                "theme": -1
+            }
+        },
+        "top": {
+            "borderStyle": "thick",
+            "color": {
+                "argb": "FF000000",
+                "theme": -1
+            }
+        }
+    },
+    "fill": {
+        "fillType": "solid",
+        "rotation": 0,
+        "endColor": {
+            "argb": "FFFFFF00",
+            "theme": -1
+        },
+        "startColor": {
+            "argb": "FFFFFF00",
+            "theme": -1
+        }
+    },
+    "font": {
+        "baseLine": 0,
+        "bold": true,
+        "cap": null,
+        "chartColor": null,
+        "color": {
+            "argb": "FF000000",
+            "theme": 1
+        },
+        "complexScript": "",
+        "eastAsian": "",
+        "italic": false,
+        "latin": "",
+        "name": "Arial",
+        "scheme": "",
+        "size": 12,
+        "strikethrough": false,
+        "strikeType": "",
+        "subscript": false,
+        "superscript": false,
+        "underline": "none",
+        "underlineColor": null,
+        "autoColor": false
+    },
+    "numberFormat": {
+        "formatCode": "General"
+    },
+    "protection": {
+        "locked": "inherit",
+        "hidden": "inherit"
+    },
+    "quotePrefix": false
+}

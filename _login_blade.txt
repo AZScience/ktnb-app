@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi" class="login-page">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Phòng Kiểm tra Nội bộ: Công cụ Kiểm tra</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet">
+    @vite(['resources/css/login.css', 'resources/js/login-entry.js'])
+</head>
+<body>
+    <main class="login-shell">
+        <div class="login-card" x-data="loginPage()">
+            <section class="login-panel-left">
+                <div class="login-panel-left__media">
+                    <img src="{{ $loginImageUrl }}" alt="Login Background">
+                    <div class="login-panel-left__overlay"></div>
+                </div>
+                <div class="login-panel-left__quote">
+                    <blockquote>&ldquo;{{ $loginQuote }}&rdquo;</blockquote>
+                    <footer>{{ $loginQuoteAuthor }}</footer>
+                </div>
+            </section>
+
+            <section class="login-panel-right">
+                <div class="login-form-wrap">
+                    <header class="login-header">
+                        <div class="login-header__logo-wrap">
+                            <img src="{{ $bannerUrl }}" alt="Logo" class="login-header__logo">
+                        </div>
+                        <h1 class="login-header__title">Đăng nhập</h1>
+                        <p class="login-header__subtitle">
+                            Cổng thông tin Kiểm tra nội bộ - Trường Đại học Nguyễn Tất Thành
+                        </p>
+                    </header>
+
+                    @if (session('status'))
+                        <div class="login-status">{{ session('status') }}</div>
+                    @endif
+
+                    <form method="POST" action="{{ route('login') }}" class="login-form" @submit="onSubmit($event)">
+                        @csrf
+
+                        <div class="login-field">
+                            <label for="email" class="login-label">Email</label>
+                            <div class="login-input-wrap">
+                                <svg class="login-input-icon login-input-icon--mail" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                                <input x-ref="email" id="email" type="email" name="email" class="login-input"
+                                    required autofocus autocomplete="username" placeholder="example@ntt.edu.vn"
+                                    value="{{ old('email') }}">
+                            </div>
+                            @error('email')<p class="login-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="login-field">
+                            <div class="login-field__row">
+                                <label for="password" class="login-label">Mật khẩu</label>
+                                <button type="button" class="login-link" @click="resetDialogOpen = true">Quên mật khẩu?</button>
+                            </div>
+                            <div class="login-input-wrap">
+                                <svg class="login-input-icon login-input-icon--lock" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                <input id="password" :type="showPassword ? 'text' : 'password'" name="password"
+                                    class="login-input login-input--password" required autocomplete="current-password">
+                                <button type="button" class="login-eye-btn" @click="showPassword = !showPassword" tabindex="-1" aria-label="Hiện/ẩn mật khẩu">
+                                    <svg x-show="!showPassword" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <svg x-show="showPassword" x-cloak fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            @error('password')<p class="login-error">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="login-actions">
+                            <label class="login-remember">
+                                <input type="checkbox" name="remember" x-model="rememberMeChecked">
+                                Lưu thông tin
+                            </label>
+                            <button type="submit" class="login-btn" :disabled="isSubmitting">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+                                </svg>
+                                <span x-text="isSubmitting ? 'Đang xử lý...' : 'Đăng nhập'"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
+
+        <div x-show="resetDialogOpen" x-cloak class="login-dialog-overlay" @keydown.escape.window="resetDialogOpen = false">
+            <div class="login-dialog" @click.outside="resetDialogOpen = false">
+                <button type="button" class="login-dialog__close" @click="resetDialogOpen = false" aria-label="Đóng">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <h2 class="login-dialog__title">Quên mật khẩu</h2>
+                <p class="login-dialog__desc">Nhập email của bạn để nhận liên kết đặt lại mật khẩu.</p>
+                <form method="POST" action="{{ route('password.email') }}" class="login-dialog__form">
+                    @csrf
+                    <div class="login-field">
+                        <label for="reset-email" class="login-label">Email đã đăng ký</label>
+                        <input id="reset-email" type="email" name="email" class="login-input" style="padding-left:0.75rem"
+                            required placeholder="example@ntt.edu.vn" value="{{ old('email') }}">
+                    </div>
+                    <div class="login-dialog__footer">
+                        <button type="submit" class="login-btn" style="width:auto;padding:0 1rem">Gửi liên kết khôi phục</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

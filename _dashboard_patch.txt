@@ -1,0 +1,212 @@
+*** Begin Patch
+*** Add File: d:\KiemtraNoibo\congcukiemtranoibo\laravel-app\app\Http\Controllers\DashboardController.php
++<?php
++
++namespace App\Http\Controllers;
++
++use App\Models\ActivityLog;
++use App\Models\AssetReception;
++use App\Models\DailySchedule;
++use App\Models\Employee;
++use App\Models\Lecturer;
++use App\Models\Message;
++use App\Models\Student;
++use App\Models\StudentViolation;
++use App\Models\SystemParameter;
++use App\Models\User;
++use App\Services\ActivityLogService;
++use Illuminate\Contracts\View\View;
++use Illuminate\Http\RedirectResponse;
++use Illuminate\Http\Request;
++use Illuminate\Support\Collection;
++use Illuminate\Support\Facades\Storage;
++use Illuminate\Support\Str;
++use Symfony\Component\HttpFoundation\BinaryFileResponse;
++
++class DashboardController extends Controller
++{
++    public function __construct(private ActivityLogService $activityLog) {}
++
++    public function index(Request $request): View
++    {
++        $request->user()?->forceFill(['last_seen_at' => now()])->saveQuietly();
++
++        $today = now()->format('d/m/Y');
++        $todayMd = now()->format('m-d');
++
++        $modules = [
++            'online' => ['label' => 'Lớp học Online', 'icon_color' => 'text-blue-500', 'bg' => 'bg-blue-50', 'border' => 'border-t-blue-500', 'text' => 'text-blue-700'],
++            'in-person' => ['label' => 'Lớp học Trực tiếp', 'icon_color' => 'text-green-500', 'bg' => 'bg-green-50', 'border' => 'border-t-green-500', 'text' => 'text-green-700'],
++            'exams' => ['label' => 'Lớp thi', 'icon_color' => 'text-purple-500', 'bg' => 'bg-purple-50', 'border' => 'border-t-purple-500', 'text' => 'text-purple-700'],
++            'homeroom' => ['label' => 'Sinh hoạt CN/CVHT', 'icon_color' => 'text-orange-500', 'bg' => 'bg-orange-50', 'border' => 'border-t-orange-500', 'text' => 'text-orange-700'],
++            'external-practice' => ['label' => 'Thực hành ngoài', 'icon_color' => 'text-amber-500', 'bg' => 'bg-amber-50', 'border' => 'border-t-amber-500', 'text' => 'text-amber-700'],
++        ];
++
++        $moduleCounts = [];
++        $moduleHandled = [];
++        $moduleBreakdowns = [];
++
++        foreach (array_keys($modules) as $key) {
++            $items = DailySchedule::where('date', $today)->forModule($key)->get();
++            $moduleCounts[$key] = $items->count();
++            $moduleHandled[$key] = $items->filter(fn ($item) => $item->recognition_date && $item->employee && $item->incident)->count();
++            $moduleBreakdowns[$key] = $this->buildBreakdown($items);
++        }
++
++        $todaySchedules = DailySchedule::where('date', $today)->orderBy('period')->get();
++        $todayIncidents = DailySchedule::where('date', $today)
++            ->whereNotNull('incident')
++            ->where('incident', '!=', '')
++            ->get();
++
++        $birthdays = Employee::with('user')
++            ->whereRaw("DATE_FORMAT(STR_TO_DATE(birth_date, '%Y-%m-%d'), '%m-%d') = ?", [$todayMd])
++            ->orderBy('name')
++            ->get();
++
++        $recentLogs = ActivityLog::orderByDesc('logged_at')->limit(10)->get();
++
++        $visitStats = [
++            'online' => User::whereNotNull('last_seen_at')
++                ->where('last_seen_at', '>=', now()->subMinutes(5))
++                ->count(),
++            'today' => ActivityLog::whereDate('logged_at', today())->count(),
++            'weekly' => ActivityLog::whereBetween('logged_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
++            'monthly' => ActivityLog::whereBetween('logged_at', [now()->startOfMonth(), now()->endOfMonth()])->count(),
++        ];
++
++        $incidentByLecturer = $todayIncidents->groupBy(fn ($item) => $item->lecturer ?: 'Chưa rõ')->map->count()->sortDesc()->take(5);
++        $incidentByClass = $todayIncidents->groupBy(fn ($item) => $item->class ?: 'Chưa rõ')->map->count()->sortDesc()->take(5);
++
++        $shiftSchedule = $this->getShiftSchedule();
++
++        return view('dashboard', [
++            'today' => $today,
++            'modules' => $modules,
++            'moduleCounts' => $moduleCounts,
++            'moduleHandled' => $moduleHandled,
++            'moduleBreakdowns' => $moduleBreakdowns,
++            'todaySchedules' => $todaySchedules,
++            'birthdays' => $birthdays,
++            'recentLogs' => $recentLogs,
++            'visitStats' => $visitStats,
++            'todayIncidents' => $todayIncidents,
++            'incidentByLecturer' => $incidentByLecturer,
++            'incidentByClass' => $incidentByClass,
++            'maxLecturer' => max(1, (int) $incidentByLecturer->max()),
++            'maxClass' => max(1, (int) $incidentByClass->max()),
++            'totals' => [
++                ['Nhân viên', Employee::count(), route('employees.index'), 'text-fuchsia-600'],
++                ['Sinh viên', Student::count(), route('students.index'), 'text-lime-600'],
++                ['Giảng viên', Lecturer::count(), route('lecturers.index'), 'text-cyan-600'],
++                ['Phòng học', \App\Models\Classroom::count(), route('classrooms.index'), 'text-yellow-600'],
++                ['Vi phạm SV', StudentViolation::count(), route('student-violations.index'), 'text-rose-600'],
++                ['Tiếp nhận TS', AssetReception::count(), route('asset-check.index'), 'text-pink-600'],
++            ],
++            'shiftSchedule' => $shiftSchedule,
++        ]);
++    }
++
++    public function uploadShiftSchedule(Request $request): RedirectResponse
++    {
++        $data = $request->validate([
++            'shift_schedule' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:10240',
++        ]);
++
++        $file = $data['shift_schedule'];
++        $storedPath = $file->store('dashboard/shift-schedules', 'local');
++
++        $existing = $this->getShiftSchedule();
++        if ($existing && ! empty($existing['path']) && Storage::disk('local')->exists($existing['path'])) {
++            Storage::disk('local')->delete($existing['path']);
++        }
++
++        SystemParameter::updateOrCreate(
++            ['key' => 'dashboard_shift_schedule'],
++            ['value' => json_encode([
++                'path' => $storedPath,
++                'name' => $file->getClientOriginalName(),
++                'mime_type' => $file->getMimeType(),
++                'updated_at' => now()->toIso8601String(),
++                'updated_by_user_id' => $request->user()?->id,
++                'updated_by_name' => $request->user()?->name,
++            ], JSON_UNESCAPED_UNICODE)]
++        );
++
++        $this->activityLog->log('Cập nhật lịch trực', 'Dashboard', $file->getClientOriginalName());
++
++        return back()->with('success', 'Đã cập nhật lịch trực.');
++    }
++
++    public function showShiftSchedule(Request $request): BinaryFileResponse|RedirectResponse
++    {
++        $shiftSchedule = $this->getShiftSchedule();
++        if (! $shiftSchedule || empty($shiftSchedule['path']) || ! Storage::disk('local')->exists($shiftSchedule['path'])) {
++            return back()->with('error', 'Không tìm thấy file lịch trực.');
++        }
++
++        $path = Storage::disk('local')->path($shiftSchedule['path']);
++        $filename = $shiftSchedule['name'] ?? basename($path);
++
++        if ($request->boolean('download')) {
++            return response()->download($path, $filename);
++        }
++
++        return response()->file($path);
++    }
++
++    public function sendBirthdayGreeting(Request $request, Employee $employee): RedirectResponse
++    {
++        $data = $request->validate([
++            'body' => 'required|string',
++        ]);
++
++        if (! $employee->user_id) {
++            return back()->with('error', 'Nhân viên này chưa có tài khoản nhận tin nhắn.');
++        }
++
++        Message::create([
++            'id' => (string) Str::uuid(),
++            'sender_user_id' => $request->user()->id,
++            'recipient_user_ids' => [(int) $employee->user_id],
++            'subject' => 'Chúc mừng sinh nhật',
++            'body' => $data['body'],
++            'attachments' => [],
++            'is_read' => false,
++            'trash_by_user_ids' => [],
++            'sent_at' => now(),
++        ]);
++
++        $this->activityLog->log('Gửi lời chúc sinh nhật', 'Message', $employee->name);
++
++        return back()->with('success', 'Đã gửi lời chúc sinh nhật.');
++    }
++
++    private function buildBreakdown(Collection $items): Collection
++    {
++        return $items
++            ->groupBy(fn ($item) => $item->department ?: 'Chưa xác định')
++            ->map(function (Collection $departmentItems) {
++                return [
++                    'total' => $departmentItems->count(),
++                    'buildings' => $departmentItems
++                        ->groupBy(fn ($item) => $item->building ?: 'Chưa xác định')
++                        ->map->count()
++                        ->sortDesc(),
++                ];
++            })
++            ->sortByDesc('total');
++    }
++
++    private function getShiftSchedule(): ?array
++    {
++        $parameter = SystemParameter::where('key', 'dashboard_shift_schedule')->first();
++        if (! $parameter?->value) {
++            return null;
++        }
++
++        $decoded = json_decode($parameter->value, true);
++        return is_array($decoded) ? $decoded : null;
++    }
++}
+*** End Patch
