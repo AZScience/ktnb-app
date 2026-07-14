@@ -1,0 +1,90 @@
+================================================================================
+KTNB App — Hướng dẫn deploy lên hosting
+Thư mục: deploy/hosting/
+================================================================================
+
+A. ÁNH XẠ FILE (local → hosting)
+--------------------------------------------------------------------------------
+File trong deploy/hosting/          | Đặt trên hosting tại
+------------------------------------|------------------------------------------
+env.production                      | .env (thư mục gốc project)
+htaccess-goc-project.txt            | .htaccess (gốc — chỉ khi không trỏ public/)
+htaccess-public.txt                 | public/.htaccess
+user.ini                            | public/user.ini
+cron-queue.txt                      | cPanel → Cron Jobs (copy nội dung)
+post-deploy.sh                      | chạy qua SSH sau khi upload
+
+B. CHUẨN BỊ TRÊN MÁY DEV (trước khi upload)
+--------------------------------------------------------------------------------
+1. composer install --no-dev --optimize-autoloader
+2. npm ci && npm run build          → tạo public/build/
+3. Export database MySQL (nếu cần giữ dữ liệu local):
+   mysqldump -u root congcukiemtranoibo > backup.sql
+
+C. UPLOAD LÊN HOSTING
+--------------------------------------------------------------------------------
+Upload toàn bộ project TRỪ:
+  - node_modules/
+  - .git/
+  - .env (tạo mới trên server từ env.production)
+  - storage/logs/*.log
+  - public/hot
+
+PHẢI CÓ trên hosting:
+  - vendor/          (composer install trên server hoặc upload sẵn)
+  - public/build/    (npm run build trên máy dev)
+
+D. CẤU HÌNH HOSTING
+--------------------------------------------------------------------------------
+1. Document Root → public/  (khuyến nghị)
+   Hoặc dùng htaccess-goc-project.txt nếu không đổi được Document Root.
+
+2. Copy env.production → .env, điền:
+   - https://kiemtranoibo-ccks.ntt.edu.vn
+   - YOUR_DB_NAME / USER / PASSWORD
+   - YOUR_APP_KEY (copy từ máy local HOẶC chạy php artisan key:generate)
+   - EXTERNAL_API_KEY (chuỗi ngẫu nhiên mạnh)
+   - GOOGLE_CLIENT_ID (nếu dùng cổng giảng viên)
+   - SMTP (nếu gửi email)
+
+3. PHP >= 8.3, extension: pdo_mysql, mbstring, openssl, fileinfo, zip, gd
+
+4. Quyền ghi: storage/, bootstrap/cache/
+
+E. LỆNH SAU UPLOAD (SSH)
+--------------------------------------------------------------------------------
+cd /duong/dan/ktnb-app
+cp deploy/hosting/env.production .env    # rồi sửa .env
+chmod +x deploy/hosting/post-deploy.sh
+./deploy/hosting/post-deploy.sh
+
+Hoặc chạy tay:
+  composer install --no-dev --optimize-autoloader
+  php artisan key:generate               # nếu chưa có APP_KEY
+  php artisan migrate --force
+  php artisan storage:link
+  php artisan config:cache
+  php artisan route:cache
+  php artisan view:cache
+
+F. IMPORT DỮ LIỆU MYSQL
+--------------------------------------------------------------------------------
+Trên hosting (phpMyAdmin hoặc SSH):
+  mysql -u USER -p DB_NAME < backup.sql
+
+G. GOOGLE OAUTH (cổng giảng viên)
+--------------------------------------------------------------------------------
+Google Cloud Console → OAuth Client → Authorized JavaScript origins:
+  https://kiemtranoibo-ccks.ntt.edu.vn
+(Bỏ http://127.0.0.1:8000 trên production)
+
+H. KIỂM TRA SAU DEPLOY
+--------------------------------------------------------------------------------
+[ ] Trang login mở được (https)
+[ ] Đăng nhập OK
+[ ] Upload ảnh / file OK
+[ ] Xuất Excel OK
+[ ] Camera QR (cần HTTPS)
+[ ] Queue/cron (nếu dùng import nền)
+
+================================================================================

@@ -1,0 +1,78 @@
+================================================================================
+KTNB — DEPLOY NHANH (4 BƯỚC) — cùng domain, không subdomain
+Domain: https://kiemtranoibo-ccks.ntt.edu.vn
+================================================================================
+
+ĐIỀU KIỆN (hỏi IT/hosting 1 lần):
+  • PHP 8.3+
+  • MySQL + user + password + tên database
+  • Đổi Document Root domain → thư mục public/ của Laravel
+    (hoặc quyền upload + đổi thư mục web)
+
+================================================================================
+BƯỚC 1 — Trên máy Windows (1 lệnh)
+================================================================================
+
+  Mở terminal trong d:\ktnb-app, chạy:
+
+    deploy\hosting\package-for-deploy.bat
+
+  Đợi xong → có file: deploy\ktnb-app-production.zip
+
+================================================================================
+BƯỚC 2 — Upload lên hosting
+================================================================================
+
+  • Vào File Manager / FTP
+  • Upload file ktnb-app-production.zip
+  • Giải nén vào thư mục web (vd. /home/user/ktnb-app/)
+  • QUAN TRỌNG: Xóa file public/hot nếu có (do npm run dev tạo).
+    Nếu còn file này, trình duyệt cố tải JS từ localhost:5173 → trang trống.
+  • Nhờ IT trỏ Document Root của kiemtranoibo-ccks.ntt.edu.vn
+    vào: .../ktnb-app/public
+
+================================================================================
+BƯỚC 3 — Tạo .env (chỉ sửa 5 dòng)
+================================================================================
+
+  Copy deploy/hosting/env.production → đổi tên thành .env (cùng cấp app/, public/)
+
+  Sửa:
+    APP_KEY=...              (copy từ .env máy dev HOẶC chạy php artisan key:generate)
+    DB_DATABASE=...
+    DB_USERNAME=...
+    DB_PASSWORD=...          ← password MySQL hosting
+    EXTERNAL_API_KEY=...     ← chuỗi bí mật bất kỳ, dài 32+ ký tự
+
+  APP_URL đã đúng: https://kiemtranoibo-ccks.ntt.edu.vn
+
+================================================================================
+BƯỚC 4 — Chạy 1 lần trên server (SSH hoặc Terminal cPanel)
+================================================================================
+
+  cd /duong/dan/ktnb-app
+  chmod +x deploy/hosting/post-deploy.sh
+  ./deploy/hosting/post-deploy.sh
+
+  (Windows hosting / không có SSH: chạy lần lượt trong deploy/hosting/post-deploy.bat)
+
+================================================================================
+XONG — Kiểm tra
+================================================================================
+
+  Mở: https://kiemtranoibo-ccks.ntt.edu.vn/login
+
+  Sau khi vào được:
+    • Cài đặt → Tham số hệ thống → Email → SMTP → Gửi thử
+    • Import DB cũ (nếu cần): phpMyAdmin → Import file backup.sql
+
+================================================================================
+LƯU Ý
+================================================================================
+
+  • App "Lịch tại các cơ sở" ở domain này sẽ được thay bằng Laravel
+    (cùng domain, đổi Document Root — KHÔNG cần subdomain).
+  • Nếu không có SSH: nhờ IT chạy giúp Bước 4 (5 lệnh artisan).
+  • Chi tiết đầy đủ: HUONG-DAN.txt | Checklist: CHECKLIST-TRUOC-GO-LIVE.txt
+
+================================================================================

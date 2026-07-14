@@ -81,7 +81,7 @@
                         <x-filter-label data-i18n="Đến ngày">Đến ngày</x-filter-label>
                         <input type="date" x-model="toDate" class="rounded-md border-gray-300 bg-white text-sm shadow-sm h-9" :disabled="loadingRows">
                     </div>
-                    <div x-show="loadingRows" x-cloak class="flex items-end pb-1 text-xs text-[var(--nttu-primary)]">
+                    <div x-show="loadingRows && pagedRows.length > 0" x-cloak class="flex items-end pb-1 text-xs text-[var(--nttu-primary)]">
                         Đang tải dữ liệu...
                     </div>
 

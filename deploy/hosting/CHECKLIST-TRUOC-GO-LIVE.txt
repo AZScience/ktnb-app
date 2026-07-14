@@ -1,0 +1,79 @@
+================================================================================
+KTNB App — Báo cáo kiểm tra go-live (2026-07-14)
+Domain: https://kiemtranoibo-ccks.ntt.edu.vn
+================================================================================
+
+A. KẾT QUẢ TỰ ĐỘNG
+--------------------------------------------------------------------------------
+  php artisan test: 49/52 PASS
+  FAIL (không chặn go-live — scaffold Breeze cũ):
+    - ExampleTest (redirect / → dashboard)
+    - ProfileTest x2 (route profile tùy biến)
+
+  Migrations: tất cả đã Ran (local)
+  PHP lint: Backup/Import/Employee/empty-state OK
+  public/hot: không có
+  public/storage → storage/app/public: OK (symlink)
+  public/build/manifest.json: OK
+  public/user.ini: OK
+  Gói delta: deploy\ktnb-app-delta-update.zip (~1.8 MB)
+
+B. MODULE CHỨC NĂNG (code wiring)
+--------------------------------------------------------------------------------
+  [OK] Auth: login, bắt đổi mật khẩu, quên MK (cần SMTP Tham số hệ thống)
+  [OK] Dashboard (+ fix ONLY_FULL_GROUP_BY)
+  [OK] Danh mục nhân sự (employees ẩn chỉ ngviphuc@gmail.com)
+  [OK] Giám sát 5 loại lịch + ghi chú localStorage
+  [OK] Kho minh chứng (cần storage:link)
+  [OK] Báo cáo cuối ngày / interactive (+ Google Sheet theo canExport)
+  [OK] Tin nhắn nội bộ
+  [OK] Backup/restore CSDL (stream + fix Array to string)
+  [OK] Tham số hệ thống / Phân quyền / Nhật ký
+  [OK] Empty state bảng thống nhất (trống / lọc / đang tải)
+  [OK] Cổng giảng viên / poll / exam / discussion (public by design)
+
+C. BẮT BUỘC TRÊN HOSTING
+--------------------------------------------------------------------------------
+  [ ] Document Root = public/
+  [ ] APP_ENV=production, APP_DEBUG=false
+  [ ] APP_URL=https://kiemtranoibo-ccks.ntt.edu.vn
+  [ ] GIỮ .env hosting (không đè bằng .env local)
+  [ ] DB_* đúng; SESSION_SECURE_COOKIE=true
+  [ ] Đổi EXTERNAL_API_KEY (không dùng default)
+  [ ] php artisan storage:link (xóa public/storage nếu là thư mục rỗng)
+  [ ] Upload đủ public/build/ + không có public/hot
+  [ ] post-deploy: migrate, config/route/view cache
+  [ ] Cron queue (deploy/hosting/cron-queue.txt)
+  [ ] SMTP trong Tham số hệ thống → test quên mật khẩu
+  [ ] HTTPS (camera QR, GPS cổng GV)
+
+D. SMOKE TEST SAU DEPLOY
+--------------------------------------------------------------------------------
+  1. /login
+  2. /dashboard
+  3. /personnel/employees (thấy nguyen.phuc, không thấy ngviphuc)
+  4. 1 trang giám sát (UI không trắng)
+  5. /monitoring/evidence (ảnh/file xem được)
+  6. /reports/daily
+  7. /messaging
+  8. /settings/backup → Restore CSDL (thử)
+  9. Quên mật khẩu (SMTP)
+  10. /lecturer-portal (nếu bật Google OAuth)
+
+E. RỦI RO CÒN LẠI
+--------------------------------------------------------------------------------
+  - Restore PROJECT zip lớn trên shared hosting: tránh; dùng delta/deploy zip
+  - Thiếu cron → import catalog treo
+  - API key mặc định nếu quên đổi EXTERNAL_API_KEY
+  - Discussion/poll/exam: public theo thiết kế — smoke-test quyền
+  - deploy\_stage_ktnb local (cây thư mục rỗng): xóa bằng CMD Admin nếu còn
+
+F. CÁCH ĐƯA LÊN (hosting đã có app)
+--------------------------------------------------------------------------------
+  Upload: deploy\ktnb-app-delta-update.zip
+  Giữ: .env, storage/app, vendor
+  Chạy: php artisan optimize:clear && php artisan migrate --force
+       && php artisan storage:link && php artisan view:clear
+  Tạo lại zip: deploy\hosting\_make-delta-zip.bat
+
+================================================================================

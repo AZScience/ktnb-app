@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
 class BackupController extends Controller
@@ -85,12 +85,22 @@ class BackupController extends Controller
             ->with('download_scope', 'database');
     }
 
-    public function download(Request $request, string $filename): StreamedResponse
+    public function download(Request $request, string $filename): BinaryFileResponse
     {
         $scope = $this->normalizeScope($request->query('scope', 'database'));
         $path = $this->resolveBackupPath($filename, $scope);
 
-        return Storage::disk('local')->download($path, basename($path));
+        $absolute = Storage::disk('local')->path($path);
+        if (! is_file($absolute) && $scope === 'database') {
+            $absolute = $this->legacyBackupAbsolutePath($filename);
+        }
+
+        abort_unless(is_file($absolute), 404);
+
+        // Stream from disk — Storage::download() loads the whole ZIP into memory and OOMs (~350MB+).
+        return response()->download($absolute, basename($absolute), [
+            'Content-Type' => 'application/zip',
+        ]);
     }
 
     public function import(Request $request): RedirectResponse
@@ -112,12 +122,15 @@ class BackupController extends Controller
         Storage::disk('local')->putFileAs($storageDir, $request->file('backup'), $storedName);
 
         try {
+            $this->prepareHeavyBackupRuntime();
             if ($scope === 'project') {
                 $this->projectBackup->restoreFromZip("{$storageDir}/{$storedName}");
             } else {
                 $this->restoreDatabaseFromZip("{$storageDir}/{$storedName}");
             }
         } catch (\Throwable $e) {
+            report($e);
+
             return redirect()
                 ->route('backup.index', ['tab' => $scope])
                 ->with('error', 'Phục hồi thất bại: '.$e->getMessage());
@@ -135,6 +148,7 @@ class BackupController extends Controller
         $scope = $this->normalizeScope($request->query('scope', $request->input('scope', 'database')));
 
         try {
+            $this->prepareHeavyBackupRuntime();
             $path = $this->resolveBackupPath($filename, $scope);
 
             if ($scope === 'project') {
@@ -154,6 +168,7 @@ class BackupController extends Controller
 
             return redirect()->route('backup.index', ['tab' => $scope])->with('success', $message);
         } catch (\Throwable $e) {
+            report($e);
             $message = 'Phục hồi thất bại: '.$e->getMessage();
 
             if ($request->expectsJson()) {
@@ -292,20 +307,69 @@ class BackupController extends Controller
         return $scope === 'project' ? 'backups/project' : 'backups';
     }
 
+    private function prepareHeavyBackupRuntime(): void
+    {
+        if (function_exists('ini_set')) {
+            @ini_set('memory_limit', '1024M');
+            @ini_set('max_execution_time', '600');
+        }
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(600);
+        }
+    }
+
     private function restoreDatabaseFromZip(string $storagePath): void
     {
         abort_unless(Storage::disk('local')->exists($storagePath), 404);
 
-        $extractDir = storage_path('app/backups/restore-'.time());
+        $extractDir = storage_path('app/private/backups/restore-'.uniqid('', true));
         File::ensureDirectoryExists($extractDir);
 
+        $absoluteZip = Storage::disk('local')->path($storagePath);
         $zip = new ZipArchive;
-        $zip->open(Storage::disk('local')->path($storagePath));
-        $zip->extractTo($extractDir);
-        $zip->close();
+        if ($zip->open($absoluteZip) !== true) {
+            throw new \RuntimeException('Không thể mở file backup CSDL.');
+        }
 
-        Artisan::call('nttu:import-firestore', ['path' => $extractDir]);
-        File::deleteDirectory($extractDir);
+        try {
+            // Stream từng entry — tránh extractTo() cả ZIP lớn (OOM / HTTP 500 trên hosting).
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = str_replace('\\', '/', (string) $zip->getNameIndex($i));
+                $name = ltrim($name, '/');
+                if ($name === '' || str_ends_with($name, '/')) {
+                    continue;
+                }
+                if (str_contains($name, '..')) {
+                    continue;
+                }
+
+                $target = $extractDir.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $name);
+                File::ensureDirectoryExists(dirname($target));
+
+                $stream = $zip->getStream($name);
+                if ($stream === false) {
+                    continue;
+                }
+
+                $out = fopen($target, 'wb');
+                if ($out === false) {
+                    fclose($stream);
+                    throw new \RuntimeException("Không thể giải nén: {$name}");
+                }
+
+                stream_copy_to_stream($stream, $out);
+                fclose($out);
+                fclose($stream);
+            }
+        } finally {
+            $zip->close();
+        }
+
+        try {
+            Artisan::call('nttu:import-firestore', ['path' => $extractDir]);
+        } finally {
+            File::deleteDirectory($extractDir);
+        }
     }
 
     private const DATABASE_BACKUP_STEM_PATTERN = '/^(?:backup[_-])?(\d{2}-\d{2}-\d{4}_\d{2}-\d{2}-\d{2})(?:-([\w.-]+))?$/i';
@@ -451,8 +515,9 @@ class BackupController extends Controller
         $zip->close();
         File::deleteDirectory($dir);
 
-        Storage::disk('local')->put("backups/{$filename}", File::get($tempZip));
-        File::delete($tempZip);
+        $destination = Storage::disk('local')->path("backups/{$filename}");
+        File::ensureDirectoryExists(dirname($destination));
+        File::move($tempZip, $destination);
     }
 
     /** @return list<array{name: string, label: string, size: int, date: string, timestamp: int}> */
@@ -502,7 +567,7 @@ class BackupController extends Controller
                 continue;
             }
 
-            Storage::disk('local')->put($legacyPath, File::get($file->getPathname()));
+            Storage::disk('local')->put($legacyPath, fopen($file->getPathname(), 'r'));
             File::delete($file->getPathname());
         }
     }

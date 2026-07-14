@@ -1,0 +1,8 @@
+# =============================================================================
+# KTNB App — Cron job xử lý hàng đợi (import nền, job async)
+# Thêm vào cPanel → Cron Jobs (chạy mỗi phút)
+# Thay /home/USER/ktnb-app bằng đường dẫn thật trên server
+# =============================================================================
+
+* * * * * cd /home/USER/ktnb-app && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/USER/ktnb-app && php artisan queue:work --stop-when-empty --tries=3 >> /dev/null 2>&1

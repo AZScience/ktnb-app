@@ -6,6 +6,9 @@ import { registerNttuShell } from './shell.js';
 import { registerHeader } from './header.js';
 import { registerLanguage } from './language.js';
 import { registerNttuColumnResize } from './nttu-column-resize.js';
+// Eager-load critical pages so hosting works even if dynamic chunks are missing.
+import './monitoring-schedules.js';
+import { registerSystemParameters } from './system-parameters.js';
 
 window.Alpine = Alpine;
 
@@ -16,6 +19,7 @@ registerAvatarInput(Alpine);
 registerNttuShell(Alpine);
 registerHeader(Alpine);
 registerLanguage(Alpine);
+registerSystemParameters(Alpine);
 
 function hasXData(fragment) {
     return document.querySelector(`[x-data*="${fragment}"]`);
@@ -49,9 +53,7 @@ async function loadPageModules() {
     if (document.getElementById('system-overview-charts')) {
         loaders.push(import('./system-overview-charts.js'));
     }
-    if (hasXData('monitoringSchedulesPage')) {
-        loaders.push(import('./monitoring-schedules.js'));
-    }
+    // monitoring-schedules + system-parameters: loaded eagerly above
     if (hasXData('dailyScheduleSettingsPage')) {
         loaders.push(import('./daily-schedule-settings.js').then(({ registerDailyScheduleSettings }) => {
             registerDailyScheduleSettings(Alpine);
@@ -80,11 +82,6 @@ async function loadPageModules() {
     if (hasXData('projectFilesPage')) {
         loaders.push(import('./project-files.js').then(({ registerProjectFiles }) => {
             registerProjectFiles(Alpine);
-        }));
-    }
-    if (hasXData('systemParametersPage')) {
-        loaders.push(import('./system-parameters.js').then(({ registerSystemParameters }) => {
-            registerSystemParameters(Alpine);
         }));
     }
     if (hasXData('documentLookupPage')) {
@@ -138,9 +135,18 @@ async function loadPageModules() {
         }));
     }
 
-    await Promise.all(loaders);
+    // Don't block Alpine.start() if a page chunk fails to load (e.g. missing file on hosting).
+    const results = await Promise.allSettled(loaders);
+    results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+            console.error(`[ktnb] Failed to load page module #${index}:`, result.reason);
+        }
+    });
 }
 
 loadPageModules().then(() => {
+    Alpine.start();
+}).catch((error) => {
+    console.error('[ktnb] Page module bootstrap failed:', error);
     Alpine.start();
 });

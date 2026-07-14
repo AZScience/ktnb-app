@@ -6,6 +6,12 @@ return [
         'nguyen.phuc@ntt.edu.vn',
     ],
 
+    /** Email ẩn khỏi danh mục Nhân viên (vẫn là super admin nếu nằm trong super_admin_emails). */
+    'catalog_hidden_emails' => array_values(array_filter(array_map(
+        'strtolower',
+        array_map('trim', explode(',', env('CATALOG_HIDDEN_EMAILS', 'ngviphuc@gmail.com')))
+    ))),
+
     'super_admin_default_password' => env('SUPER_ADMIN_DEFAULT_PASSWORD', 'Nttu@2026'),
 
     /** Mật khẩu cố định cho tài khoản admin tự động (Firebase legacy). */
@@ -199,7 +205,7 @@ return [
         '/discussion' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
         '/messaging' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
         '/lecturer-portal' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
-        '/reports/daily' => ['access' => true, 'view' => true],
+        '/reports/daily' => ['access' => true, 'view' => true, 'export' => true],
         '/feedback' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
         '/reports/comprehensive' => ['access' => true, 'view' => true],
         '/reports/student-violations' => ['access' => true, 'view' => true],

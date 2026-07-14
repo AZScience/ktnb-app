@@ -507,13 +507,24 @@ class DashboardController extends Controller
 
     private function countGrouped($query, string $column): Collection
     {
-        $expression = "COALESCE(NULLIF(TRIM({$column}), ''), 'Chưa xác định')";
-
+        // Group by bare column so MySQL ONLY_FULL_GROUP_BY (common on hosting) accepts the query.
+        // Empty/null labels are normalized in PHP afterward.
         return $query
-            ->selectRaw("{$expression} as label, COUNT(*) as total")
-            ->groupByRaw($expression)
+            ->selectRaw("`{$column}` as label, COUNT(*) as total")
+            ->groupBy($column)
             ->orderByDesc('total')
-            ->pluck('total', 'label');
+            ->get()
+            ->reduce(function (Collection $carry, object $row) {
+                $label = trim((string) ($row->label ?? ''));
+                if ($label === '') {
+                    $label = 'Chưa xác định';
+                }
+
+                $carry[$label] = (int) ($carry[$label] ?? 0) + (int) $row->total;
+
+                return $carry;
+            }, collect())
+            ->sortDesc();
     }
 
     private function mergeOverviewChartData(array $metrics, array $groups, int $limit = 10): array

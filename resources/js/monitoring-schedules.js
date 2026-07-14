@@ -138,6 +138,75 @@ function formatFilterDate(d) {
     return d;
 }
 
+const LOCAL_NOTE_MODULES = new Set([
+    'homeroom',
+    'online',
+    'in-person',
+    'exams',
+    'external-practice',
+]);
+
+function moduleSupportsLocalNote(module) {
+    return LOCAL_NOTE_MODULES.has(module);
+}
+
+function localNotesStorageKey(module) {
+    return `nttu_monitoring_${module}_local_notes`;
+}
+
+function buildLocalNoteDraftKey(form) {
+    if (form?.id) {
+        return `id:${form.id}`;
+    }
+
+    return [
+        'row',
+        form?.date || '',
+        form?.period || '',
+        form?.class || '',
+        form?.content || '',
+        form?.lecturer || '',
+    ].join('|');
+}
+
+function readLocalNotesMap(module) {
+    try {
+        return JSON.parse(localStorage.getItem(localNotesStorageKey(module)) || '{}');
+    } catch {
+        return {};
+    }
+}
+
+function writeLocalNotesMap(module, map) {
+    localStorage.setItem(localNotesStorageKey(module), JSON.stringify(map));
+}
+
+function applyLocalNotesToItems(module, items) {
+    if (!moduleSupportsLocalNote(module) || !Array.isArray(items)) {
+        return items;
+    }
+
+    const map = readLocalNotesMap(module);
+
+    return items.map((item) => {
+        const key = buildLocalNoteDraftKey(item);
+        if (!Object.prototype.hasOwnProperty.call(map, key)) {
+            return item;
+        }
+
+        return { ...item, note: map[key] };
+    });
+}
+
+function formSnapshotWithoutLocalNote(form, excludeNote) {
+    const snapshot = { ...form };
+    if (excludeNote) {
+        delete snapshot.note;
+    }
+
+    return snapshot;
+}
+
 export function monitoringSchedulesPage(config) {
     const storageKey = `nttu_monitoring_${config.module}_colvis`;
     const pageKey = `nttu_monitoring_${config.module}_page`;
@@ -211,6 +280,7 @@ export function monitoringSchedulesPage(config) {
         currentLang: getLanguage(),
         showsAttendingStudents: !!config.showsAttendingStudents,
         uiConfig,
+        persistLocalNoteEnabled: moduleSupportsLocalNote(config.module),
         modalOpen: false,
         modalMode: 'edit',
         advancedOpen: false,
@@ -262,6 +332,10 @@ export function monitoringSchedulesPage(config) {
                 periodStart: '',
                 periodEnd: '',
                 ...(savedAdvanced || {}),
+                // Server date wins for schedule modules — stale localStorage date causes empty tables.
+                ...((config.uiConfig?.advancedDateReloads && (config.date || config.todayDate))
+                    ? { date: config.date || config.todayDate }
+                    : {}),
             },
             config.date || config.todayDate,
         ),
@@ -279,7 +353,10 @@ export function monitoringSchedulesPage(config) {
             });
             void this.loadFilterPresets();
             if (this.dataUrl) {
-                await this.fetchScheduleData(this.advancedFilters.date || this.date || this.todayDate);
+                const initialDate = this.uiConfig.advancedDateReloads
+                    ? (this.date || this.todayDate)
+                    : (this.advancedFilters.date || this.date || this.todayDate);
+                await this.fetchScheduleData(initialDate);
                 if (this.uiConfig.advancedDateReloads) {
                     const serverDate = formatFilterDate(this.date);
                     if (serverDate) {
@@ -332,7 +409,7 @@ export function monitoringSchedulesPage(config) {
                 });
                 if (!res.ok) throw new Error('Không tải được lịch');
                 const payload = await res.json();
-                this.items = payload.items || [];
+                this.items = applyLocalNotesToItems(this.module, payload.items || []);
                 this.date = payload.date || d;
                 this.dateNotice = payload.dateNotice || '';
                 this.advancedFilters = normalizeAdvancedFilters(
@@ -1064,6 +1141,7 @@ export function monitoringSchedulesPage(config) {
             this.form = { ...data };
             this.applyHiddenRecordingDefaults();
             this.initialForm = JSON.parse(JSON.stringify(this.form));
+            this.restoreLocalNoteDraft();
             if (mode === 'edit') {
                 this.openSections = {
                     'class-info': false,
@@ -1099,11 +1177,16 @@ export function monitoringSchedulesPage(config) {
         },
 
         get isChanged() {
-            return JSON.stringify(this.form) !== JSON.stringify(this.initialForm);
+            const excludeNote = this.persistLocalNoteEnabled;
+            const form = formSnapshotWithoutLocalNote(this.form, excludeNote);
+            const initial = formSnapshotWithoutLocalNote(this.initialForm, excludeNote);
+
+            return JSON.stringify(form) !== JSON.stringify(initial);
         },
 
         undoForm() {
             this.form = JSON.parse(JSON.stringify(this.initialForm));
+            this.restoreLocalNoteDraft();
             this.evidenceInitFromForm();
         },
 
@@ -1118,8 +1201,72 @@ export function monitoringSchedulesPage(config) {
         },
 
         closeModal() {
+            this.persistLocalNoteDraft();
             this.evidenceCleanupPanel();
             this.modalOpen = false;
+        },
+
+        localNoteDraftKey() {
+            return buildLocalNoteDraftKey(this.form);
+        },
+
+        restoreLocalNoteDraft() {
+            if (!this.persistLocalNoteEnabled) {
+                return;
+            }
+
+            const map = readLocalNotesMap(this.module);
+            const key = this.localNoteDraftKey();
+            if (!Object.prototype.hasOwnProperty.call(map, key)) {
+                return;
+            }
+
+            this.form.note = map[key];
+        },
+
+        persistLocalNoteDraft() {
+            if (!this.persistLocalNoteEnabled) {
+                return;
+            }
+
+            const map = readLocalNotesMap(this.module);
+            const key = this.localNoteDraftKey();
+            const note = String(this.form.note ?? '');
+
+            if (note.trim() === '') {
+                delete map[key];
+            } else {
+                map[key] = note;
+            }
+
+            writeLocalNotesMap(this.module, map);
+            this.syncLocalNoteToTableRow();
+        },
+
+        syncLocalNoteToTableRow() {
+            if (!this.persistLocalNoteEnabled || !this.form?.id) {
+                return;
+            }
+
+            const idx = this.items.findIndex((item) => item.id === this.form.id);
+            if (idx < 0) {
+                return;
+            }
+
+            this.items[idx] = {
+                ...this.items[idx],
+                note: String(this.form.note ?? ''),
+            };
+        },
+
+        clearLocalNoteDraftSilently() {
+            if (!this.persistLocalNoteEnabled) {
+                return;
+            }
+
+            const map = readLocalNotesMap(this.module);
+            delete map[this.localNoteDraftKey()];
+            writeLocalNotesMap(this.module, map);
         },
 
         mergeMonitoringItem(existing, saved) {
@@ -1245,6 +1392,7 @@ export function monitoringSchedulesPage(config) {
                     }
                 }
                 this.toast = { type: 'success', message: data.message };
+                this.clearLocalNoteDraftSilently();
                 setTimeout(() => this.closeModal(), 600);
             } catch (e) {
                 this.toast = { type: 'error', message: e.message };

@@ -11,6 +11,7 @@ class ParameterVerificationService
 {
     public function __construct(
         private GoogleSheetService $googleSheets,
+        private SystemSmtpMailerService $smtpMailer,
     ) {}
 
     public function verifyGoogleSheet(string $sheetId, string $email, string $privateKey, ?string $tabName = null): array
@@ -137,7 +138,7 @@ class ParameterVerificationService
         }
 
         try {
-            $transport = $this->createSmtpTransport($host, $port, $user, $pass);
+            $transport = $this->smtpMailer->createTransport($host, $port, $user, $pass);
             $mailer = new Mailer($transport);
 
             $transport->start();
@@ -158,33 +159,8 @@ class ParameterVerificationService
                     : 'Kết nối SMTP thành công.',
             ];
         } catch (\Throwable $e) {
-            return ['success' => false, 'message' => $this->formatSmtpError($e->getMessage())];
+            return ['success' => false, 'message' => $this->smtpMailer->formatSmtpError($e->getMessage())];
         }
-    }
-
-    private function createSmtpTransport(string $host, string $port, string $user, string $pass): \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport
-    {
-        $portNum = (int) ($port ?: 587);
-        $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $portNum, $portNum === 465);
-        $transport->setUsername($user);
-        $transport->setPassword($pass);
-
-        return $transport;
-    }
-
-    private function formatSmtpError(string $message): string
-    {
-        if (str_contains($message, 'EAUTH') || str_contains($message, '535')) {
-            return 'Lỗi xác thực (Sai Username hoặc Password).';
-        }
-        if (str_contains($message, 'ECONNREFUSED')) {
-            return 'Kết nối bị từ chối (Sai Host hoặc Port).';
-        }
-        if (str_contains($message, 'ETIMEDOUT')) {
-            return 'Kết nối quá hạn (Kiểm tra Firewall hoặc mạng).';
-        }
-
-        return $message ?: 'Không thể kết nối máy chủ SMTP.';
     }
 
     private function apiError(Response $response): string

@@ -53,6 +53,8 @@ class ProjectBackupService
 
     public function createBackupZip(string $storagePath): void
     {
+        $this->prepareHeavyRuntime();
+
         $absoluteZip = Storage::disk('local')->path($storagePath);
         File::ensureDirectoryExists(dirname($absoluteZip));
 
@@ -69,19 +71,58 @@ class ProjectBackupService
     {
         abort_unless(Storage::disk('local')->exists($storagePath), 404);
 
-        $extractDir = storage_path('app/backups/project-restore-'.time());
-        File::ensureDirectoryExists($extractDir);
+        $this->prepareHeavyRuntime();
 
+        $absoluteZip = Storage::disk('local')->path($storagePath);
         $zip = new ZipArchive;
-        if ($zip->open(Storage::disk('local')->path($storagePath)) !== true) {
+        if ($zip->open($absoluteZip) !== true) {
             throw new \RuntimeException('Không thể mở file backup project.');
         }
 
-        $zip->extractTo($extractDir);
-        $zip->close();
+        try {
+            // Stream từng file — tránh extractTo() cả ZIP lớn (dễ OOM / HTTP 500 trên hosting).
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = str_replace('\\', '/', (string) $zip->getNameIndex($i));
+                $name = ltrim($name, '/');
+                if ($name === '' || str_ends_with($name, '/')) {
+                    continue;
+                }
+                if (str_contains($name, '..') || $this->shouldExclude($name)) {
+                    continue;
+                }
 
-        $this->mergeExtractedTree($extractDir, $this->root);
-        File::deleteDirectory($extractDir);
+                $target = $this->root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $name);
+                File::ensureDirectoryExists(dirname($target));
+
+                $stream = $zip->getStream($name);
+                if ($stream === false) {
+                    continue;
+                }
+
+                $out = fopen($target, 'wb');
+                if ($out === false) {
+                    fclose($stream);
+                    throw new \RuntimeException("Không thể ghi file phục hồi: {$name}");
+                }
+
+                stream_copy_to_stream($stream, $out);
+                fclose($out);
+                fclose($stream);
+            }
+        } finally {
+            $zip->close();
+        }
+    }
+
+    private function prepareHeavyRuntime(): void
+    {
+        if (function_exists('ini_set')) {
+            @ini_set('memory_limit', '1024M');
+            @ini_set('max_execution_time', '600');
+        }
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(600);
+        }
     }
 
     private function addDirectoryToZip(ZipArchive $zip, string $directory, string $relativePrefix): void
@@ -108,31 +149,6 @@ class ProjectBackupService
             }
 
             $zip->addFile($absolute, str_replace('\\', '/', $relative));
-        }
-    }
-
-    private function mergeExtractedTree(string $sourceDir, string $targetRoot): void
-    {
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($sourceDir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::SELF_FIRST
-        );
-
-        foreach ($iterator as $item) {
-            $relative = ltrim(str_replace('\\', '/', substr($item->getPathname(), strlen($sourceDir))), '/');
-            if ($relative === '' || $this->shouldExclude($relative)) {
-                continue;
-            }
-
-            $target = $targetRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relative);
-            if ($item->isDir()) {
-                File::ensureDirectoryExists($target);
-
-                continue;
-            }
-
-            File::ensureDirectoryExists(dirname($target));
-            File::copy($item->getPathname(), $target);
         }
     }
 

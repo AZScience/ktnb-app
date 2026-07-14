@@ -1,0 +1,300 @@
+================================================================================
+  HƯỚNG DẪN DEPLOY — HỆ THỐNG KIỂM TRA NỘI BỘ (KTNB App)
+  Trường Đại học Nguyễn Tất Thành — Phòng Kiểm tra Nội bộ
+================================================================================
+
+  Phiên bản: 2026-07-03
+  Domain production: https://kiemtranoibo-ccks.ntt.edu.vn
+  Project Laravel — PHP 8.3+ / MySQL
+
+  File này nằm tại: deploy/hosting/HUONG-DAN-DEPLOY.txt
+  (Copy toàn bộ thư mục deploy/hosting/ khi cần mang theo)
+
+================================================================================
+  MỤC LỤC
+================================================================================
+
+  1. Deploy nhanh — 4 bước (khuyến nghị)
+  2. Chuẩn bị trước khi deploy
+  3. Chi tiết từng bước
+  4. Cấu hình .env trên hosting
+  5. Sau khi deploy — kiểm tra & cấu hình thêm
+  6. Import dữ liệu từ máy local
+  7. Câu hỏi thường gặp
+  8. Danh sách file kèm theo trong deploy/hosting/
+
+================================================================================
+  1. DEPLOY NHANH — 4 BƯỚC
+================================================================================
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ BƯỚC 1 — Máy dev (Windows)                                              │
+  │   cd d:\ktnb-app                                                          │
+  │   deploy\hosting\package-for-deploy.bat                                   │
+  │   → Tạo file: deploy\ktnb-app-production.zip                            │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ BƯỚC 2 — Upload hosting                                                   │
+  │   • Upload zip lên hosting (FTP / File Manager)                           │
+  │   • Giải nén (vd. /home/user/ktnb-app/)                                   │
+  │   • IT trỏ Document Root domain → .../ktnb-app/public                       │
+  │     (CÙNG domain, KHÔNG cần subdomain)                                    │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ BƯỚC 3 — Tạo .env (sửa 5 dòng quan trọng)                                │
+  │   Copy deploy/hosting/env.production → .env (thư mục gốc project)        │
+  │   Sửa: APP_KEY, DB_DATABASE, DB_USERNAME, DB_PASSWORD, EXTERNAL_API_KEY   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ BƯỚC 4 — Chạy trên server (SSH / Terminal cPanel)                         │
+  │   cd /duong/dan/ktnb-app                                                  │
+  │   chmod +x deploy/hosting/post-deploy.sh                                  │
+  │   ./deploy/hosting/post-deploy.sh                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  Kiểm tra: https://kiemtranoibo-ccks.ntt.edu.vn/login
+
+================================================================================
+  2. CHUẨN BỊ TRƯỚC KHI DEPLOY
+================================================================================
+
+  HỎI IT / NHÀ CUNG CẤP HOSTING:
+  ─────────────────────────────
+  [ ] PHP phiên bản 8.3 trở lên
+  [ ] Extension: pdo_mysql, mbstring, openssl, fileinfo, zip, gd
+  [ ] MySQL: tên database, username, password, host (thường localhost)
+  [ ] Quyền đổi Document Root của kiemtranoibo-ccks.ntt.edu.vn
+  [ ] SSH hoặc Terminal trên cPanel (để chạy php artisan)
+  [ ] HTTPS đã bật (bắt buộc cho camera QR, GPS check-in)
+
+  TRÊN MÁY LOCAL (đã có sẵn trong project):
+  ─────────────────────────────────────────
+  • Source code trong d:\ktnb-app
+  • File .env local (để copy APP_KEY)
+  • Database MySQL local: congcukiemtranoibo (nếu cần giữ dữ liệu)
+
+  LƯU Ý VỀ DOMAIN HIỆN TẠI:
+  ─────────────────────────
+  Domain kiemtranoibo-ccks.ntt.edu.vn đang chạy app "Lịch tại các cơ sở".
+  Deploy Laravel = IT trỏ domain vào thư mục public/ của Laravel.
+  App cũ sẽ không còn hiển thị ở URL gốc (cùng domain, không cần subdomain).
+
+================================================================================
+  3. CHI TIẾT TỪNG BƯỚC
+================================================================================
+
+  ─── 3.1. Đóng gói trên máy dev ───
+
+  Chạy: deploy\hosting\package-for-deploy.bat
+
+  Script tự động:
+    • composer install --no-dev
+    • npm run build (tạo public/build/)
+    • Nén zip loại trừ node_modules, .git, .env
+
+  Kết quả: deploy\ktnb-app-production.zip
+
+  Nếu script lỗi, chạy tay:
+    composer install --no-dev --optimize-autoloader
+    npm ci
+    npm run build
+  Rồi upload toàn bộ project (có vendor/ và public/build/).
+
+  ─── 3.2. Upload & cấu trúc thư mục ───
+
+  Sau giải nén, cấu trúc trên hosting:
+
+    ktnb-app/
+    ├── app/
+    ├── bootstrap/
+    ├── config/
+    ├── database/
+    ├── deploy/
+    ├── public/          ← Document Root TRỎ VÀO ĐÂY
+    │   ├── index.php
+    │   ├── .htaccess
+    │   └── build/       ← JS/CSS đã build
+    ├── resources/
+    ├── routes/
+    ├── storage/
+    ├── vendor/
+    └── .env             ← tạo từ env.production
+
+  KHÔNG upload: node_modules/, .git/, .env từ máy local
+
+  ─── 3.3. Document Root ───
+
+  CÁCH ĐÚNG (khuyến nghị):
+    Domain → /path/to/ktnb-app/public
+
+  Nếu KHÔNG đổi được Document Root:
+    • Copy deploy/hosting/htaccess-goc-project.txt → .htaccess (thư mục gốc)
+    • Hoặc nhờ IT hỗ trợ
+
+  ─── 3.4. Chạy post-deploy ───
+
+  Linux / SSH:
+    cd /path/to/ktnb-app
+    chmod +x deploy/hosting/post-deploy.sh
+    ./deploy/hosting/post-deploy.sh
+
+  Windows hosting:
+    deploy\hosting\post-deploy.bat
+
+  Quyền ghi (Linux):
+    chmod -R 775 storage bootstrap/cache
+
+  Cron job (tùy chọn — import nền):
+    Xem nội dung file deploy/hosting/cron-queue.txt
+    Thêm vào cPanel → Cron Jobs
+
+================================================================================
+  4. CẤU HÌNH .ENV TRÊN HOSTING
+================================================================================
+
+  Tạo file .env từ mẫu: deploy/hosting/env.production
+
+  ┌──────────────────┬────────────────────────────────────────────────────┐
+  │ Biến             │ Giá trị production                                 │
+  ├──────────────────┼────────────────────────────────────────────────────┤
+  │ APP_ENV          │ production                                         │
+  │ APP_DEBUG        │ false                                              │
+  │ APP_URL          │ https://kiemtranoibo-ccks.ntt.edu.vn               │
+  │ APP_KEY          │ Copy từ .env máy dev HOẶC php artisan key:generate  │
+  │ DB_HOST          │ localhost (hoặc host hosting cấp)                │
+  │ DB_DATABASE      │ Tên DB hosting                                     │
+  │ DB_USERNAME      │ User DB hosting                                    │
+  │ DB_PASSWORD      │ Password DB hosting (local để trống, hosting có)   │
+  │ EXTERNAL_API_KEY │ Chuỗi bí mật mạnh, tự đặt (32+ ký tự)              │
+  └──────────────────┴────────────────────────────────────────────────────┘
+
+  SMTP / Email:
+    Không cần MAIL_* trong .env cho quên mật khẩu & tin nhắn.
+    Cấu hình trong: Cài đặt → Tham số hệ thống → tab Email (trên web).
+
+  Password có ký tự đặc biệt:
+    DB_PASSWORD="mat@khau#123"
+
+  Sau khi sửa .env:
+    php artisan config:clear
+    php artisan config:cache
+
+================================================================================
+  5. SAU KHI DEPLOY — KIỂM TRA & CẤU HÌNH
+================================================================================
+
+  CHECKLIST KIỂM TRA:
+  ──────────────────
+  [ ] https://kiemtranoibo-ccks.ntt.edu.vn/login mở được
+  [ ] Đăng nhập tài khoản admin OK
+  [ ] Upload ảnh / file OK
+  [ ] Xuất Excel báo cáo ngày OK
+  [ ] Quên mật khẩu → nhận email (sau khi cấu hình SMTP)
+  [ ] Cổng giảng viên /lecturer-portal (cần Google Client ID + HTTPS)
+
+  CẤU HÌNH SMTP (tab Email):
+  ──────────────────────────
+  1. Đăng nhập admin
+  2. Cài đặt → Tham số hệ thống → Email
+  3. Điền SMTP Host, Port, User, App Password
+  4. Bấm "Gửi thử Email kiểm tra kết nối"
+  5. Lưu tất cả thay đổi
+
+  Dùng cho: tin nhắn nội bộ + Quên mật khẩu trang login
+
+  GOOGLE OAUTH (cổng giảng viên):
+  ────────────────────────────────
+  Google Cloud Console → OAuth Client → Authorized JavaScript origins:
+    https://kiemtranoibo-ccks.ntt.edu.vn
+  (Không có dấu / cuối)
+
+  UPLOAD FILE LỚN:
+  ───────────────
+  Copy deploy/hosting/user.ini → public/user.ini
+
+  BẢO MẬT BẮT BUỘC:
+  ─────────────────
+  • APP_DEBUG=false
+  • Đổi EXTERNAL_API_KEY (không dùng mặc định)
+  • Đổi mật khẩu admin mặc định trên production
+
+================================================================================
+  6. IMPORT DỮ LIỆU TỪ MÁY LOCAL
+================================================================================
+
+  Trên máy dev (Windows), export MySQL:
+
+    mysqldump -u root congcukiemtranoibo > backup.sql
+
+  Trên hosting:
+    • phpMyAdmin → chọn database → Import → chọn backup.sql
+    • Hoặc SSH: mysql -u USER -p DB_NAME < backup.sql
+
+  Nếu database mới (không import):
+    php artisan migrate --force
+    php artisan db:seed          (nếu cần dữ liệu ban đầu)
+
+================================================================================
+  7. CÂU HỎI THƯỜNG GẶP
+================================================================================
+
+  Q: Local không password MySQL, hosting có password — sửa đâu?
+  A: Chỉ file .env trên hosting, dòng DB_PASSWORD=...
+
+  Q: Có tự nhận localhost vs hosting không?
+  A: Không. Máy dev dùng .env local; hosting dùng .env riêng.
+
+  Q: Có cần npm trên hosting không?
+  A: Không. Build sẵn public/build/ trước khi upload.
+
+  Q: Có cần subdomain không?
+  A: Không. Cùng domain, đổi Document Root vào public/
+
+  Q: Lỗi 500 sau deploy?
+  A: Kiểm tra quyền storage/, bootstrap/cache/
+     Xem storage/logs/laravel.log
+     php artisan config:clear
+
+  Q: Trang trắng / không có CSS?
+  A: Thiếu public/build/ → chạy npm run build rồi upload lại
+     Hoặc Document Root chưa trỏ đúng public/
+
+  Q: Không có SSH?
+  A: Nhờ IT chạy post-deploy.sh
+     Hoặc dùng Terminal trên cPanel (nếu có)
+
+================================================================================
+  8. FILE KÈM THEO (deploy/hosting/)
+================================================================================
+
+  HUONG-DAN-DEPLOY.txt     ← File này (hướng dẫn đầy đủ)
+  DEPLOY-NHANH.txt         ← Tóm tắt 4 bước
+  HUONG-DAN.txt            ← Hướng dẫn kỹ thuật chi tiết
+  CHECKLIST-TRUOC-GO-LIVE.txt  ← Checklist bảo mật & test
+  env.production           ← Mẫu .env → copy thành .env
+  package-for-deploy.bat   ← Đóng gói zip trên Windows
+  post-deploy.sh           ← Script chạy sau upload (Linux)
+  post-deploy.bat          ← Script chạy sau upload (Windows)
+  htaccess-goc-project.txt ← .htaccess gốc (khi không đổi Document Root)
+  htaccess-public.txt      ← .htaccess cho public/
+  user.ini                 ← Giới hạn upload PHP
+  cron-queue.txt           ← Mẫu cron job
+
+================================================================================
+  LIÊN HỆ / HỖ TRỢ
+================================================================================
+
+  Repository GitHub: https://github.com/AZScience/ktnb-app (branch: kiemtranoibo)
+
+  Khi cần IT hỗ trợ, gửi kèm:
+    • File zip: deploy\ktnb-app-production.zip
+    • Yêu cầu: Document Root → .../ktnb-app/public
+    • PHP 8.3+, MySQL credentials
+    • Chạy deploy/hosting/post-deploy.sh
+
+================================================================================
+                              HẾT HƯỚNG DẪN
+================================================================================

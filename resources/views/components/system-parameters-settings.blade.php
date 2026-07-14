@@ -335,8 +335,9 @@
                     <li>Loại ứng dụng: <strong>Web application</strong> / <strong>Ứng dụng web</strong></li>
                     <li>Mục <strong>Authorized JavaScript origins</strong> / <strong>Nguồn gốc JavaScript được ủy quyền</strong> — thêm URL (không có dấu <code>/</code> cuối):
                         <code class="rounded bg-white/80 px-1">http://127.0.0.1:8000</code>,
-                        <code class="rounded bg-white/80 px-1">http://localhost:8000</code>
-                        và domain production (https)</li>
+                        <code class="rounded bg-white/80 px-1">http://localhost:8000</code>,
+                        <code class="rounded bg-white/80 px-1">https://kiemtranoibo-ccks.ntt.edu.vn</code>
+                    </li>
                     <li><strong>Authorized redirect URIs</strong>: để trống (cổng này không cần)</li>
                     <li>Bấm <strong>Create</strong> → copy <strong>Client ID</strong> (dạng <code>xxx.apps.googleusercontent.com</code>)</li>
                 </ol>
@@ -366,8 +367,10 @@
                 <ol class="list-decimal space-y-1 pl-4">
                     <li>Mở <a href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noopener" class="font-medium underline">Clients</a> → sửa OAuth client Web</li>
                     <li>Thêm <strong>đúng</strong> origin (xem dòng “Origin trang” trên cổng check-in), ví dụ:
-                        <code class="rounded bg-white px-1">http://127.0.0.1:8000</code> <strong>và</strong>
-                        <code class="rounded bg-white px-1">http://localhost:8000</code> — hai URL này là khác nhau</li>
+                        <code class="rounded bg-white px-1">http://127.0.0.1:8000</code>,
+                        <code class="rounded bg-white px-1">http://localhost:8000</code>,
+                        <code class="rounded bg-white px-1">https://kiemtranoibo-ccks.ntt.edu.vn</code>
+                    </li>
                     <li>Không thêm path (<code>/lecturer-portal</code>), không dấu <code>/</code> cuối</li>
                     <li>Save → đợi 1–2 phút → thử lại trên <strong>cùng URL</strong> đã khai báo</li>
                 </ol>
@@ -422,7 +425,7 @@
                 <ul class="list-disc space-y-1 pl-4">
                     <li>Nếu dùng Gmail, hãy bật 2FA và tạo Mật khẩu ứng dụng (App Password).</li>
                     <li>Host thường là <strong>smtp.gmail.com</strong> và Port là <strong>587</strong>.</li>
-                    <li>Hệ thống sẽ gửi email đồng bộ khi bạn gửi tin nhắn nội bộ cho cán bộ.</li>
+                    <li>Hệ thống dùng SMTP này khi gửi <strong>tin nhắn nội bộ</strong> và email <strong>Quên mật khẩu</strong> trên trang đăng nhập.</li>
                 </ul>
             </div>
         </div>

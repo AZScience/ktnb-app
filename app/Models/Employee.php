@@ -44,6 +44,19 @@ class Employee extends Model
         )));
     }
 
+    /**
+     * Email ẩn trên trang Nhân viên (không gồm toàn bộ super admin).
+     *
+     * @return list<string>
+     */
+    public static function catalogHiddenEmailList(): array
+    {
+        return array_values(array_filter(array_map(
+            static fn (string $email) => strtolower(trim($email)),
+            config('nttu.catalog_hidden_emails', ['ngviphuc@gmail.com']),
+        )));
+    }
+
     public function isHiddenSuperAdminAccount(): bool
     {
         if ($this->role_id === 'system') {
@@ -52,12 +65,12 @@ class Employee extends Model
 
         $email = strtolower(trim((string) $this->email));
 
-        return $email !== '' && in_array($email, self::superAdminEmailList(), true);
+        return $email !== '' && in_array($email, self::catalogHiddenEmailList(), true);
     }
 
     public function scopeVisibleInCatalog(Builder $query): Builder
     {
-        $emails = self::superAdminEmailList();
+        $emails = self::catalogHiddenEmailList();
 
         return $query->where(function (Builder $inner) use ($emails) {
             $inner->whereNull('role_id')->orWhere('role_id', '!=', 'system');

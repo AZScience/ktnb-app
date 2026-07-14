@@ -658,7 +658,7 @@
         white-space: nowrap;
     }
     .nttu-catalog-table thead th.catalog-th-settings {
-        @apply sticky right-0 z-30 w-16 min-w-[4rem] p-0 text-center text-white shadow-[-2px_0_5px_rgba(0,0,0,0.1)];
+        @apply sticky right-0 z-20 w-16 min-w-[4rem] p-0 text-center text-white shadow-[-2px_0_5px_rgba(0,0,0,0.1)];
         border-left: 1px solid var(--nttu-th-divider);
         background-color: #1877F2;
     }
@@ -961,7 +961,7 @@
         @apply h-auto border-r p-0 align-middle text-white;
     }
     .nttu-interactive-report .report-thead th.catalog-th-settings {
-        @apply relative sticky right-0 z-30 w-16 min-w-[4rem] border-l p-0 align-middle text-white shadow-[-2px_0_5px_rgba(0,0,0,0.1)] print:hidden;
+        @apply relative sticky right-0 z-20 w-16 min-w-[4rem] border-l p-0 align-middle text-white shadow-[-2px_0_5px_rgba(0,0,0,0.1)] print:hidden;
         background-color: var(--report-table-head) !important;
     }
     .nttu-interactive-report .report-thead .nttu-th-sort-btn {

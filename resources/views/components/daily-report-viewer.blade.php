@@ -96,7 +96,7 @@
                             <span x-text="`${tabDefinitions[tabKey]?.title} (${processedItems(tabKey).length})`"></span>
                         </h3>
                         <button type="button"
-                            x-show="googleSheetsConfigured && canEdit"
+                            x-show="googleSheetsConfigured && (canEdit || canExport)"
                             x-cloak
                             @click="openPushDialog(tabKey)"
                             class="inline-flex items-center gap-2 rounded-md border border-orange-500 px-3 py-2 text-xs font-medium text-orange-700 shadow-sm hover:bg-orange-600 hover:text-white">

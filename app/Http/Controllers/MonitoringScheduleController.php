@@ -401,15 +401,19 @@ class MonitoringScheduleController extends Controller
             return [$requested, "Không có lịch ngày {$requested}."];
         }
 
+        // Aggregate in PHP to avoid MySQL ONLY_FULL_GROUP_BY issues with ORDER BY expressions.
         $best = DailySchedule::query()
             ->forModule($module)
             ->whereNotNull('date')
             ->where('date', '!=', '')
-            ->selectRaw('date, COUNT(*) as cnt')
+            ->select('date')
+            ->selectRaw('COUNT(*) as cnt')
             ->groupBy('date')
-            ->orderByDesc('cnt')
-            ->orderByRaw("STR_TO_DATE(date, '%d/%m/%Y') DESC")
-            ->limit(1)
+            ->get()
+            ->sortBy([
+                fn ($row) => -((int) $row->cnt),
+                fn ($row) => -$this->scheduleDateSortKey((string) $row->date),
+            ])
             ->first();
 
         if ($best) {

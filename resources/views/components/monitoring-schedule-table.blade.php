@@ -234,6 +234,7 @@
                             <x-table-empty-state
                                 icon="table"
                                 filters-active="hasActiveAdvancedFilters || Object.keys(columnFilters).some(k => columnFilters[k])"
+                                clear-action="clearAllFilters()"
                             />
                         </td></tr>
                     </template>
@@ -589,7 +590,13 @@
                                 <div class="space-y-1">
                                     <label class="text-gray-500 flex items-center gap-1.5">Ghi chú</label>
                                     <template x-if="isNoteFieldEditable">
-                                        <input x-model="form.note" class="nttu-form-control" placeholder="Ghi chú thêm...">
+                                        <input
+                                            x-model="form.note"
+                                            type="text"
+                                            class="nttu-form-control"
+                                            :placeholder="persistLocalNoteEnabled && module === 'online' ? 'Dán link eLearning (LCMS) hoặc ghi chú...' : 'Ghi chú thêm...'"
+                                            @input.debounce.400ms="persistLocalNoteDraft()"
+                                        >
                                     </template>
                                     <template x-if="!isNoteFieldEditable">
                                         <p class="py-2" x-text="form.note || '—'"></p>
@@ -671,7 +678,7 @@
                                         <textarea x-model="form.note" rows="2" class="w-full rounded-md border-gray-300 text-sm shadow-sm"></textarea>
                                     </template>
                                     <template x-if="!isNoteFieldEditable">
-                                        <p class="py-2 whitespace-pre-wrap" x-text="form.note || '—'"></p>
+                                        <p class="py-2" x-text="form.note || '—'"></p>
                                     </template>
                                 </div>
                             </div>

@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Models\Employee;
 use App\Models\User;
-use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mime\Email;
 
 class InternalMailNotificationService
 {
-    public function __construct(private SystemParameterService $params) {}
+    public function __construct(
+        private SystemParameterService $params,
+        private SystemSmtpMailerService $smtpMailer,
+    ) {}
 
     /**
      * @param  list<int>  $recipientUserIds
@@ -21,12 +23,8 @@ class InternalMailNotificationService
         string $body,
         array $attachments = [],
     ): void {
-        $config = $this->params->all();
-        $host = (string) ($config['smtpHost'] ?? '');
-        $user = (string) ($config['smtpUser'] ?? '');
-        $pass = (string) ($config['smtpPass'] ?? '');
-
-        if ($host === '' || $user === '' || $pass === '') {
+        $credentials = $this->smtpMailer->credentialsFromParameters();
+        if ($credentials === null) {
             return;
         }
 
@@ -35,16 +33,9 @@ class InternalMailNotificationService
             return;
         }
 
-        $port = (string) ($config['smtpPort'] ?? '587');
-        $fromName = (string) ($config['smtpFromName'] ?? 'Phòng Kiểm tra nội bộ');
-        $portNum = (int) ($port ?: 587);
+        $fromName = $credentials['fromName'];
 
         try {
-            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $portNum, $portNum === 465);
-            $transport->setUsername($user);
-            $transport->setPassword($pass);
-            $mailer = new Mailer($transport);
-
             $attachmentHtml = '';
             if ($attachments !== []) {
                 $items = collect($attachments)
@@ -90,12 +81,12 @@ class InternalMailNotificationService
             HTML;
 
             $email = (new Email)
-                ->from(sprintf('"%s" <%s>', $fromName, $user))
+                ->from(sprintf('"%s" <%s>', $fromName, $credentials['user']))
                 ->to(...$emails)
                 ->subject('[NTTU] '.$subject)
                 ->html($html);
 
-            $mailer->send($email);
+            $this->smtpMailer->send($email, $credentials);
         } catch (\Throwable) {
             // Email is best-effort; in-app message is already saved.
         }

@@ -8,10 +8,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-slate-100/80 font-sans antialiased">
-    <main class="flex min-h-screen items-center justify-center p-4">
+    <main class="flex min-h-screen items-center justify-center p-4" x-data="loginPage()">
         <div
             class="grid w-full max-w-4xl min-h-[600px] overflow-hidden rounded-xl border bg-white shadow-xl lg:min-h-[800px] lg:grid-cols-2"
-            x-data="loginPage()"
         >
             {{-- Trái: ảnh + quote --}}
             <div class="relative hidden lg:flex lg:flex-col lg:justify-end">

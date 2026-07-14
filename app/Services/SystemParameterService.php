@@ -63,7 +63,7 @@ class SystemParameterService
             'reportSheetTabName' => 'Báo cáo Tổng hợp',
             'adminEmail' => '',
             'supportPhone' => '',
-            'website' => 'https://kiemtranoibo.ntt.edu.vn',
+            'website' => 'https://kiemtranoibo-ccks.ntt.edu.vn',
             'smtpFromName' => 'Phòng Kiểm tra nội bộ',
             'smtpHost' => 'smtp.gmail.com',
             'smtpPort' => '587',

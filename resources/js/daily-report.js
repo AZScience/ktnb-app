@@ -574,7 +574,7 @@ export function registerDailyReport(Alpine) {
         },
 
         async openPushDialog(tabKey) {
-            if (!this.canEdit) return;
+            if (!this.canEdit && !this.canExport) return;
             if (!this.googleSheetsConfigured) {
                 this.showToast('Chưa cấu hình Google Sheets trong Tham số hệ thống.', 'error');
                 return;

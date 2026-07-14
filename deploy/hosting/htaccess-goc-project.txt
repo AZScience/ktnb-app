@@ -1,0 +1,11 @@
+# =============================================================================
+# KTNB App — .htaccess cho THƯ MỤC GỐC project
+# Cách dùng: copy vào thư mục gốc (cùng cấp app/, public/, vendor/), đổi tên .htaccess
+# Dùng khi hosting KHÔNG cho phép đặt Document Root vào public/
+# Khuyến nghị: nếu được, hãy trỏ Document Root thẳng vào public/ thay vì dùng file này.
+# =============================================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

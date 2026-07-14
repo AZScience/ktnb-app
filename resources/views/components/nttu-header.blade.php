@@ -21,7 +21,7 @@
     ];
 @endphp
 
-<header class="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b bg-white px-4 sm:px-6">
+<header class="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-4 border-b bg-white px-4 sm:px-6">
     <button
         type="button"
         @click="toggleSidebar()"
@@ -88,7 +88,7 @@
                 x-cloak
                 x-transition
                 @click.stop
-                class="absolute right-0 z-50 mt-2 w-[340px] overflow-hidden rounded-md border bg-white shadow-xl"
+                class="absolute right-0 z-[60] mt-2 w-[340px] overflow-hidden rounded-md border bg-white shadow-xl"
             >
                 <div class="flex items-center justify-between border-b bg-slate-50/80 p-4">
                     <h3 class="text-sm font-bold tracking-tight text-gray-900" data-i18n="Thông báo">Thông báo</h3>
@@ -169,7 +169,7 @@
                 x-cloak
                 x-transition
                 @click.stop
-                class="absolute right-0 z-50 mt-2 w-64 rounded-md border bg-white py-1 shadow-lg"
+                class="absolute right-0 z-[60] mt-2 w-64 rounded-md border bg-white py-1 shadow-lg"
             >
                 <div class="border-b px-4 py-3">
                     <p class="text-sm font-bold leading-none text-gray-900">{{ $displayName }}</p>
@@ -222,7 +222,7 @@
                 x-cloak
                 x-transition
                 @click.stop
-                class="absolute right-0 z-50 mt-2 w-44 rounded-md border bg-white py-1 shadow-lg"
+                class="absolute right-0 z-[60] mt-2 w-44 rounded-md border bg-white py-1 shadow-lg"
             >
                 <button
                     type="button"

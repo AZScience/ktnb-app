@@ -177,7 +177,7 @@
     </div>
 
     <div class="w-full overflow-x-auto overflow-y-visible relative">
-        <div x-show="listLoading" x-cloak class="absolute inset-0 z-20 flex items-center justify-center bg-white/70 text-sm text-slate-600" x-text="text('Đang tải dữ liệu...')">
+        <div x-show="listLoading && currentItems.length > 0" x-cloak class="absolute inset-0 z-20 flex items-center justify-center bg-white/70 text-sm text-slate-600" x-text="text('Đang tải dữ liệu...')">
         </div>
         <table class="nttu-table nttu-catalog-table w-full min-w-full table-fixed"
             data-col-resize="catalog_{{ $storageKey }}">

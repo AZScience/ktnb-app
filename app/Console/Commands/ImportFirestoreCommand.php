@@ -328,19 +328,106 @@ class ImportFirestoreCommand extends Command
      */
     private function prepareUpsertRow(string $modelClass, array $row): array
     {
-        if ($modelClass === Message::class) {
-            foreach (['recipient_user_ids', 'recipient_legacy_ids', 'attachments', 'trash_by_user_ids'] as $key) {
-                if (isset($row[$key]) && is_array($row[$key])) {
-                    $row[$key] = json_encode($row[$key], JSON_UNESCAPED_UNICODE);
-                }
+        // upsert() bỏ qua Eloquent casts → phải tự JSON/scalar hóa trước khi ghi DB.
+        /** @var \Illuminate\Database\Eloquent\Model $model */
+        $model = new $modelClass;
+
+        foreach ($model->getCasts() as $key => $cast) {
+            if (! array_key_exists($key, $row) || $row[$key] === null) {
+                continue;
             }
 
-            if (isset($row['sent_at']) && $row['sent_at'] instanceof \DateTimeInterface) {
-                $row['sent_at'] = $row['sent_at']->format('Y-m-d H:i:s');
+            $castName = strtolower((string) $cast);
+            $value = $row[$key];
+
+            if ($this->isJsonLikeCast($castName)) {
+                if (is_array($value) || is_object($value)) {
+                    $row[$key] = json_encode($value, JSON_UNESCAPED_UNICODE);
+                }
+
+                continue;
+            }
+
+            if (in_array($castName, ['bool', 'boolean'], true)) {
+                $row[$key] = $value ? 1 : 0;
+
+                continue;
+            }
+
+            if (
+                in_array($castName, ['datetime', 'immutable_datetime', 'date', 'immutable_date', 'timestamp'], true)
+                || str_starts_with($castName, 'datetime:')
+                || str_starts_with($castName, 'date:')
+            ) {
+                if ($value instanceof \DateTimeInterface) {
+                    $row[$key] = $value->format('Y-m-d H:i:s');
+                }
+            }
+        }
+
+        foreach ($row as $key => $value) {
+            if ($value instanceof \DateTimeInterface) {
+                $row[$key] = $value->format('Y-m-d H:i:s');
+            } elseif (is_array($value) || is_object($value)) {
+                // Cột string nhưng export Firestore trả về mảng/object.
+                $row[$key] = $this->scalarString($value);
             }
         }
 
         return $row;
+    }
+
+    private function isJsonLikeCast(string $cast): bool
+    {
+        return in_array($cast, [
+            'array', 'json', 'object', 'collection',
+            'encrypted:array', 'encrypted:json', 'encrypted:object', 'encrypted:collection',
+        ], true) || str_contains($cast, 'array') || str_contains($cast, 'json');
+    }
+
+    private function scalarString(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        if (is_scalar($value)) {
+            $text = trim((string) $value);
+
+            return $text === '' ? null : $text;
+        }
+
+        if (is_array($value)) {
+            if ($this->isList($value)) {
+                $parts = [];
+                foreach ($value as $item) {
+                    if (is_scalar($item)) {
+                        $part = trim((string) $item);
+                        if ($part !== '') {
+                            $parts[] = $part;
+                        }
+                    }
+                }
+
+                return $parts === [] ? null : implode(', ', $parts);
+            }
+
+            $json = json_encode($value, JSON_UNESCAPED_UNICODE);
+
+            return $json === false ? null : $json;
+        }
+
+        if (is_object($value)) {
+            $json = json_encode($value, JSON_UNESCAPED_UNICODE);
+
+            return $json === false ? null : $json;
+        }
+
+        return null;
     }
 
     private function parseRows(array $raw): array
@@ -695,30 +782,35 @@ class ImportFirestoreCommand extends Command
         $keywords = $row['keywords'] ?? null;
         if (is_string($keywords)) {
             $decoded = json_decode($keywords, true);
-            $keywords = is_array($decoded) ? $decoded : array_filter(array_map('trim', explode(',', $keywords)));
+            $keywords = is_array($decoded)
+                ? $decoded
+                : array_values(array_filter(array_map('trim', explode(',', $keywords))));
+        }
+        if (! is_array($keywords)) {
+            $keywords = $keywords === null || $keywords === '' ? [] : [(string) $keywords];
         }
 
         return [
             'id' => $row['id'],
-            'doc_code' => $row['doc_code'] ?? null,
-            'doc_number' => $row['doc_number'] ?? null,
-            'title' => $row['title'] ?? 'Không có tiêu đề',
-            'abstract' => $row['abstract'] ?? null,
-            'doc_type' => $row['doc_type'] ?? null,
+            'doc_code' => $this->scalarString($row['doc_code'] ?? null),
+            'doc_number' => $this->scalarString($row['doc_number'] ?? null),
+            'title' => $this->scalarString($row['title'] ?? null) ?? 'Không có tiêu đề',
+            'abstract' => $this->scalarString($row['abstract'] ?? null),
+            'doc_type' => $this->scalarString($row['doc_type'] ?? null),
             'issue_date' => $this->normalizeLegacyDate($row['issue_date'] ?? null),
             'received_date' => $this->normalizeLegacyDate($row['received_date'] ?? null),
-            'issuing_body' => $row['issuing_body'] ?? null,
-            'signer' => $row['signer'] ?? null,
-            'department' => $row['department'] ?? null,
-            'assignee' => $row['assignee'] ?? null,
-            'urgency' => $row['urgency'] ?? 'Thường',
-            'confidentiality' => $row['confidentiality'] ?? 'Thường',
-            'status' => $row['status'] ?? 'Mới',
-            'original_file' => $row['original_file'] ?? null,
-            'extracted_text' => $row['extracted_text'] ?? null,
-            'ai_summary' => $row['ai_summary'] ?? null,
-            'keywords' => $keywords,
-            'file_password' => $row['file_password'] ?? null,
+            'issuing_body' => $this->scalarString($row['issuing_body'] ?? null),
+            'signer' => $this->scalarString($row['signer'] ?? null),
+            'department' => $this->scalarString($row['department'] ?? null),
+            'assignee' => $this->scalarString($row['assignee'] ?? null),
+            'urgency' => $this->scalarString($row['urgency'] ?? null) ?? 'Thường',
+            'confidentiality' => $this->scalarString($row['confidentiality'] ?? null) ?? 'Thường',
+            'status' => $this->scalarString($row['status'] ?? null) ?? 'Mới',
+            'original_file' => $this->scalarString($row['original_file'] ?? null),
+            'extracted_text' => $this->scalarString($row['extracted_text'] ?? null),
+            'ai_summary' => $this->scalarString($row['ai_summary'] ?? null),
+            'keywords' => array_values($keywords),
+            'file_password' => $this->scalarString($row['file_password'] ?? null),
         ];
     }
 
