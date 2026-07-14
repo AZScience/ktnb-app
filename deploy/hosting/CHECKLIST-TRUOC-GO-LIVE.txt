@@ -24,7 +24,7 @@ B. MODULE CHỨC NĂNG (code wiring)
   [OK] Dashboard (+ fix ONLY_FULL_GROUP_BY)
   [OK] Danh mục nhân sự (employees ẩn chỉ ngviphuc@gmail.com)
   [OK] Giám sát 5 loại lịch + ghi chú localStorage
-  [OK] Kho minh chứng (cần storage:link)
+  [OK] Kho minh chứng (/storage → disk public; cần symlink hoặc serve=true)
   [OK] Báo cáo cuối ngày / interactive (+ Google Sheet theo canExport)
   [OK] Tin nhắn nội bộ
   [OK] Backup/restore CSDL (stream + fix Array to string)
@@ -41,6 +41,8 @@ C. BẮT BUỘC TRÊN HOSTING
   [ ] DB_* đúng; SESSION_SECURE_COOKIE=true
   [ ] Đổi EXTERNAL_API_KEY (không dùng default)
   [ ] php artisan storage:link (xóa public/storage nếu là thư mục rỗng)
+      → URL /storage/evidence/... = file thật storage/app/public/evidence/...
+      → Nếu chưa symlink: config public disk serve=true + .htaccess vẫn phục vụ được
   [ ] Upload đủ public/build/ + không có public/hot
   [ ] post-deploy: migrate, config/route/view cache
   [ ] Cron queue (deploy/hosting/cron-queue.txt)

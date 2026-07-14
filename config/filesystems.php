@@ -33,7 +33,8 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Không serve qua /storage — URL đó dành cho disk public (minh chứng, CKEditor…).
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
@@ -43,6 +44,8 @@ return [
             'root' => storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
+            // Fallback khi hosting không có symlink public/storage → storage/app/public.
+            'serve' => true,
             'throw' => false,
             'report' => false,
         ],

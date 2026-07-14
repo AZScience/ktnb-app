@@ -74,5 +74,8 @@ LƯU Ý
     (cùng domain, đổi Document Root — KHÔNG cần subdomain).
   • Nếu không có SSH: nhờ IT chạy giúp Bước 4 (5 lệnh artisan).
   • Chi tiết đầy đủ: HUONG-DAN.txt | Checklist: CHECKLIST-TRUOC-GO-LIVE.txt
+  • Minh chứng: URL /storage/evidence/... = file trong storage/app/public/evidence/
+    Nếu ảnh lỗi: xóa public/storage (nếu là thư mục rỗng) → storage:link;
+    hoặc upload config/filesystems.php + public/.htaccess (bản mới).
 
 ================================================================================
