@@ -128,6 +128,7 @@ class DailyReportTemplateBuilder
                     $sheet,
                     (string) ($definition['title'] ?? $definition['label'] ?? $sheetName),
                     $definition['exportCols'] ?? [],
+                    $definition['columns'] ?? [],
                 );
             }
         }
@@ -139,8 +140,9 @@ class DailyReportTemplateBuilder
 
     /**
      * @param  list<string>  $exportCols
+     * @param  list<array{key?: string, label?: string}>  $tabColumns
      */
-    private function buildStandardSheet(Worksheet $sheet, string $title, array $exportCols): void
+    private function buildStandardSheet(Worksheet $sheet, string $title, array $exportCols, array $tabColumns = []): void
     {
         $headerRow = 6;
         $dataRow = 7;
@@ -152,7 +154,7 @@ class DailyReportTemplateBuilder
 
         $sheet->setCellValue("A{$headerRow}", 'STT');
         foreach ($exportCols as $offset => $colKey) {
-            $label = $this->labelForExportColumn($colKey, $exportCols);
+            $label = $this->labelForExportColumn($colKey, $exportCols, $tabColumns);
             $sheet->setCellValue(
                 Coordinate::stringFromColumnIndex($offset + 2).$headerRow,
                 $label,
@@ -383,11 +385,19 @@ class DailyReportTemplateBuilder
 
     /**
      * @param  list<string>  $exportCols
+     * @param  list<array{key?: string, label?: string}>  $tabColumns
      */
-    private function labelForExportColumn(string $colKey, array $exportCols): string
+    private function labelForExportColumn(string $colKey, array $exportCols, array $tabColumns = []): string
     {
         if ($colKey === '__gap__') {
             return '';
+        }
+
+        // Ưu tiên nhãn cột của tab hiện tại (vd. homeroom: attending_students → "SV dự").
+        foreach ($tabColumns as $column) {
+            if (($column['key'] ?? null) === $colKey && isset($column['label'])) {
+                return (string) $column['label'];
+            }
         }
 
         if (isset(self::EXPORT_LABELS[$colKey])) {

@@ -409,7 +409,8 @@ export function registerDailyReport(Alpine) {
             if (col.type === 'notification' || col.type === 'incident') {
                 return 'text-center align-middle';
             }
-            if (col.key === 'student_count' || col.key === 'studentCount') {
+            if (col.key === 'student_count' || col.key === 'studentCount'
+                || col.key === 'attending_students' || col.key === 'attendingStudents') {
                 return 'text-center align-middle';
             }
 

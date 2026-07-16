@@ -245,7 +245,7 @@
                             </td>
                             <template x-for="key in visibleColumnKeys" :key="key">
                                 <td class="align-middle border-r min-w-0 break-words"
-                                    :class="(key === 'note' || key === 'content') ? 'text-left' : ''"
+                                    :class="(key === 'note' || key === 'content' || key === 'lecturer') ? 'text-left' : ''"
                                     :data-col="key">
                                     <span x-show="key === 'period'" x-cloak class="font-mono font-bold text-xs" x-text="item.period ?? '—'"></span>
                                     <span x-show="key === 'type' && item.type" x-cloak class="nttu-cell-chip inline-flex items-center rounded border border-gray-300 px-1.5 py-0.5 text-xs font-medium text-gray-700" x-text="item.type"></span>
