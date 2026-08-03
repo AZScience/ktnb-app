@@ -200,7 +200,11 @@ class MonthlyReportStatsService
         }
 
         $onlineTotal = $onlineRecorded->count();
-        $onlineDone  = max(0, $onlineTotal - $onlineNoLcms - $onlineNgoaiTkb - $onlineBaoNghi - $onlineNotOnline);
+        $onlineDone = $onlineRecorded->filter(function (DailySchedule $s) {
+            $issue = $this->classifyOnlineIssue($s);
+
+            return $issue !== 'bao_nghi' && $issue !== 'not_online';
+        })->count();
 
         // ── Exam incident counts ───────────────────────────────────────────────
         $examCounts = $this->countNamedIncidents($examsNotable, 'exam');
@@ -214,7 +218,7 @@ class MonthlyReportStatsService
 
         foreach ($violations as $v) {
             /** @var StudentViolation $v */
-            match ($this->classifyViolationType((string) ($v->violation_type ?? ''))) {
+            match ($this->classifyViolationType((string) ($v->violation_type ?? '').' '.(string) ($v->note ?? ''))) {
                 'phone_bring' => $vioPhoneBring++,
                 'docs'        => $vioDocs++,
                 'use_phone'   => $vioUsePhone++,
@@ -228,15 +232,35 @@ class MonthlyReportStatsService
         $homeroomTotal   = $homeroomRecorded->count();
         $homeroomOnsite  = $homeroomRecorded->filter(fn (DailySchedule $s) => ! $this->isOnlineLocation($s))->count();
         $homeroomOnline  = $homeroomRecorded->filter(fn (DailySchedule $s) => $this->isOnlineLocation($s))->count();
+        $homeroomDone = (int) ($homeroomCounts['co_sh'] ?? 0);
+        if ($homeroomDone === 0) {
+            $homeroomDone = $homeroomRecorded->reject(function (DailySchedule $s) {
+                $normalized = mb_strtolower(trim((string) ($s->incident ?? '')));
+                foreach (array_merge(
+                    self::INCIDENTS['homeroom']['sh_ngoai'],
+                    self::INCIDENTS['homeroom']['ghi_nhan_khac'],
+                ) as $alias) {
+                    if ($normalized === mb_strtolower(trim($alias))) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })->count();
+        }
 
         // ── Petition classification ────────────────────────────────────────────
         $petitionComplaint = $petitions->filter(fn (Petition $p) => $this->isPetitionComplaint($p))->count();
         $petitionFeedback  = $petitions->filter(fn (Petition $p) => $this->isPetitionFeedback($p))->count();
+        if ($petitionFeedback === 0 && $petitions->count() > $petitionComplaint) {
+            $petitionFeedback = $petitions->count() - $petitionComplaint;
+        }
 
         // ── Service request classification ─────────────────────────────────────
         $srAttendance = $serviceReqs->filter(fn (ServiceRequest $r) => $this->isAttendanceRequest($r))->count();
         $srLost       = $serviceReqs->filter(fn (ServiceRequest $r) => $this->isLostRequest($r))->count();
         $srOther      = max(0, $serviceReqs->count() - $srAttendance - $srLost);
+        $supportTotal = $assets->count() + $serviceReqs->count();
 
         // ── Red texts ─────────────────────────────────────────────────────────
         $redTexts = [
@@ -257,7 +281,7 @@ class MonthlyReportStatsService
             (int) $petitionComplaint,
             (int) $petitionFeedback,
             // 2-6: support / service requests / assets
-            (int) $serviceReqs->count(),
+            (int) $supportTotal,
             (int) $assets->count(),
             (int) $srAttendance,
             (int) $srOther,
@@ -302,7 +326,7 @@ class MonthlyReportStatsService
             (int) $homeroomTotal,
             (int) $homeroomOnsite,
             (int) $homeroomOnline,
-            (int) $homeroomCounts['co_sh'],
+            (int) $homeroomDone,
             (int) $homeroomCounts['sh_ngoai'],
             (int) $homeroomCounts['ghi_nhan_khac'],
             // 45-52: reserved zeros

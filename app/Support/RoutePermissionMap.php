@@ -77,6 +77,7 @@ class RoutePermissionMap
         'reports.daily.google-sheets.push' => '/reports/daily',
         'reports.comprehensive' => '/reports/comprehensive',
         'reports.comprehensive.export' => '/reports/comprehensive',
+        'reports.comprehensive.monthly-report' => '/reports/comprehensive',
         'reports.student-violations' => '/reports/student-violations',
         'reports.student-violations.export' => '/reports/student-violations',
         'reports.good-deeds' => '/reports/good-deeds',

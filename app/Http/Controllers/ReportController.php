@@ -10,6 +10,8 @@ use App\Models\Lecturer;
 use App\Services\DailyReportExportService;
 use App\Services\DailyReportService;
 use App\Services\GoogleSheetService;
+use App\Services\IncidentMonthlyReportExportService;
+use App\Services\MonthlyReportStatsService;
 use App\Services\ReportGoogleSheetService;
 use App\Services\ReportExportService;
 use App\Services\StudentViolationReportExportService;
@@ -34,6 +36,8 @@ class ReportController extends Controller
         private StudentViolationReportExportService $violationExport,
         private GoogleSheetService $googleSheets,
         private ReportGoogleSheetService $reportGoogleSheet,
+        private MonthlyReportStatsService $monthlyReportStats,
+        private IncidentMonthlyReportExportService $incidentMonthlyReportExport,
     ) {}
 
     public function daily(Request $request): View
@@ -199,6 +203,8 @@ class ReportController extends Controller
                 'variant' => 'comprehensive',
                 'dataUrl' => route('reports.interactive-data', ['variant' => 'comprehensive']),
                 'exportUrl' => route('reports.comprehensive.export'),
+                'monthlyReportUrl' => route('reports.comprehensive.monthly-report'),
+                'currentUserName' => Auth::user()?->name ?? '',
                 'rows' => [],
                 'lazyLoad' => true,
                 'dateField' => 'date',
@@ -550,6 +556,49 @@ class ReportController extends Controller
             'incident' => 'Việc phát sinh',
             'incidentDetail' => 'Chi tiết sự cố',
         ], "ViecKhongPhuHop_{$from}_{$to}.xlsx", 'Việc Không Phù Hợp');
+    }
+
+    public function exportComprehensiveMonthlyReport(Request $request): StreamedResponse
+    {
+        $from = $this->queries->normalizeDate($request->get('from'));
+        $to = $this->queries->normalizeDate($request->get('to', $from));
+        $titleFrom = $this->queries->normalizeDate($request->get('titleFromDate', $from));
+        $titleTo = $this->queries->normalizeDate($request->get('titleToDate', $to));
+        $campus = trim((string) $request->get('campus', ''));
+
+        $departments = collect($request->input('departments', []))
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->values()
+            ->all();
+        if ($departments === [] && $request->filled('department')) {
+            $departments = [trim((string) $request->get('department'))];
+        }
+
+        $users = collect($request->input('users', []))
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->values()
+            ->all();
+        if ($users === [] && $request->filled('user')) {
+            $users = [trim((string) $request->get('user'))];
+        }
+
+        $allSchedules = $this->queries->schedulesWithIncidents($from, $to);
+        $filtered = $this->monthlyReportStats->filterSchedulesForReport($allSchedules, $campus, $users, $departments);
+        $rows = $this->presenter->comprehensiveRows($filtered);
+
+        $slug = str_replace('/', '-', $titleFrom).'_'.str_replace('/', '-', $titleTo);
+        $filename = "BaoCaoThang_KPH_{$slug}.docx";
+
+        return $this->incidentMonthlyReportExport->download($rows, $titleFrom, $titleTo, $filename, [
+            'campus' => $campus,
+            'department' => implode(', ', $departments),
+            'departments' => $departments,
+            'users' => $users,
+            'titleFromDate' => $titleFrom,
+            'titleToDate' => $titleTo,
+        ]);
     }
 
     public function exportStudentViolations(Request $request): StreamedResponse

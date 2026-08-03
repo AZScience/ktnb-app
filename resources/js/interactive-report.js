@@ -79,6 +79,15 @@ function isValidIsoDate(value) {
     return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
 }
 
+function isoToDisplayDate(value) {
+    if (!isValidIsoDate(value)) {
+        return '';
+    }
+    const [year, month, day] = String(value).split('-');
+
+    return `${day}/${month}/${year}`;
+}
+
 function resolveInitialDateRange(config, prefs) {
     const fallbackFrom = config.initialFrom || new Date().toISOString().slice(0, 10);
     const fallbackTo = config.initialTo || new Date().toISOString().slice(0, 10);
@@ -230,11 +239,29 @@ export function registerInteractiveReport(Alpine) {
     const multiSelectMixin = createNttuMultiSelectMixin({
         valuesKey: 'advanced',
         resolveOptions(field) {
+            if (field === 'monthlyReportUsers') {
+                return this.monthlyReportUserOptions || [];
+            }
             const key = advancedFilterOptionsKey(field);
             return this[key] || [];
         },
-        onChange() {
-            this.currentPage = 1;
+        getSelectedValues(field) {
+            if (field === 'monthlyReportUsers') {
+                return this.monthlyReportForm?.users || [];
+            }
+            return this.advanced?.[field] || [];
+        },
+        setSelectedValues(field, values) {
+            if (field === 'monthlyReportUsers') {
+                this.monthlyReportForm = { ...this.monthlyReportForm, users: values };
+                return;
+            }
+            this.advanced = { ...this.advanced, [field]: values };
+        },
+        onChange(field) {
+            if (field !== 'monthlyReportUsers') {
+                this.currentPage = 1;
+            }
         },
     });
 
@@ -267,6 +294,15 @@ export function registerInteractiveReport(Alpine) {
         rowsPerPageOptions: ROWS_PER_PAGE_OPTIONS,
         columnVisibility: {},
         currentLang: getLanguage(),
+        monthlyReportModalOpen: false,
+        monthlyReportForm: {
+            fromDate: '',
+            toDate: '',
+            campus: '',
+            department: '',
+            users: [],
+        },
+        monthlyReportResolve: null,
         pushDialogOpen: false,
         isPushing: false,
         isLoadingTabs: false,
@@ -1046,6 +1082,131 @@ export function registerInteractiveReport(Alpine) {
         isHtmlCell(column) {
             return ['signature', 'citizen', 'multiline'].includes(column.type)
                 || ['badge-danger', 'badge-info'].includes(column.tone);
+        },
+
+        async exportMonthlyReport() {
+            if (!this.canExport || !this.config.monthlyReportUrl) return;
+            const form = await this.collectMonthlyReportInputs();
+            if (form === null) {
+                return;
+            }
+
+            const url = new URL(this.config.monthlyReportUrl, window.location.origin);
+            url.searchParams.set('from', form.fromDate);
+            url.searchParams.set('to', form.toDate);
+            url.searchParams.set('titleFromDate', isoToDisplayDate(form.fromDate));
+            url.searchParams.set('titleToDate', isoToDisplayDate(form.toDate));
+            url.searchParams.set('campus', form.campus);
+            url.searchParams.set('department', form.department);
+            url.searchParams.append('departments[]', form.department);
+            (form.users || []).forEach((user) => {
+                if (user) {
+                    url.searchParams.append('users[]', user);
+                }
+            });
+            window.location.href = url.toString();
+        },
+
+        collectMonthlyReportInputs() {
+            this.monthlyReportForm = {
+                fromDate: this.monthlyReportForm.fromDate || this.fromDate,
+                toDate: this.monthlyReportForm.toDate || this.toDate,
+                campus: this.monthlyReportForm.campus || this.defaultMonthlyReportCampus(),
+                department: this.monthlyReportForm.department || this.defaultMonthlyReportDepartment(),
+                users: this.monthlyReportForm.users?.length
+                    ? this.monthlyReportForm.users
+                    : this.defaultMonthlyReportUsers(),
+            };
+            this.nttuMultiCloseAll();
+            this.monthlyReportModalOpen = true;
+
+            return new Promise((resolve) => {
+                this.monthlyReportResolve = (form) => {
+                    resolve(form);
+                };
+            });
+        },
+
+        submitMonthlyReportForm() {
+            const form = { ...this.monthlyReportForm };
+            if (!isValidIsoDate(form.fromDate) || !isValidIsoDate(form.toDate)) {
+                window.alert('Vui lòng chọn Từ ngày và Đến ngày.');
+                return;
+            }
+            if (!form.campus) {
+                window.alert('Vui lòng chọn Cơ sở.');
+                return;
+            }
+            if (!form.department) {
+                window.alert('Vui lòng chọn Khoa.');
+                return;
+            }
+            if (!form.users?.length) {
+                window.alert('Vui lòng chọn ít nhất một Nhân viên ghi nhận.');
+                return;
+            }
+            this.nttuMultiCloseAll();
+            this.monthlyReportModalOpen = false;
+            this.monthlyReportResolve?.(form);
+            this.monthlyReportResolve = null;
+        },
+
+        cancelMonthlyReportForm() {
+            this.nttuMultiCloseAll();
+            this.monthlyReportModalOpen = false;
+            this.monthlyReportResolve?.(null);
+            this.monthlyReportResolve = null;
+        },
+
+        defaultMonthlyReportCampus() {
+            const selected = this.advanced?.buildings?.[0];
+            if (selected) {
+                const noteMatch = this.monthlyReportCampusOptions.find((option) => option.value === selected || option.label === selected);
+                if (noteMatch) {
+                    return noteMatch.value;
+                }
+            }
+
+            return this.monthlyReportCampusOptions[0]?.value || '';
+        },
+
+        defaultMonthlyReportDepartment() {
+            const selected = this.advanced?.departments?.[0];
+            if (selected) {
+                return selected;
+            }
+
+            return this.monthlyReportDepartmentOptions[0]?.value || '';
+        },
+
+        defaultMonthlyReportUsers() {
+            const current = this.config.currentUserName || '';
+            if (current) {
+                return [current];
+            }
+
+            const first = this.monthlyReportUserOptions[0]?.value;
+            return first ? [first] : [];
+        },
+
+        get monthlyReportCampusOptions() {
+            return this.config.filterOptions?.buildingNotes?.length
+                ? this.config.filterOptions.buildingNotes
+                : (this.config.filterOptions?.buildings || []);
+        },
+
+        get monthlyReportDepartmentOptions() {
+            return this.config.filterOptions?.departments || [];
+        },
+
+        get monthlyReportUserOptions() {
+            const users = this.config.filterOptions?.users || [];
+            return users.map((item) => {
+                if (item && typeof item === 'object') {
+                    return { value: String(item.value ?? item.label ?? ''), label: String(item.label ?? item.value ?? '') };
+                }
+                return { value: String(item), label: String(item) };
+            }).filter((item) => item.value);
         },
 
         async exportExcel() {

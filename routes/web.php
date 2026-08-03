@@ -309,6 +309,7 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
         Route::get('incident-reports', [ReportController::class, 'incidentReports'])->name('incident-reports');
         Route::get('interactive-data/{variant}', [ReportController::class, 'interactiveData'])->name('interactive-data');
         Route::get('comprehensive/export', [ReportController::class, 'exportComprehensive'])->name('comprehensive.export');
+        Route::get('comprehensive/monthly-report', [ReportController::class, 'exportComprehensiveMonthlyReport'])->name('comprehensive.monthly-report');
         Route::get('student-violations/export', [ReportController::class, 'exportStudentViolations'])->name('student-violations.export');
         Route::get('good-deeds/export', [ReportController::class, 'exportGoodDeeds'])->name('good-deeds.export');
         Route::get('request-reports/export', [ReportController::class, 'exportRequestReports'])->name('request-reports.export');

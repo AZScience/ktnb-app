@@ -29,6 +29,68 @@
         :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'"
         x-text="toast?.message"></div>
 
+    <div x-show="monthlyReportModalOpen" x-cloak
+        class="fixed inset-0 z-[80] flex items-center justify-center p-4 print:hidden"
+        @keydown.escape.window="cancelMonthlyReportForm()">
+        <div class="absolute inset-0 bg-black/50" @click="cancelMonthlyReportForm()"></div>
+        <form class="relative w-full max-w-lg rounded-xl bg-white shadow-2xl"
+            @submit.prevent="submitMonthlyReportForm()">
+            <div class="border-b px-5 py-4">
+                <h3 class="text-lg font-semibold text-gray-900">Thông tin Báo cáo tháng</h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Cơ sở lọc lớp offline / CVHT offline. Khoa lọc Online / CVHT online (tổng số lớp đã ghi nhận). Nhân viên ghi nhận áp dụng cho toàn bộ số liệu.
+                </p>
+            </div>
+            <div class="grid gap-4 px-5 py-4 sm:grid-cols-2">
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">Từ ngày</label>
+                    <input type="date" x-model="monthlyReportForm.fromDate" class="nttu-form-control" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">Đến ngày</label>
+                    <input type="date" x-model="monthlyReportForm.toDate" class="nttu-form-control" required>
+                </div>
+                <div class="space-y-1 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700">Cơ sở</label>
+                    <select x-model="monthlyReportForm.campus" class="nttu-form-control" required>
+                        <option value="">Chọn cơ sở</option>
+                        <template x-for="option in monthlyReportCampusOptions" :key="'monthly-report-campus-' + option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="space-y-1 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700">Khoa</label>
+                    <select x-model="monthlyReportForm.department" class="nttu-form-control" required>
+                        <option value="">Chọn khoa</option>
+                        <template x-for="option in monthlyReportDepartmentOptions" :key="'monthly-report-dept-' + option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="space-y-1 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700">Nhân viên ghi nhận</label>
+                    <x-nttu-multi-select
+                        field="monthlyReportUsers"
+                        placeholder="Chọn nhân viên ghi nhận"
+                        search-placeholder="Tìm nhân viên..."
+                        empty-text="Không tìm thấy nhân viên"
+                        :allow-create="false"
+                        chip-mode="chips"
+                        size="sm"
+                    />
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 border-t bg-slate-50 px-5 py-4">
+                <button type="button" class="rounded-md border bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    @click="cancelMonthlyReportForm()">Hủy</button>
+                <button type="submit" class="rounded-md bg-[var(--nttu-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+                    Xuất báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+
     {{-- Sticky filter toolbar --}}
     <div class="report-filter-toolbar overflow-visible rounded-lg print:hidden"
          :class="['good-deeds', 'incident-reports'].includes(config.variant) ? 'border-none bg-white/90 shadow-lg backdrop-blur-md' : 'border border-gray-100 shadow-lg'">
@@ -52,6 +114,10 @@
                         <button type="button" x-show="canExport" x-cloak @click="exportExcel()" class="report-btn-export inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-sm shadow-sm">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <span class="sidebar-label" data-i18n="Xuất Excel">Xuất Excel</span>
+                        </button>
+                        <button type="button" x-show="canExport && config.monthlyReportUrl" x-cloak @click="exportMonthlyReport()" class="report-btn-export inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-sm shadow-sm">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span class="sidebar-label" data-i18n="Báo cáo tháng">Báo cáo tháng</span>
                         </button>
                     </div>
                 </div>

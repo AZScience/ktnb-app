@@ -100,6 +100,60 @@ class Employee extends Model
         return $lookup[$value] ?? trim((string) $label);
     }
 
+    /**
+     * Map họ tên / bí danh / tên user sang danh sách nhãn khớp cột employee trên lịch.
+     *
+     * @param  list<string>  $labels
+     * @return list<string>
+     */
+    public static function scheduleEmployeeAliases(array $labels): array
+    {
+        $lookup = self::recipientNicknameLookup();
+        $targets = [];
+
+        foreach ($labels as $label) {
+            $raw = trim((string) $label);
+            if ($raw === '') {
+                continue;
+            }
+
+            $key = self::normalizeRecipientKey($raw);
+            $resolved = self::nicknameFor($raw);
+            $targets[$key] = true;
+            if ($resolved !== '') {
+                $targets[self::normalizeRecipientKey($resolved)] = true;
+            }
+        }
+
+        if ($targets === []) {
+            return [];
+        }
+
+        $aliases = [];
+        foreach ($lookup as $aliasKey => $resolved) {
+            $resolvedKey = self::normalizeRecipientKey($resolved);
+            if (isset($targets[$aliasKey]) || isset($targets[$resolvedKey])) {
+                $aliases[] = $resolved;
+                $aliases[] = $aliasKey;
+            }
+        }
+
+        foreach (array_keys($targets) as $key) {
+            $aliases[] = $key;
+        }
+
+        $unique = [];
+        foreach ($aliases as $alias) {
+            $value = trim((string) $alias);
+            if ($value === '') {
+                continue;
+            }
+            $unique[self::normalizeRecipientKey($value)] = $value;
+        }
+
+        return array_values($unique);
+    }
+
     public static function forgetRecipientNicknameLookup(): void
     {
         Cache::forget('employee-nickname-lookup');
@@ -131,7 +185,7 @@ class Employee extends Model
         });
     }
 
-    private static function normalizeRecipientKey(?string $value): string
+    public static function normalizeRecipientKey(?string $value): string
     {
         $value = trim((string) $value);
         if ($value === '') {
