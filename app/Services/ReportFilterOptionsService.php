@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\IncidentCategory;
 use App\Models\Lecturer;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 
 class ReportFilterOptionsService
@@ -63,6 +64,18 @@ class ReportFilterOptionsService
     }
 
     /** @return list<string> */
+    private function buildingNoteValues(): array
+    {
+        return Cache::remember('report-filter:building-notes', self::CACHE_TTL, function () {
+            return BuildingBlock::query()
+                ->whereNotNull('note')
+                ->where('note', '!=', '')
+                ->pluck('note')
+                ->all();
+        });
+    }
+
+    /** @return list<string> */
     private function employeeNicknames(): array
     {
         return Cache::remember('report-filter:employee-nicknames', self::CACHE_TTL, fn () => Employee::query()->whereNotNull('nickname')->pluck('nickname')->all());
@@ -101,6 +114,8 @@ class ReportFilterOptionsService
             'departments' => $this->sortedOptions($departments),
             'employees' => $this->sortedOptions($employees),
             'lecturers' => $this->sortedOptions($lecturers),
+            'buildingNotes' => $this->sortedOptions($this->buildingNoteValues()),
+            'users' => $this->sortedOptions(User::query()->orderBy('name')->pluck('name')->all()),
         ];
     }
 

@@ -177,7 +177,7 @@ class ReportQueryService
         return $this->petitions(date('d/m/Y'), date('d/m/Y'));
     }
 
-    private function whereDisplayDateBetween(
+    public function whereDisplayDateBetween(
         Builder $query,
         string $column,
         string $from,
