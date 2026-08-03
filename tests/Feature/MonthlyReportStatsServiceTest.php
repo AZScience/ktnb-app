@@ -77,13 +77,25 @@ class MonthlyReportStatsServiceTest extends TestCase
         ]);
 
         $this->schedule([
-            'id' => 'homeroom-offline-other-campus',
+            'id' => 'homeroom-offline-matching-campus',
             'date' => '10/07/2026',
+            'building' => 'Dãy nhà M',
+            'room' => 'M.201',
+            'department' => 'Khoa CNTT',
+            'content' => 'SHCN lớp 22DTH3',
+            'incident' => 'Có SH',
+            'recognition_date' => '10/07/2026',
+            'employee' => 'Thầy Phúc',
+        ]);
+
+        $this->schedule([
+            'id' => 'homeroom-offline-other-campus',
+            'date' => '11/07/2026',
             'building' => 'Dãy nhà A',
             'department' => 'Khoa CNTT',
             'content' => 'SHCN lớp 22DTH2',
             'incident' => 'Có SH',
-            'recognition_date' => '10/07/2026',
+            'recognition_date' => '11/07/2026',
             'employee' => 'Thầy Phúc',
         ]);
 
@@ -104,12 +116,13 @@ class MonthlyReportStatsServiceTest extends TestCase
 
         $this->assertSame(1, $data['metrics'][7]); // in-person notable at campus
         $this->assertSame(1, $data['metrics'][8]); // chuyển phòng
-        $this->assertSame(1, $data['metrics'][19]); // online recorded for Khoa CNTT only
+        $this->assertSame(1, $data['metrics'][19]); // online teaching recorded for Khoa CNTT only
         $this->assertSame(1, $data['metrics'][23]); // online báo nghỉ
-        $this->assertSame(1, $data['metrics'][39]); // homeroom recorded: online Khoa CNTT (offline other campus excluded)
-        $this->assertSame(0, $data['metrics'][40]); // onsite
+        // CVHT = online theo Khoa + offline theo Cơ sở
+        $this->assertSame(2, $data['metrics'][39]); // 1 online Khoa CNTT + 1 offline Dãy nhà M
+        $this->assertSame(1, $data['metrics'][40]); // onsite / offline
         $this->assertSame(1, $data['metrics'][41]); // online CVHT
-        $this->assertSame(1, $data['metrics'][42]); // Có SH
+        $this->assertSame(2, $data['metrics'][42]); // Có SH
     }
 
     public function test_employee_aliases_filter_recorded_schedules(): void

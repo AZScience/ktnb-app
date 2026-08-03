@@ -342,7 +342,8 @@ class MonthlyReportStatsService
      * Load schedules for the given module and date range, applying appropriate filters:
      * - online:       employee + department (no campus)
      * - in-person / exams: employee + campus (no department)
-     * - homeroom:     employee; online-location → department; offline → campus
+     * - homeroom:     employee; ONLINE location → department; OFFLINE → campus
+     *                 (CVHT totals = online-by-Khoa + offline-by-Cơ-sở)
      *
      * @param  list<string>  $employeeAliases  pre-expanded via Employee::scheduleEmployeeAliases
      * @param  list<string>  $departments

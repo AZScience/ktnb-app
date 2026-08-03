@@ -38,7 +38,10 @@
             <div class="border-b px-5 py-4">
                 <h3 class="text-lg font-semibold text-gray-900">Thông tin Báo cáo tháng</h3>
                 <p class="mt-1 text-sm text-gray-500">
-                    Cơ sở lọc lớp offline / CVHT offline. Khoa lọc Online / CVHT online (tổng số lớp đã ghi nhận). Nhân viên ghi nhận áp dụng cho toàn bộ số liệu.
+                    Cơ sở lọc lớp học offline và <strong>CVHT offline</strong>.
+                    Khoa lọc lớp <strong>Online</strong> và <strong>CVHT online</strong>.
+                    Mục CVHT trên báo cáo gồm cả offline (theo Cơ sở) + online (theo Khoa).
+                    Nhân viên ghi nhận áp dụng cho toàn bộ số liệu đã ghi nhận.
                 </p>
             </div>
             <div class="grid gap-4 px-5 py-4 sm:grid-cols-2">
