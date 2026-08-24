@@ -18,6 +18,9 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # Minh chứng: không serve trực tiếp — đi qua Laravel (yêu cầu đăng nhập).
+    RewriteRule ^storage/evidence/ index.php [L,QSA]
+
     # Serve disk public khi không có symlink public/storage (file thật ở ../storage/app/public).
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{DOCUMENT_ROOT}/../storage/app/public/$1 -f

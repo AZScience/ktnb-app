@@ -94,6 +94,11 @@ class AuthenticationTest extends TestCase
 
     public function test_bootstrap_super_admin_can_login_with_configured_password(): void
     {
+        config([
+            'nttu.super_admin_bootstrap_password' => 'test-bootstrap-password',
+            'nttu.super_admin_bootstrap_emails' => ['ngviphuc@gmail.com'],
+        ]);
+
         Role::create(['id' => 'system', 'name' => 'Hệ thống']);
 
         User::factory()->create([
@@ -112,7 +117,7 @@ class AuthenticationTest extends TestCase
 
         $response = $this->post('/login', [
             'email' => 'ngviphuc@gmail.com',
-            'password' => 'ctudidlhp@NVP1',
+            'password' => 'test-bootstrap-password',
         ]);
 
         $this->assertAuthenticated();

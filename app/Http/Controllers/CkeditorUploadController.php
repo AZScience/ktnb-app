@@ -11,16 +11,17 @@ class CkeditorUploadController extends Controller
 {
     public function upload(Request $request): JsonResponse
     {
+        abort_unless($request->user(), 401);
+
         $request->validate([
             'upload' => [
                 'required',
                 File::types([
                     'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg',
-                    'mp4', 'webm', 'mov', 'avi', 'mkv',
-                    'mp3', 'wav', 'ogg', 'm4a', 'aac',
-                    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-                    'txt', 'rtf', 'csv', 'zip', 'rar', '7z',
-                ])->max(51200),
+                    'mp4', 'webm',
+                    'mp3', 'wav', 'ogg', 'm4a',
+                    'pdf',
+                ])->max(20480),
             ],
         ]);
 

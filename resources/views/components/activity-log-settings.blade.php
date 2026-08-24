@@ -21,9 +21,13 @@
     class="space-y-4"
 >
     <div x-show="toast" x-cloak
-        class="fixed top-4 right-4 z-[70] max-w-md rounded-lg px-4 py-3 text-sm text-white shadow-lg"
-        :class="toast?.type === 'error' ? 'bg-red-600' : 'bg-green-600'"
-        x-text="toast?.message"></div>
+        class="fixed top-4 right-4 z-[70] max-w-md rounded-lg px-4 py-3 text-sm text-white shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'error' ? 'bg-red-600' : 'bg-green-600'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 
     <div class="nttu-card overflow-hidden">
         <div class="border-b px-4 pt-3">
@@ -190,40 +194,11 @@
             </table>
         </div>
 
-        <div class="flex flex-col gap-4 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-sm text-gray-500">
-                Tổng cộng <span x-text="sortedItems.length"></span> bản ghi (Chỉ hiển thị 1000 bản ghi).
-                <span x-show="selectedIds.length > 0" x-cloak> Đã chọn <span x-text="selectedIds.length"></span> dòng.</span>
-            </p>
-            <div class="flex flex-wrap items-center gap-4">
-                <div class="flex items-center gap-2 text-sm text-gray-500">
-                    <span>Số dòng</span>
-                    <select class="nttu-rows-per-page-select" :value="normalizedRowsPerPage" @change="setRowsPerPage($event.target.value)">
-                        <template x-for="n in rowsPerPageOptions" :key="n">
-                            <option :value="n" x-text="n" :selected="normalizedRowsPerPage === n"></option>
-                        </template>
-                    </select>
-                </div>
-                <div class="flex items-center gap-1">
-                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded border bg-white text-sm disabled:opacity-40" :disabled="safePage === 1" @click="goPage(1)" title="Trang đầu">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
-                    </button>
-                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded border bg-white text-sm disabled:opacity-40" :disabled="safePage === 1" @click="goPage(safePage - 1)" title="Trang trước">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    </button>
-                    <span class="flex items-center gap-1 text-sm font-medium">
-                        <input type="number" class="h-8 w-12 rounded border text-center text-sm" :value="safePage" @change="goPage($event.target.value)" title="Nhập số trang">
-                        / <span x-text="totalPages"></span>
-                    </span>
-                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded border bg-white text-sm disabled:opacity-40" :disabled="safePage === totalPages" @click="goPage(safePage + 1)" title="Trang sau">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded border bg-white text-sm disabled:opacity-40" :disabled="safePage === totalPages" @click="goPage(totalPages)" title="Trang cuối">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
-                    </button>
-                </div>
-            </div>
-        </div>
+        <x-partials.catalog-table-pagination
+            summary-expr="'Tổng cộng ' + sortedItems.length + ' bản ghi (Chỉ hiển thị 1000 bản ghi).' + (selectedIds.length > 0 ? ' Đã chọn ' + selectedIds.length + ' dòng.' : '')"
+            row-options-expr="rowsPerPageOptions"
+            class="px-4 py-4"
+        />
         </div>
 
         <div x-show="activeMainTab !== 'history'" x-cloak x-ref="statsPanel" class="p-4 sm:p-6">

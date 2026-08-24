@@ -1,5 +1,6 @@
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, normalizeRowsPerPage } from './nttu-pagination.js';
+import { incidentBadgeClass } from './nttu-incident-colors.js';
 
 function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -369,6 +370,10 @@ export function registerCheckinMonitor(Alpine) {
             this.openFilterCol = this.openFilterCol === key ? null : key;
         },
 
+        incidentBadgeClass(value) {
+            return incidentBadgeClass(value);
+        },
+
         cellValue(item, key) {
             if (key === 'status') return this.statusLabel(item.status);
             if (key === 'isNotification') return item.isNotification ? 'Có' : 'Không';
@@ -529,9 +534,7 @@ export function registerCheckinMonitor(Alpine) {
 
         showToast(message, type = 'success') {
             this.toast = { message, type };
-            setTimeout(() => {
-                if (this.toast?.message === message) this.toast = null;
-            }, 2800);
+            setTimeout(() => { this.toast = null; }, 30000);
         },
     }));
 }

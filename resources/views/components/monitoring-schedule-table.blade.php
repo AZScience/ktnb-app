@@ -46,9 +46,13 @@
     class="space-y-3"
 >
     <div x-show="toast" x-cloak
-        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg"
-        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'"
-        x-text="toast?.message"></div>
+        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
     <div class="nttu-card">
         <div class="py-3 px-4 border-b flex flex-wrap justify-between items-center gap-3">
             <h2 class="text-xl font-semibold flex items-center gap-2 text-gray-800">
@@ -65,7 +69,7 @@
                 <svg class="h-6 w-6 text-[var(--nttu-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 12h6"/><path d="M8 8h6"/><circle cx="16" cy="8" r="2"/></svg>
                 @endif
                 @endif
-                <span>{{ $cardTitle }}</span>
+                <span x-text="'{{ $cardTitle }}'"></span>
             </h2>
             <div class="flex flex-wrap items-center gap-2">
                 @if($uiConfig['iconToolbar'])
@@ -274,6 +278,10 @@
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         Ghi nhận
                                     </button>
+                                    <button type="button" x-show="canEdit && isHandled(item)" x-cloak class="flex w-full items-center gap-2 px-3 py-2 text-left text-amber-700 hover:bg-amber-50" @click="confirmClearRecording(item)">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                        Hủy ghi nhận
+                                    </button>
                                     <button type="button" x-show="canAdd" x-cloak class="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50" @click="openModal('copy', item)">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                         Sao chép
@@ -291,17 +299,18 @@
         </div>
         <div class="px-4 py-3 border-t text-sm text-gray-500 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
             <span>
-                <span x-text="'Tổng cộng ' + filteredItems.length + ' bản ghi.'"></span>
-                <span x-show="visibleSelectedCount > 0" x-text="' Đã chọn ' + visibleSelectedCount + ' dòng.'"></span>
+                <span x-text="text('Tổng cộng') + ' ' + filteredItems.length + ' ' + text('bản ghi.')"></span>
+                <span x-show="visibleSelectedCount > 0" x-text="' ' + text('Đã chọn') + ' ' + visibleSelectedCount + ' ' + text('dòng.')"></span>
             </span>
             <div class="flex items-center gap-3">
                 <label class="inline-flex items-center gap-2">
-                    <span>Số dòng</span>
-                            <select class="nttu-rows-per-page-select" :value="normalizedRowsPerPage" @change="setRowsPerPage($event.target.value)">
-                                <template x-for="n in [5,10,15,20,25,30,35,40,45,50]" :key="n">
-                                    <option :value="n" x-text="n" :selected="normalizedRowsPerPage == n"></option>
-                        </template>
-                    </select>
+                    <span x-text="'Số dòng'"></span>
+                            <input type="number" class="nttu-rows-per-page-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" list="{{ $datalistId = uniqid('dl_') }}" :value="normalizedRowsPerPage" @change="setRowsPerPage($event.target.value)">
+<datalist id="{{ $datalistId }}">
+    <template x-for="n in [5,10,15,20,25,30,35,40,45,50]" :key="n">
+        <option :value="n"></option>
+    </template>
+</datalist>
                 </label>
                 <div class="flex items-center gap-1">
                     <button type="button" class="rounded border h-8 w-8 flex items-center justify-center disabled:opacity-40" :disabled="safeCurrentPage <= 1" @click="goToPage(1)" title="Trang đầu">«</button>
@@ -590,13 +599,46 @@
                                 <div class="space-y-1">
                                     <label class="text-gray-500 flex items-center gap-1.5">Ghi chú</label>
                                     <template x-if="isNoteFieldEditable">
-                                        <input
-                                            x-model="form.note"
-                                            type="text"
-                                            class="nttu-form-control"
-                                            :placeholder="persistLocalNoteEnabled && module === 'online' ? 'Dán link eLearning (LCMS) hoặc ghi chú...' : 'Ghi chú thêm...'"
-                                            @input.debounce.400ms="persistLocalNoteDraft()"
-                                        >
+                                        <div class="relative">
+                                            <input
+                                                x-model="form.note"
+                                                type="text"
+                                                class="nttu-form-control pr-10"
+                                                :placeholder="persistLocalNoteEnabled && module === 'online' ? 'Dán link eLearning (LCMS) hoặc ghi chú...' : 'Ghi chú thêm...'"
+                                                @input.debounce.400ms="persistLocalNoteDraft()"
+                                            >
+                                            <div x-data="{ showDropdown: false }" class="absolute inset-y-0 right-0 flex items-center pr-2" x-show="module === 'online' || module === 'homeroom'">
+                                                <button type="button" 
+                                                    title="Quét tìm Link Google Meet"
+                                                    @click="module === 'homeroom' ? fetchMeetLinkFromEmail('email') : showDropdown = !showDropdown"
+                                                    @click.away="showDropdown = false"
+                                                    class="p-1 rounded-md text-blue-600 hover:bg-blue-50 hover:text-blue-800 disabled:opacity-50 flex items-center justify-center"
+                                                    :disabled="isFetchingMeetLink">
+                                                    <svg x-show="isFetchingMeetLink" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    <svg x-show="!isFetchingMeetLink" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                    </svg>
+                                                </button>
+                                                
+                                                <div x-show="showDropdown && module !== 'homeroom'" x-transition.opacity.duration.200ms
+                                                    class="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50 overflow-hidden"
+                                                    style="display: none;">
+                                                    <div class="py-1">
+                                                        <button type="button" @click="showDropdown = false; fetchMeetLinkFromEmail('email')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                                                            <svg class="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                                            Từ Email (ktnb@...)
+                                                        </button>
+                                                        <button type="button" @click="showDropdown = false; fetchMeetLinkFromEmail('lcms')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 border-t border-gray-100">
+                                                            <svg class="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                                                            Từ LCMS (Moodle)
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </template>
                                     <template x-if="!isNoteFieldEditable">
                                         <p class="py-2" x-text="form.note || '—'"></p>
@@ -668,9 +710,80 @@
                                 <div class="md:col-span-3 space-y-1">
                                     <label class="text-gray-500 flex items-center gap-1.5">
                                         <svg class="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                        Chi tiết việc phát sinh
+                                        Chi tiết việc phát sinh @if (in_array($module, ['homeroom', 'external-practice']))<span class="text-red-600">*</span>@endif
                                     </label>
-                                    <input x-model="form.incident_detail" :readonly="isViewMode" class="nttu-form-control">
+                                    <div class="relative">
+                                        <input x-model="form.incident_detail" :readonly="isViewMode" class="nttu-form-control w-full"
+                                            @if (in_array($module, ['homeroom', 'external-practice'])) required @endif
+                                            @if (in_array($module, ['homeroom', 'exams'])) :class="!isViewMode && 'pr-20'" @endif
+                                            :placeholder="incidentDetailExtracting ? 'Đang đọc nội dung từ ảnh phiếu...' : ''">
+                                        <div x-show="!isViewMode" class="absolute inset-y-0 right-2 flex items-center gap-1">
+                                            <svg x-show="incidentDetailExtracting" x-cloak class="h-4 w-4 animate-spin text-orange-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+                                            @if (in_array($module, ['homeroom', 'exams']))
+                                            <button type="button" x-show="!incidentDetailExtracting"
+                                                class="inline-flex h-7 w-7 items-center justify-center rounded text-orange-600 hover:bg-orange-100"
+                                                @click="openIncidentDetailCamera()"
+                                                title="Chụp ảnh phiếu để trích xuất nội dung">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            </button>
+                                            <button type="button" x-show="!incidentDetailExtracting"
+                                                class="inline-flex h-7 w-7 items-center justify-center rounded text-orange-600 hover:bg-orange-100"
+                                                @click="$refs.incidentDetailPhotoInput.click()"
+                                                title="Tải ảnh phiếu từ máy để trích xuất nội dung">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            </button>
+                                            @endif
+                                        </div>
+                                        <input type="file" x-ref="incidentDetailCameraInput" accept="image/*" capture="environment" class="hidden"
+                                            @change="extractIncidentDetailFromPhoto($event)">
+                                        <input type="file" x-ref="incidentDetailPhotoInput" accept="image/*" class="hidden"
+                                            @change="extractIncidentDetailFromPhoto($event)">
+
+                                        <div x-show="incidentCameraOpen" x-cloak
+                                            class="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4"
+                                            @keydown.escape.window="closeIncidentDetailCamera()">
+                                            <div class="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl" @click.stop>
+                                                <div class="flex items-center justify-between border-b px-4 py-3">
+                                                    <h3 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-orange-600">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                        Chụp ảnh phiếu sinh hoạt
+                                                    </h3>
+                                                    <button type="button" class="rounded p-1 text-gray-500 hover:bg-gray-100" @click="closeIncidentDetailCamera()">
+                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    </button>
+                                                </div>
+                                                <div class="flex flex-wrap items-center gap-2 border-b bg-slate-50 px-4 py-2">
+                                                    <label class="text-xs font-bold text-gray-600">Camera:</label>
+                                                    <select class="h-8 flex-1 min-w-[160px] rounded-md border-gray-300 py-0 text-xs shadow-sm"
+                                                        :value="incidentCameraDeviceId"
+                                                        @change="selectIncidentDetailCamera($event.target.value)">
+                                                        <template x-for="cam in incidentCameraDevices" :key="cam.id">
+                                                            <option :value="cam.id" :selected="cam.id === incidentCameraDeviceId" x-text="cam.label"></option>
+                                                        </template>
+                                                    </select>
+                                                    <button type="button"
+                                                        class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100"
+                                                        @click="flipIncidentDetailCamera()" title="Đổi camera trước / sau">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                        Trước/Sau
+                                                    </button>
+                                                </div>
+                                                <div class="bg-black">
+                                                    <video x-ref="incidentDetailVideo" autoplay playsinline muted class="mx-auto max-h-[60vh] w-full object-contain"></video>
+                                                </div>
+                                                <div class="flex items-center justify-between gap-3 px-4 py-3">
+                                                    <p class="text-xs text-gray-500">Đưa phiếu vào giữa khung, đủ sáng, rõ mục "Nội dung sinh hoạt (CVHT)".</p>
+                                                    <div class="flex shrink-0 gap-2">
+                                                        <button type="button" class="rounded-md border px-3 py-2 text-sm hover:bg-gray-50" @click="closeIncidentDetailCamera()">Đóng</button>
+                                                        <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700" @click="captureIncidentDetailPhoto()">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                            Chụp &amp; trích xuất
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div x-show="!uiConfig.noteInClassSection" class="md:col-span-3 space-y-1">
                                     <label class="text-gray-500">Ghi chú</label>
@@ -698,7 +811,7 @@
                         </div>
                     </div>
                 </div>
-                <div x-show="toast" class="rounded px-3 py-2 text-sm" :class="toast?.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'" x-text="toast?.message"></div>
+
             </div>
             <div class="flex justify-end gap-2 border-t px-6 py-4" x-show="!isViewMode">
                 <button type="button" class="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm" :disabled="!isChanged" @click="undoForm()">
@@ -722,6 +835,24 @@
             <div class="mt-4 flex justify-end gap-2">
                 <x-nttu-button type="button" action="cancel" @click="deleteOpen = false">Hủy</x-nttu-button>
                 <x-nttu-button type="button" action="delete" x-bind:disabled="saving" @click="deleteItem()">Xóa</x-nttu-button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Xác nhận hủy ghi nhận --}}
+    <div x-show="clearRecordingOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" @keydown.escape.window="clearRecordingOpen = false">
+        <div class="absolute inset-0 bg-black/50" @click="clearRecordingOpen = false"></div>
+        <div class="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl" @click.stop>
+            <h3 class="text-lg font-semibold text-gray-900">Xác nhận hủy ghi nhận</h3>
+            <p class="mt-2 text-sm text-gray-600">Xóa thông tin ghi nhận (cán bộ, ngày ghi nhận, việc phát sinh, sĩ số hiện diện, minh chứng). Dòng lịch vẫn được giữ; vòng đỏ ở cột # sẽ biến mất.</p>
+            <div class="mt-4 flex justify-end gap-2">
+                <x-nttu-button type="button" action="cancel" @click="clearRecordingOpen = false">Đóng</x-nttu-button>
+                <button type="button"
+                    class="inline-flex items-center gap-2 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                    x-bind:disabled="saving"
+                    @click="clearRecording()">
+                    <span x-text="saving ? 'Đang hủy...' : 'Hủy ghi nhận'"></span>
+                </button>
             </div>
         </div>
     </div>

@@ -6,14 +6,14 @@
         <div class="w-full max-w-md overflow-hidden rounded-2xl bg-slate-950 shadow-2xl" @click.stop>
             <div class="border-b border-white/10 px-4 py-3">
                 <h4 class="font-semibold text-white">Quét thẻ (TSV/CCCD)</h4>
-                <p class="mt-1 text-xs text-white/70">Tự động bám và lấy nét mã QR/Barcode. Nếu không quét được: chụp ảnh để quét mã (hồng) hoặc trích xuất thông tin trực tiếp (tím).</p>
+                <p class="mt-1 text-xs text-white/70">Đưa thẻ vào khung hình và bấm <b>CHỤP VÀ ĐỌC BẰNG AI</b> để hệ thống tự động nhận diện thông tin (hỗ trợ cả Thẻ sinh viên và CCCD).</p>
             </div>
 
             <div class="p-4">
                 <div class="violation-scanner-panel relative mx-auto w-full max-w-sm cursor-crosshair overflow-hidden rounded-3xl border-4 bg-black shadow-2xl"
                      :class="violationScannerSuccess ? 'border-green-400' : (violationScannerFocusActive ? 'border-cyan-400' : 'border-white/20')"
-                     :style="violationScannerMode === 'barcode' ? 'aspect-ratio: 16/9' : 'aspect-ratio: 1/1'"
-                     title="Chạm vào mã QR/Barcode để lấy nét"
+                     style="aspect-ratio: 4/3"
+                     title="Chạm vào khung hình để lấy nét"
                      @click="violationTapToFocus($event)">
                     <div id="violation-qr-reader" class="violation-qr-reader absolute inset-0 h-full w-full"></div>
                     <div x-show="violationScannerFocusBox && !violationScannerLoading && !violationScannerDecoding && !violationScannerExtracting" x-cloak
@@ -38,59 +38,37 @@
 
             <div x-show="violationScannerError" x-cloak class="border-t border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-200" x-text="violationScannerError"></div>
 
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3">
-                <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-col gap-2 border-t border-white/10 px-4 py-3">
+                <div class="flex flex-wrap items-center gap-2 w-full">
                     <button type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border transition"
-                            :class="violationScannerMode === 'qr' ? 'border-cyan-400 bg-cyan-500/25' : 'border-white/20 bg-white/5 hover:bg-white/10'"
-                            title="Quét QR"
-                            @click="violationSetScannerMode('qr')">
-                        <svg class="h-5 w-5" :class="violationScannerMode === 'qr' ? 'text-cyan-300' : 'text-cyan-400'" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v3h-3v-3zm-4 0h3v3h-3v-3zm4 4h3v3h-3v-3zm-4 0h3v3h-3v-3z"/>
-                        </svg>
-                    </button>
-                    <button type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border transition"
-                            :class="violationScannerMode === 'barcode' ? 'border-amber-400 bg-amber-500/25' : 'border-white/20 bg-white/5 hover:bg-white/10'"
-                            title="Quét Barcode"
-                            @click="violationSetScannerMode('barcode')">
-                        <svg class="h-5 w-5" :class="violationScannerMode === 'barcode' ? 'text-amber-300' : 'text-amber-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-width="2" d="M4 7h1v10H4V7zm3 0h1v10H7V7zm3 0h2v10h-2V7zm4 0h1v10h-1V7zm3 0h2v10h-2V7z"/>
-                        </svg>
-                    </button>
-                    <button type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-white/5 transition hover:bg-sky-500/20 disabled:opacity-50"
-                            title="Đổi camera"
+                            class="flex-1 inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-3 text-sm font-medium text-white transition hover:bg-sky-500/20 disabled:opacity-50"
                             :disabled="violationScannerLoading || violationScannerDecoding || violationScannerExtracting"
                             @click.stop="violationToggleScannerCamera()">
-                        <x-form-field-icon name="refresh" tone="sky" class="h-5 w-5" />
+                        <x-form-field-icon name="refresh" tone="sky" class="h-4 w-4" />
+                        Đổi Camera
                     </button>
-                    <label class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-white/20 bg-white/5 transition hover:bg-green-500/20"
-                           title="Tải ảnh">
-                        <x-form-field-icon name="upload" tone="green" class="h-5 w-5" />
-                        <input type="file" accept="image/*" class="hidden" @change="violationScanFromFile($event)">
+                    <label class="flex-1 inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-3 text-sm font-medium text-white transition hover:bg-green-500/20"
+                           :class="violationScannerLoading || violationScannerDecoding || violationScannerExtracting ? 'opacity-50 pointer-events-none' : ''">
+                        <x-form-field-icon name="upload" tone="green" class="h-4 w-4" />
+                        Tải ảnh lên
+                        <input type="file" accept="image/*" class="hidden" @change="violationScanFromFile($event)" :disabled="violationScannerLoading || violationScannerDecoding || violationScannerExtracting">
                     </label>
+                </div>
+                <div class="flex w-full gap-2">
                     <button type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rose-400/50 bg-rose-500/15 transition hover:bg-rose-500/30 disabled:opacity-50"
-                            title="Chụp và quét mã QR/Barcode"
-                            :disabled="violationScannerLoading || violationScannerDecoding || violationScannerExtracting"
-                            @click="violationCaptureAndScanFromCamera()">
-                        <x-form-field-icon name="camera" tone="rose" class="h-5 w-5" />
-                    </button>
-                    <button type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-violet-400/50 bg-violet-500/15 transition hover:bg-violet-500/30 disabled:opacity-50"
-                            title="Chụp và trích xuất thông tin (không cần mã)"
+                            class="flex-1 inline-flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-violet-500 bg-violet-600 px-4 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition hover:bg-violet-500 disabled:opacity-50"
                             :disabled="violationScannerLoading || violationScannerDecoding || violationScannerExtracting"
                             @click="violationCaptureAndExtractFromCamera()">
-                        <x-form-field-icon name="camera" tone="violet" class="h-5 w-5" />
+                        <x-form-field-icon name="camera" tone="white" class="h-5 w-5" />
+                        CHỤP VÀ ĐỌC BẰNG AI
+                    </button>
+                    <button type="button"
+                            class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/20 bg-rose-500/20 transition hover:bg-rose-500/40"
+                            title="Đóng"
+                            @click="violationCloseScanner()">
+                        <x-form-field-icon name="close" tone="destructive" class="h-6 w-6 text-rose-400" />
                     </button>
                 </div>
-                <button type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/20 bg-white/5 transition hover:bg-rose-500/20"
-                        title="Đóng"
-                        @click="violationCloseScanner()">
-                    <x-form-field-icon name="close" tone="destructive" class="h-5 w-5" />
-                </button>
             </div>
         </div>
     </div>

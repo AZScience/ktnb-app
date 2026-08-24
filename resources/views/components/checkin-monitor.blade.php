@@ -14,9 +14,13 @@
     @click.self="closeRowMenu()"
 >
     <div x-show="toast" x-cloak
-        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg"
-        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'"
-        x-text="toast?.message"></div>
+        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 
     {{-- Stats --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -287,7 +291,8 @@
                                         </template>
                                         <template x-if="col.key === 'incident'">
                                             <span x-show="item.incident && item.incident !== 'none'"
-                                                class="text-[10px] px-2 py-0.5 rounded bg-red-600 text-white font-medium"
+                                                class="text-[10px] px-2.5 py-1 rounded-full font-semibold inline-flex shadow-sm"
+                                                :class="incidentBadgeClass(item.incident)"
                                                 x-text="item.incident"></span>
                                         </template>
                                         <template x-if="col.key === 'isNotification'">

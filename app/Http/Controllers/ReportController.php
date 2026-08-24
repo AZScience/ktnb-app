@@ -2,36 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BuildingBlock;
-use App\Models\Classroom;
-use App\Models\Department;
-use App\Models\IncidentCategory;
-use App\Models\Lecturer;
 use App\Services\DailyReportExportService;
 use App\Services\DailyReportService;
 use App\Services\GoogleSheetService;
-use App\Services\ReportGoogleSheetService;
-use App\Services\ReportExportService;
-use App\Services\StudentViolationReportExportService;
+use App\Services\ReportExportCoordinator;
 use App\Services\ReportFilterOptionsService;
-use App\Services\ReportPresenterService;
+use App\Services\ReportGoogleSheetService;
+use App\Services\ReportInteractivePayloadService;
 use App\Services\ReportQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ReportController extends Controller
 {
     public function __construct(
         private ReportQueryService $queries,
-        private ReportPresenterService $presenter,
-        private ReportExportService $export,
         private ReportFilterOptionsService $filterOptions,
+        private ReportInteractivePayloadService $interactivePayloads,
+        private ReportExportCoordinator $reportExports,
         private DailyReportService $daily,
         private DailyReportExportService $dailyExport,
-        private StudentViolationReportExportService $violationExport,
         private GoogleSheetService $googleSheets,
         private ReportGoogleSheetService $reportGoogleSheet,
     ) {}
@@ -63,10 +57,20 @@ class ReportController extends Controller
 
     public function dailyExport(Request $request): StreamedResponse|JsonResponse
     {
-        $isoDate = $request->get('date', date('Y-m-d'));
+        $isoDate = $request->input('date') ?: date('Y-m-d');
         $displayDate = $this->daily->isoToDisplay($isoDate);
         $officerContext = $this->daily->resolveOfficerContext(Auth::user());
-        $datasets = $this->buildDailyDatasets($displayDate, $officerContext['aliases']);
+        
+        if ($request->isMethod('POST')) {
+            $payload = $request->json('datasets');
+            if (is_array($payload) && !empty($payload)) {
+                $datasets = $payload;
+            } else {
+                $datasets = $this->buildDailyDatasets($displayDate, $officerContext['aliases']);
+            }
+        } else {
+            $datasets = $this->buildDailyDatasets($displayDate, $officerContext['aliases']);
+        }
 
         $hasData = collect($datasets)->contains(fn (array $items) => $items !== []);
         if (! $hasData) {
@@ -75,7 +79,7 @@ class ReportController extends Controller
 
         try {
             return $this->dailyExport->download($isoDate, $datasets, $officerContext['fullName']);
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+        } catch (HttpException $e) {
             return response()->json(['message' => $e->getMessage() ?: 'Lỗi xuất file.'], $e->getStatusCode());
         } catch (\Throwable $e) {
             report($e);
@@ -176,14 +180,7 @@ class ReportController extends Controller
             $variant === 'comprehensive' ? 'comprehensive' : 'default'
         );
 
-        return match ($variant) {
-            'comprehensive' => response()->json($this->buildComprehensivePayload($from, $to)),
-            'student-violations' => response()->json($this->buildStudentViolationsPayload($from, $to)),
-            'good-deeds' => response()->json($this->buildGoodDeedsPayload($from, $to)),
-            'request-reports' => response()->json($this->buildRequestReportsPayload($from, $to)),
-            'incident-reports' => response()->json($this->buildIncidentReportsPayload($from, $to)),
-            default => abort(404),
-        };
+        return response()->json($this->interactivePayloads->payload($variant, $from, $to));
     }
 
     public function comprehensive(Request $request): View
@@ -199,6 +196,8 @@ class ReportController extends Controller
                 'variant' => 'comprehensive',
                 'dataUrl' => route('reports.interactive-data', ['variant' => 'comprehensive']),
                 'exportUrl' => route('reports.comprehensive.export'),
+                'monthlyReportUrl' => route('reports.comprehensive.monthly-report'),
+                'currentUserName' => Auth::user()?->name ?? '',
                 'rows' => [],
                 'lazyLoad' => true,
                 'dateField' => 'date',
@@ -206,7 +205,7 @@ class ReportController extends Controller
                 'initialTo' => $to,
                 'filterOptions' => $this->filterOptions->comprehensive([]),
                 'filterGridCols' => 5,
-                'advancedFilters' => ['period', 'buildings', 'departments', 'employees', 'lecturers'],
+                'advancedFilters' => ['period', 'buildings', 'departments', 'employees', 'lecturers', 'recognitions'],
                 'tableTitle' => 'BẢNG TỔNG HỢP VIỆC KHÔNG PHÙ HỢP CÁC LĨNH VỰC',
                 'emptyMessage' => 'Tuyệt vời! Không có việc không phù hợp nào được ghi nhận.',
                 'exportFileName' => 'ViecKhongPhuHop.xlsx',
@@ -222,8 +221,8 @@ class ReportController extends Controller
                     ['key' => 'studentCount', 'label' => 'Sĩ số', 'style' => 'xs', 'icon' => 'users'],
                     ['key' => 'lecturer', 'label' => 'Giảng viên', 'style' => 'xs-medium', 'icon' => 'user'],
                     ['key' => 'content', 'label' => 'Nội dung', 'style' => 'xs', 'icon' => 'book'],
-                    ['key' => 'incident', 'label' => 'Việc phát sinh', 'tone' => 'badge-danger', 'icon' => 'alert-triangle'],
-                    ['key' => 'incidentDetail', 'label' => 'Chi tiết sự cố', 'style' => 'xs', 'icon' => 'info'],
+                    ['key' => 'incident', 'label' => 'Việc phát sinh', 'tone' => 'badge-danger', 'align' => 'center', 'icon' => 'alert-triangle'],
+                    ['key' => 'incidentDetail', 'label' => 'Chi tiết sự cố', 'style' => 'xs', 'align' => 'left', 'icon' => 'info'],
                 ],
             ],
         ]);
@@ -447,6 +446,45 @@ class ReportController extends Controller
         ]);
     }
 
+        public function incidentRecordsReports(Request $request): View
+    {
+        [$from, $to] = $this->resolveReportRange($request, 'default');
+
+        return view('reports.incident-records-reports', [
+            'rows' => [],
+            'reportConfig' => [
+                'storageKey' => 'report-incident-records-cols',
+                'theme' => 'blue',
+                'variant' => 'incident-records-reports',
+                'dataUrl' => route('reports.interactive-data', ['variant' => 'incident-records-reports']),
+                'exportUrl' => route('reports.incident-records-reports.export'),
+                'lazyLoad' => true,
+                'rows' => [],
+                'dateField' => 'incident_time',
+                'initialFrom' => $from,
+                'initialTo' => $to,
+                'filterOptions' => [
+                    'locations' => [],
+                    'creator_names' => [],
+                ],
+                'advancedFilters' => ['locations', 'creator_names'],
+                'tableTitle' => 'THỐNG KÊ BIÊN BẢN SỰ VIỆC',
+                'emptyMessage' => 'Không có biên bản nào trong khoảng thời gian đã chọn.',
+                'exportFileName' => 'ThongKeBienBan.xlsx',
+                'exportSheetName' => 'Thống kê biên bản',
+                'columns' => [
+                    ['key' => 'incident_time', 'label' => 'Ngày ghi nhận', 'align' => 'center', 'style' => 'mono-xs', 'icon' => 'calendar'],
+                    ['key' => 'location', 'label' => 'Địa điểm', 'icon' => 'map-pin'],
+                    ['key' => 'creator_name', 'label' => 'Người lập biên bản', 'icon' => 'user'],
+                    ['key' => 'witness_name', 'label' => 'Người chứng kiến', 'icon' => 'users'],
+                    ['key' => 'creator_signature', 'label' => 'Chữ ký người lập', 'type' => 'signature', 'align' => 'center'],
+                    ['key' => 'witness_signature', 'label' => 'Chữ ký người chứng kiến', 'type' => 'signature', 'align' => 'center'],
+                ],
+                'googleSheetSync' => false,
+            ],
+        ]);
+    }
+
     public function incidentReports(Request $request): View
     {
         [$from, $to] = $this->resolveReportRange($request, 'default');
@@ -532,134 +570,37 @@ class ReportController extends Controller
 
     public function exportComprehensive(Request $request): StreamedResponse
     {
-        $from = $this->queries->normalizeDate($request->get('from'));
-        $to = $this->queries->normalizeDate($request->get('to', $from));
-        $rows = $this->presenter->comprehensiveRows($this->queries->schedulesWithIncidents($from, $to));
+        return $this->reportExports->comprehensive($request);
+    }
 
-        return $this->export->downloadFromArrays($rows, [
-            'employee' => 'Nhân viên',
-            'date' => 'Ngày',
-            'room' => 'Phòng',
-            'period' => 'Tiết',
-            'type' => 'LT/TH',
-            'department' => 'Khoa',
-            'class' => 'Lớp',
-            'studentCount' => 'Sĩ số',
-            'lecturer' => 'Giảng viên',
-            'content' => 'Nội dung',
-            'incident' => 'Việc phát sinh',
-            'incidentDetail' => 'Chi tiết sự cố',
-        ], "ViecKhongPhuHop_{$from}_{$to}.xlsx", 'Việc Không Phù Hợp');
+    public function exportComprehensiveMonthlyReport(Request $request): StreamedResponse
+    {
+        return $this->reportExports->comprehensiveMonthlyReport($request);
     }
 
     public function exportStudentViolations(Request $request): StreamedResponse
     {
-        $from = $this->queries->normalizeDate($request->get('from'));
-        $to = $this->queries->normalizeDate($request->get('to', $from));
-        $rows = $this->presenter->violationRows($this->queries->violations($from, $to));
-
-        return $this->violationExport->download(
-            $from,
-            $to,
-            $rows,
-            "BaoCao_SVViPham_{$from}_to_{$to}.xlsx",
-            $this->daily->resolveOfficerFullName(Auth::user()),
-        );
+        return $this->reportExports->studentViolations($request);
     }
 
     public function exportGoodDeeds(Request $request): StreamedResponse
     {
-        $from = $this->queries->normalizeDate($request->get('from'));
-        $to = $this->queries->normalizeDate($request->get('to', $from));
-        $items = $this->queries->assetReceptions($from, $to);
-        $tab = $request->get('tab', 'property');
-        $rows = $tab === 'deed'
-            ? $this->presenter->goodDeedsGratitudeRows($items)
-            : $this->presenter->goodDeedsPropertyRows(
-                $items->where('return_status', 'Đã trả')->values()
-            );
-
-        $headers = $tab === 'deed' ? [
-            'appreciationCode' => 'Số vào sổ',
-            'appreciationCampus' => 'Cơ sở',
-            'appreciationName' => 'Họ và tên',
-            'appreciationRecDate' => 'Ngày tiếp nhận TS',
-            'appreciationGiveDate' => 'Ngày trao tặng thư',
-            'gift' => 'Quà',
-            'appreciationId' => 'MSSV/CCCD/SĐT',
-            'appreciationDept' => 'Đơn vị',
-            'refCode' => 'Số vào sổ TN & BG',
-            'note' => 'Ghi chú',
-        ] : [
-            'code' => 'Số vào sổ',
-            'campus' => 'Cơ sở',
-            'receptionDate' => 'Ngày tiếp nhận',
-            'recipient' => 'Nhân sự tiếp nhận',
-            'finderName' => 'Họ và tên người giao TS',
-            'finderId' => 'MSSV/CCCD/SĐT',
-            'finderDept' => 'Đơn vị người giao',
-            'property' => 'Nội dung TS',
-            'returnDate' => 'Ngày giao trả',
-            'returner' => 'Nhân sự giao trả',
-            'ownerName' => 'Tên người nhận',
-            'ownerId' => 'MSSV/CCCD',
-            'ownerClass' => 'Lớp',
-            'ownerDept' => 'Đơn vị Khoa/Viện',
-            'ownerPhone' => 'Điện thoại',
-        ];
-
-        $filename = $tab === 'deed'
-            ? "TriAnNguoiViecTot_{$from}_to_{$to}.xlsx"
-            : "TiepNhanTaiSan_{$from}_to_{$to}.xlsx";
-
-        return $this->export->downloadFromArrays(
-            $rows,
-            $headers,
-            $filename,
-            $tab === 'deed' ? 'Tri ân người việc tốt' : 'Tiếp nhận tài sản',
-        );
+        return $this->reportExports->goodDeeds($request);
     }
 
     public function exportRequestReports(Request $request): StreamedResponse
     {
-        $from = $this->queries->normalizeDate($request->get('from'));
-        $to = $this->queries->normalizeDate($request->get('to', $from));
-        $rows = $this->presenter->requestRows($this->queries->serviceRequests($from, $to));
+        return $this->reportExports->requestReports($request);
+    }
 
-        return $this->export->downloadFromArrays($rows, [
-            'code' => 'Số vào sổ',
-            'recipient' => 'Nhân sự tiếp nhận',
-            'receptionDate' => 'Ngày tiếp nhận',
-            'building' => 'Dãy nhà',
-            'studentName' => 'Họ và tên SV',
-            'studentId' => 'MSSV/CCCD',
-            'class' => 'Lớp',
-            'department' => 'Đơn vị Khoa/Viện',
-            'requestType' => 'Nội dung',
-            'content' => 'Ghi rõ nội dung',
-            'status' => 'Tình trạng giải quyết',
-        ], "BaoCaoTiepNhanYeuCau_{$from}_to_{$to}.xlsx", 'Tiếp nhận yêu cầu');
+        public function exportIncidentRecordsReports(Request $request): StreamedResponse
+    {
+        return $this->reportExports->incidentRecordsReports($request);
     }
 
     public function exportIncidentReports(Request $request): StreamedResponse
     {
-        $from = $this->queries->normalizeDate($request->get('from'));
-        $to = $this->queries->normalizeDate($request->get('to', $from));
-        $rows = $this->presenter->petitionRows($this->queries->petitions($from, $to));
-
-        return $this->export->downloadFromArrays($rows, [
-            'receptionDate' => 'Ngày tiếp',
-            'citizenInfo' => 'Thông tin công dân',
-            'summary' => 'Tóm tắt nội dung vụ việc',
-            'petitionType' => 'Phân loại đơn',
-            'peopleCount' => 'Số người',
-            'previousAuthority' => 'Cơ quan đã giải quyết',
-            'accept' => 'Thụ lý để giải quyết',
-            'returnAndGuide' => 'Trả lại đơn và hướng dẫn',
-            'transfer' => 'Chuyển đơn',
-            'followUp' => 'Theo dõi kết quả giải quyết',
-            'note' => 'Ghi chú',
-        ], "BaoCaoTiepNhanDonThu_{$from}_to_{$to}.xlsx", 'Tiếp nhận đơn thư');
+        return $this->reportExports->incidentReports($request);
     }
 
     /** @return array{0: string, 1: string} */
@@ -670,66 +611,6 @@ class ReportController extends Controller
         return [
             $request->get('from', $defaultFrom),
             $request->get('to', $defaultTo),
-        ];
-    }
-
-    /** @return array{rows: list<array<string, mixed>>, filterOptions: array<string, mixed>} */
-    private function buildComprehensivePayload(string $from, string $to): array
-    {
-        $rows = $this->presenter->comprehensiveRows($this->queries->schedulesWithIncidents($from, $to));
-
-        return [
-            'rows' => $rows,
-            'filterOptions' => $this->filterOptions->comprehensive($rows),
-        ];
-    }
-
-    /** @return array{rows: list<array<string, mixed>>, filterOptions: array<string, mixed>} */
-    private function buildStudentViolationsPayload(string $from, string $to): array
-    {
-        $rows = $this->presenter->violationRows($this->queries->violations($from, $to));
-
-        return [
-            'rows' => $rows,
-            'filterOptions' => $this->filterOptions->violations($rows),
-        ];
-    }
-
-    /** @return array{filterOptions: array<string, mixed>, tabs: array<string, array{rows: list<array<string, mixed>>}>} */
-    private function buildGoodDeedsPayload(string $from, string $to): array
-    {
-        $items = $this->queries->assetReceptions($from, $to);
-        $propertyItems = $items->where('return_status', 'Đã trả')->values();
-        $propertyRows = $this->presenter->goodDeedsPropertyRows($propertyItems);
-
-        return [
-            'filterOptions' => $this->filterOptions->withBuildingsAndRecipients($propertyRows),
-            'tabs' => [
-                'property' => ['rows' => $propertyRows],
-                'deed' => ['rows' => $this->presenter->goodDeedsGratitudeRows($items)],
-            ],
-        ];
-    }
-
-    /** @return array{rows: list<array<string, mixed>>, filterOptions: array<string, mixed>} */
-    private function buildRequestReportsPayload(string $from, string $to): array
-    {
-        $rows = $this->presenter->requestRows($this->queries->serviceRequests($from, $to));
-
-        return [
-            'rows' => $rows,
-            'filterOptions' => $this->filterOptions->withBuildingsAndRecipients($rows),
-        ];
-    }
-
-    /** @return array{rows: list<array<string, mixed>>, filterOptions: array<string, mixed>} */
-    private function buildIncidentReportsPayload(string $from, string $to): array
-    {
-        $rows = $this->presenter->petitionRows($this->queries->petitions($from, $to));
-
-        return [
-            'rows' => $rows,
-            'filterOptions' => $this->filterOptions->withBuildingsAndRecipients($rows),
         ];
     }
 

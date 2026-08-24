@@ -2,6 +2,7 @@ import { crosstabHeaderIconClassForKey, headerIconClassForKey, headerIconPathFor
 import { TABLE_EXPORT_EMPTY } from './nttu-table-messages.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeRowsPerPage } from './nttu-pagination.js';
+import { incidentBadgeClass } from './nttu-incident-colors.js';
 
 const DAILY_REPORT_TAB_PALETTE = {
     active: 'bg-red-600 text-white border-red-600 shadow-md',
@@ -89,6 +90,7 @@ function normalizeTableState(state, columns) {
 
 export function registerDailyReport(Alpine) {
     Alpine.data('dailyReportPage', (config) => ({
+            text(key) { return window.t ? window.t(key) : key; },
         tab: 'in-person',
         dateIso: config.dateIso,
         displayDate: config.displayDate,
@@ -421,9 +423,7 @@ export function registerDailyReport(Alpine) {
             const val = item[col.key];
             if (col.type === 'incident') {
                 if (!val) return { kind: 'normal' };
-                if (String(val).includes('Báo nghỉ')) return { kind: 'badge', text: val, class: 'bg-red-500 text-white' };
-                if (String(val).includes('Chuyển phòng')) return { kind: 'badge', text: val, class: 'bg-orange-500 text-white' };
-                return { kind: 'badge', text: val, class: 'bg-blue-600 text-white' };
+                return { kind: 'badge', text: val, class: incidentBadgeClass(val) };
             }
             if (col.type === 'notification') {
                 return { kind: 'checkbox', checked: parseNotificationValue(val) };
@@ -544,9 +544,7 @@ export function registerDailyReport(Alpine) {
 
         showToast(message, type = 'success') {
             this.toast = { message, type };
-            setTimeout(() => {
-                if (this.toast?.message === message) this.toast = null;
-            }, 4000);
+            setTimeout(() => { this.toast = null; }, 30000);
         },
 
         csrfToken() {
@@ -686,8 +684,22 @@ export function registerDailyReport(Alpine) {
                 const url = new URL(this.exportUrl, window.location.origin);
                 url.searchParams.set('date', this.dateIso);
 
+                const exportDatasets = {};
+                this.tabList().forEach((tabKey) => {
+                    exportDatasets[tabKey] = this.processedItems(tabKey);
+                });
+
                 const response = await fetch(url.toString(), {
-                    headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify({
+                        date: this.dateIso,
+                        datasets: exportDatasets
+                    }),
                 });
 
                 if (!response.ok) {

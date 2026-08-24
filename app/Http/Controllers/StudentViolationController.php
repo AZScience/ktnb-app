@@ -25,6 +25,8 @@ use App\Services\FaceComparisonService;
 use App\Services\ReportExportService;
 use App\Services\ViolationCardExtractionService;
 
+use App\Services\CatalogTableQueryService;
+
 use Illuminate\Http\JsonResponse;
 
 use Illuminate\Http\RedirectResponse;
@@ -47,13 +49,36 @@ class StudentViolationController extends Controller
         private ViolationCardExtractionService $cardExtraction,
         private ReportExportService $export,
         private CatalogExcelService $excel,
+        private CatalogTableQueryService $catalogQuery,
     ) {}
 
 
 
-    public function index(): View
-
+    public function index(\Illuminate\Http\Request $request)
     {
+        if ($request->wantsJson()) {
+            $perPage = $request->integer('per_page', 25);
+            $query = StudentViolation::query()->select(StudentViolation::INDEX_COLUMNS);
+            
+            if ($request->has('sort_key')) {
+                $dir = $request->input('sort_dir', 'asc') === 'desc' ? 'desc' : 'asc';
+                $query->orderBy($request->input('sort_key'), $dir);
+            } else {
+                $query->orderByDesc('created_at');
+            }
+
+            $paginator = $query->paginate($perPage);
+            
+            return response()->json([
+                'items' => $paginator->getCollection(),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'total' => $paginator->total(),
+                    'per_page' => $paginator->perPage(),
+                ]
+            ]);
+        }
 
         $officerNames = StudentViolation::query()
 
@@ -97,9 +122,7 @@ class StudentViolationController extends Controller
 
         return view('monitoring.student-violations.index', [
 
-            'items' => $this->indexItems(),
-
-            'students' => Student::orderBy('name')->get(['id', 'name', 'class', 'major', 'department', 'citizen_id']),
+            'serverPaginated' => true,
 
             'violationTypeOptions' => $this->violationTypeOptions(),
 
@@ -117,6 +140,16 @@ class StudentViolationController extends Controller
 
         ]);
 
+    }
+
+    public function list(Request $request): JsonResponse
+    {
+        return $this->catalogQuery->paginate(
+            $request,
+            StudentViolation::query()->orderByDesc('created_at'),
+            ['full_name', 'student_id', 'class', 'department', 'violation_type', 'officer', 'note', 'identifier'],
+            fn (StudentViolation $item) => $item->toArray()
+        );
     }
 
 
@@ -295,7 +328,7 @@ class StudentViolationController extends Controller
 
         return response()->json([
             'message' => 'Import thành công '.count($data['rows']).' bản ghi.',
-            'items' => $this->indexItems(),
+            'items' => collect(),
         ]);
     }
 

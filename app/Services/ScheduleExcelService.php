@@ -297,6 +297,15 @@ class ScheduleExcelService
 
         foreach ($items as $item) {
             $studentCount = $item->student_count;
+            $note = (string) ($item->note ?? '');
+
+            if (\App\Models\DailySchedule::isRecorded($item)) {
+                $incidentDetail = trim((string) ($item->incident_detail ?? ''));
+                if ($incidentDetail !== '') {
+                    $note = $incidentDetail;
+                }
+            }
+
             $rows[] = [
                 $stt++,
                 $item->room ?? '',
@@ -308,7 +317,7 @@ class ScheduleExcelService
                 $this->resolveExportLecturer($item),
                 $item->content ?? '',
                 $item->status ?? '',
-                $item->note ?? '',
+                $note,
             ];
         }
 

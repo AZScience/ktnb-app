@@ -3,8 +3,33 @@
 ])
 
 <div class="ar-form mx-auto max-w-3xl space-y-6 p-6 text-black md:p-10">
-    <div class="mb-8 text-center">
+    <div class="mb-8 flex flex-wrap items-center justify-center gap-3">
         <h2 class="text-2xl font-bold uppercase tracking-wide">Tiếp nhận Tài sản/Đồ vật</h2>
+        <template x-if="!isViewMode">
+            <div class="relative">
+                <input type="file" id="ar-ai-upload" class="hidden" accept="image/*" @change="arExtractAi($event)">
+                <input type="file" id="ar-ai-camera" class="hidden" accept="image/*" capture="environment" @change="arExtractAi($event)">
+                
+                <div class="relative inline-flex items-center gap-3 rounded-xl border border-gray-300 bg-white px-3 py-1.5 shadow-sm">
+                    <button type="button" title="Chụp ảnh bằng Camera" @click="arOpenCamera()" 
+                        class="text-[#D04B14] transition hover:scale-110 active:scale-95 disabled:opacity-50"
+                        :disabled="arIsExtractingAi">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </button>
+
+                    <button type="button" title="Tải ảnh lên" @click="document.getElementById('ar-ai-upload').click()" 
+                        class="text-[#D04B14] transition hover:scale-110 active:scale-95 disabled:opacity-50"
+                        :disabled="arIsExtractingAi">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </button>
+                    
+                    <div x-show="arIsExtractingAi" x-cloak class="absolute inset-0 z-10 flex items-center justify-center gap-1.5 rounded-xl bg-white/90">
+                        <svg class="h-4 w-4 animate-spin text-[#D04B14]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span class="text-xs font-semibold text-[#D04B14]">Đang đọc...</span>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
 
     <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
@@ -130,6 +155,37 @@
                     <input type="text" class="ar-signature" x-model="form.witness" :readonly="isViewMode" placeholder="...">
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div x-show="arCameraOpen" x-cloak class="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4" @keydown.escape.window="arCloseCamera()">
+        <div class="w-full max-w-md bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10" @click.outside="arCloseCamera()">
+            <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-white font-semibold whitespace-nowrap">Camera</h3>
+                    <template x-if="arCameras.length > 1">
+                        <select x-model="arSelectedCameraId" @change="arSwitchCamera()" class="h-8 rounded-md bg-slate-800 border-white/20 text-white text-xs max-w-[200px]">
+                            <template x-for="cam in arCameras" :key="cam.deviceId">
+                                <option :value="cam.deviceId" x-text="cam.label || 'Camera ' + ($index + 1)"></option>
+                            </template>
+                        </select>
+                    </template>
+                </div>
+                <button type="button" @click="arCloseCamera()" class="text-white/70 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="relative bg-black aspect-[3/4] sm:aspect-square flex items-center justify-center">
+                <video x-ref="arVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                <div class="absolute inset-0 border-2 border-dashed border-white/30 pointer-events-none m-4 rounded-lg"></div>
+            </div>
+            <div class="p-4 flex justify-center bg-slate-900">
+                <button type="button" @click="arCapturePhoto()" class="flex items-center gap-2 bg-[#D04B14] hover:bg-orange-600 text-white px-6 py-3 rounded-full font-bold shadow-lg transition transform hover:scale-105 active:scale-95">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"></circle></svg>
+                    CHỤP & ĐỌC BẰNG AI
+                </button>
+            </div>
+            <canvas x-ref="arCanvas" class="hidden"></canvas>
         </div>
     </div>
 </div>

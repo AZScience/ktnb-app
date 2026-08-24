@@ -36,8 +36,8 @@ class LoginRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $defaults = config('nttu.login_defaults', []);
-        $defaultEmail = strtolower(trim((string) ($defaults['email'] ?? 'ntt-00000@ntt.edu.vn')));
-        $defaultPassword = (string) ($defaults['password'] ?? 'NTT-00000');
+        $defaultEmail = strtolower(trim((string) ($defaults['email'] ?? '')));
+        $defaultPassword = (string) ($defaults['password'] ?? '');
 
         $email = strtolower(trim((string) $this->input('email', '')));
         $password = (string) $this->input('password', '');

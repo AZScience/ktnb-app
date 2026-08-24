@@ -30,9 +30,13 @@
     class="mx-auto max-w-6xl space-y-6"
 >
     <div x-show="toast" x-cloak
-        class="fixed top-4 right-4 z-[70] max-w-md rounded-lg px-4 py-3 text-sm text-white shadow-lg"
-        :class="toast?.type === 'success' ? 'bg-green-600' : 'bg-red-600'"
-        x-text="toast?.message"></div>
+        class="fixed top-4 right-4 z-[70] max-w-md rounded-lg px-4 py-3 text-sm text-white shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'success' ? 'bg-green-600' : 'bg-red-600'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 
     <div class="space-y-3">
         <div class="flex items-start gap-3">

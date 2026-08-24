@@ -12,11 +12,12 @@ class OnlineCheckinController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
+        $payload = $this->validatedPayload($request);
         $id = (string) Str::uuid();
 
         OnlineCheckin::create([
             'id' => $id,
-            'payload' => $request->all(),
+            'payload' => $payload,
             'server_timestamp' => now(),
         ]);
 
@@ -27,7 +28,7 @@ class OnlineCheckinController extends Controller
     public function update(Request $request, string $onlineCheckin): JsonResponse
     {
         $checkin = OnlineCheckin::findOrFail($onlineCheckin);
-        $payload = array_merge($checkin->payload ?? [], $request->all());
+        $payload = array_merge($checkin->payload ?? [], $this->validatedPayload($request));
         $checkin->update(['payload' => $payload, 'server_timestamp' => now()]);
 
         return response()->json(['success' => true, 'id' => $checkin->id])
@@ -46,5 +47,32 @@ class OnlineCheckinController extends Controller
 
         return response()->json(['success' => true, 'data' => $data])
             ->header('Access-Control-Allow-Origin', '*');
+    }
+
+    /** @return array<string, mixed> */
+    private function validatedPayload(Request $request): array
+    {
+        $validated = $request->validate([
+            'classId' => ['nullable', 'string', 'max:120'],
+            'class' => ['nullable', 'string', 'max:120'],
+            'lecturer' => ['nullable', 'string', 'max:200'],
+            'content' => ['nullable', 'string', 'max:2000'],
+            'meetingLink' => ['nullable', 'string', 'max:500'],
+            'period' => ['nullable', 'string', 'max:50'],
+            'date' => ['nullable', 'string', 'max:20'],
+            'status' => ['nullable', 'string', 'max:100'],
+            'attendanceList' => ['nullable', 'array', 'max:500'],
+            'attendanceDetails' => ['nullable', 'array', 'max:500'],
+            'studentCount' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'actualStudentCount' => ['nullable', 'integer', 'min:0', 'max:10000'],
+        ]);
+
+        $extra = collect($request->all())
+            ->except(array_keys($validated))
+            ->filter(fn ($value) => is_scalar($value) || is_array($value))
+            ->take(30)
+            ->all();
+
+        return array_merge($validated, $extra);
     }
 }

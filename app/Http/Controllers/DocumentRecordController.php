@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessCatalogImportJob;
+use App\Models\Department;
 use App\Models\DocumentRecord;
 use App\Models\DocumentType;
-use App\Models\Department;
 use App\Models\Employee;
+use App\Services\CatalogExcelService;
 use App\Services\DocumentRecordExtractionService;
 use App\Services\DocumentRecordQueryService;
 use App\Services\EvidenceStorageService;
+use App\Services\ImportProgressService;
 use App\Services\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class DocumentRecordController extends Controller
 {
@@ -24,14 +27,30 @@ class DocumentRecordController extends Controller
         private EvidenceStorageService $storage,
         private ReportExportService $export,
         private DocumentRecordExtractionService $extraction,
+        private CatalogExcelService $catalogExcel,
+        private ImportProgressService $importProgress,
     ) {}
 
-    public function index(Request $request): View
+        public function index(Request $request)
     {
+        if ($request->wantsJson()) {
+            $perPage = $request->integer('per_page', 25);
+            $paginator = $this->query->filter($request)->paginate($perPage);
+            return response()->json([
+                'items' => $paginator->getCollection()->map(fn ($record) => $this->recordTableRow($record)),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'total' => $paginator->total(),
+                    'per_page' => $paginator->perPage(),
+                ]
+            ]);
+        }
+
         $mapOption = fn ($name) => ['value' => $name, 'label' => $name];
 
         return view('monitoring.document-records.index', [
-            'items' => $this->query->filter($request)->get()->map(fn (DocumentRecord $record) => $this->recordTableRow($record)),
+            'items' => collect(), // will be loaded via ajax
             'docTypes' => DocumentType::orderBy('name')->get(),
             'docTypeOptions' => DocumentType::orderBy('name')->pluck('name')->map($mapOption)->values()->all(),
             'departmentOptions' => Department::orderBy('name')->pluck('name')->map($mapOption)->values()->all(),
@@ -171,6 +190,18 @@ class DocumentRecordController extends Controller
             'rows.*.title' => 'required|string|max:500',
         ]);
 
+        if ($request->boolean('async') || count($data['rows']) > 50) {
+            $progress = $this->importProgress->start(count($data['rows']), 'Import hồ sơ văn bản');
+            ProcessCatalogImportJob::dispatch($progress['id'], 'document-records', $data['rows'])->afterResponse();
+
+            return response()->json([
+                'message' => 'Đang import nền...',
+                'async' => true,
+                'progress_id' => $progress['id'],
+                'progress_url' => route('imports.status', ['id' => $progress['id']]),
+            ]);
+        }
+
         $year = date('Y');
         $count = DocumentRecord::count();
 
@@ -255,7 +286,7 @@ class DocumentRecordController extends Controller
     {
         $name = $file->getClientOriginalName();
         $path = $file->store('documents/'.date('Y/m'), 'public');
-        $url = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+        $url = Storage::disk('public')->url($path);
 
         return $name.':::'.$url;
     }
@@ -271,47 +302,56 @@ class DocumentRecordController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        $rows = [];
+        $rows = $this->catalogExcel->parseRows($path, [
+            'doc_code' => 'Mã hồ sơ',
+            'doc_number' => 'Số văn bản',
+            'title' => 'Tiêu đề',
+            'abstract' => 'Trích yếu',
+            'doc_type' => 'Loại',
+            'issue_date' => 'Ngày ban hành',
+            'received_date' => 'Ngày đến',
+            'issuing_body' => 'Cơ quan ban hành',
+            'signer' => 'Người ký',
+            'department' => 'Đơn vị',
+            'assignee' => 'Phụ trách',
+            'urgency' => 'Độ khẩn',
+            'confidentiality' => 'Độ mật',
+            'file_password' => 'Mật khẩu',
+            'status' => 'Trạng thái',
+            'original_file' => 'Đường dẫn file',
+        ], [
+            'requiredKey' => 'title',
+            'aliases' => [
+                'mã văn bản' => 'doc_code',
+                'mã hồ sơ' => 'doc_code',
+                'số/ký hiệu' => 'doc_number',
+                'số văn bản' => 'doc_number',
+                'tiêu đề' => 'title',
+                'loại văn bản' => 'doc_type',
+                'loại' => 'doc_type',
+                'ngày nhận' => 'received_date',
+                'phòng ban xử lý' => 'department',
+                'người phụ trách' => 'assignee',
+            ],
+        ]);
 
-        foreach ($sheet->toArray() as $line) {
-            if (! is_array($line)) {
-                continue;
+        return array_map(function (array $row): array {
+            if (trim((string) ($row['title'] ?? '')) === '' && trim((string) ($row['abstract'] ?? '')) !== '') {
+                $row['title'] = $row['abstract'];
             }
 
-            $assoc = [];
-            foreach ($line as $key => $value) {
-                if (is_string($key)) {
-                    $assoc[$key] = trim((string) $value);
+            foreach ([
+                'urgency' => 'Thường',
+                'confidentiality' => 'Thường',
+                'status' => 'Mới',
+            ] as $key => $default) {
+                if (trim((string) ($row[$key] ?? '')) === '') {
+                    $row[$key] = $default;
                 }
             }
 
-            $title = $assoc['Tiêu đề'] ?? $assoc['Trích yếu'] ?? trim((string) ($line[2] ?? ''));
-            if ($title === '' || mb_strtolower($title) === 'tiêu đề' || mb_strtolower($title) === 'trích yếu') {
-                continue;
-            }
-
-            $rows[] = [
-                'doc_code' => $assoc['Mã văn bản'] ?? $assoc['Mã hồ sơ'] ?? trim((string) ($line[0] ?? '')),
-                'doc_number' => $assoc['Số/ký hiệu'] ?? $assoc['Số văn bản'] ?? trim((string) ($line[1] ?? '')),
-                'title' => $title,
-                'abstract' => $assoc['Trích yếu'] ?? trim((string) ($line[3] ?? '')),
-                'doc_type' => $assoc['Loại văn bản'] ?? $assoc['Loại'] ?? trim((string) ($line[4] ?? '')),
-                'issue_date' => $assoc['Ngày ban hành'] ?? trim((string) ($line[5] ?? '')),
-                'received_date' => $assoc['Ngày nhận'] ?? $assoc['Ngày đến'] ?? trim((string) ($line[6] ?? '')),
-                'issuing_body' => $assoc['Cơ quan ban hành'] ?? trim((string) ($line[7] ?? '')),
-                'signer' => $assoc['Người ký'] ?? trim((string) ($line[8] ?? '')),
-                'department' => $assoc['Phòng ban xử lý'] ?? $assoc['Đơn vị'] ?? trim((string) ($line[9] ?? '')),
-                'assignee' => $assoc['Người phụ trách'] ?? $assoc['Phụ trách'] ?? trim((string) ($line[10] ?? '')),
-                'urgency' => $assoc['Độ khẩn'] ?? trim((string) ($line[11] ?? 'Thường')),
-                'confidentiality' => $assoc['Độ mật'] ?? trim((string) ($line[12] ?? 'Thường')),
-                'file_password' => $assoc['Mật khẩu'] ?? trim((string) ($line[13] ?? '')),
-                'status' => $assoc['Trạng thái'] ?? trim((string) ($line[14] ?? 'Mới')),
-                'original_file' => $assoc['Đường dẫn file'] ?? trim((string) ($line[15] ?? '')),
-            ];
-        }
-
-        return $rows;
+            return $row;
+        }, $rows);
     }
 
     /** @return array<string, mixed> */

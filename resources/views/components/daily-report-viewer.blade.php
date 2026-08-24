@@ -31,9 +31,13 @@
     class="space-y-6"
 >
     <div x-show="toast" x-cloak
-        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg"
-        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'"
-        x-text="toast?.message"></div>
+        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 
     {{-- Toolbar --}}
     <div class="nttu-card p-4 shadow-md">
@@ -219,7 +223,7 @@
                                                     aria-label="Thông báo">
                                             </template>
                                             <template x-if="cellValue(item, col).kind === 'badge'">
-                                                <span class="inline-flex rounded px-2 py-0.5 text-[10px] font-bold" :class="cellValue(item, col).class" x-text="cellValue(item, col).text"></span>
+                                                <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold shadow-sm" :class="cellValue(item, col).class" x-text="cellValue(item, col).text"></span>
                                             </template>
                                             <template x-if="cellValue(item, col).kind === 'normal'">
                                                 <span class="text-[10px] font-bold text-green-600">Bình thường</span>
@@ -261,12 +265,13 @@
                     <div class="flex flex-wrap items-center gap-4">
                         <div class="flex items-center gap-2">
                             <span>Số dòng</span>
-                            <select class="nttu-rows-per-page-select" x-model.number="stateFor(tabKey).rowsPerPage"
+                            <input type="number" class="nttu-rows-per-page-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" list="{{ $datalistId = uniqid('dl_') }}" x-model.number="stateFor(tabKey).rowsPerPage"
                                 @change="setRowsPerPage(tabKey, $event.target.value)">
-                                <template x-for="n in [5,10,15,20,25,30,35,40,45,50]" :key="n">
-                                    <option :value="n" x-text="n" :selected="rowsPerPageFor(tabKey) === n"></option>
-                                </template>
-                            </select>
+<datalist id="{{ $datalistId }}">
+    <template x-for="n in [5,10,15,20,25,30,35,40,45,50]" :key="n">
+        <option :value="n"></option>
+    </template>
+</datalist>
                         </div>
                         <div class="flex items-center gap-1">
                             <button type="button" class="h-8 w-8 rounded border disabled:opacity-40" :disabled="stateFor(tabKey).currentPage === 1" @click="goPage(tabKey, 1)">«</button>

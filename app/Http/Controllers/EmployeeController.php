@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\Position;
 use App\Models\Role;
 use App\Services\AuthLoginService;
+use App\Services\CatalogExcelService;
 use App\Services\CatalogTableQueryService;
 use App\Services\ImportProgressService;
 use App\Services\ReportExportService;
@@ -15,7 +16,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeeController extends Controller
@@ -25,6 +25,7 @@ class EmployeeController extends Controller
         private AuthLoginService $authLogin,
         private CatalogTableQueryService $catalogQuery,
         private ImportProgressService $importProgress,
+        private CatalogExcelService $catalogExcel,
     ) {}
 
     public function index(): View
@@ -283,45 +284,19 @@ class EmployeeController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        $rows = [];
-        $startRow = 8;
-
-        foreach ($sheet->getRowIterator($startRow) as $row) {
-            $cells = [];
-            foreach ($row->getCellIterator() as $cell) {
-                $cells[] = trim((string) $cell->getValue());
-            }
-
-            $employeeId = $cells[0] ?? '';
-            if ($employeeId === '' || mb_strtolower($employeeId) === 'mã số') {
-                continue;
-            }
-
-            $rows[] = [
-                'employee_id' => $employeeId,
-                'name' => $cells[1] ?? '',
-                'email' => $cells[2] ?? '',
-                'note' => $cells[3] ?? '',
-            ];
-        }
-
-        if ($rows === []) {
-            foreach ($sheet->toArray() as $line) {
-                $employeeId = trim((string) ($line['Mã số'] ?? $line[0] ?? ''));
-                if ($employeeId === '' || mb_strtolower($employeeId) === 'mã số') {
-                    continue;
-                }
-                $rows[] = [
-                    'employee_id' => $employeeId,
-                    'name' => trim((string) ($line['Họ và tên'] ?? $line[1] ?? '')),
-                    'email' => trim((string) ($line['Email'] ?? $line[2] ?? '')),
-                    'note' => trim((string) ($line['Ghi chú'] ?? $line[3] ?? '')),
-                ];
-            }
-        }
-
-        return $rows;
+        return $this->catalogExcel->parseRows($path, [
+            'employee_id' => 'Mã số',
+            'name' => 'Họ và tên',
+            'email' => 'Email',
+            'note' => 'Ghi chú',
+        ], [
+            'requiredKey' => 'employee_id',
+            'aliases' => [
+                'mã số' => 'employee_id',
+                'họ tên' => 'name',
+                'ghi chú' => 'note',
+            ],
+        ]);
     }
 
     private function resolvePosition(string $value): string

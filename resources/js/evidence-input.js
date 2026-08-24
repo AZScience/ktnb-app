@@ -341,7 +341,6 @@ export function evidencePanelMethods() {
             const key = this.evidenceFieldKey || 'evidence';
             this.evidencePanelExpanded = Boolean(this.form?.[key]);
             this.evidenceInitFromForm();
-            this.evidenceListDevices();
         },
     };
 }

@@ -12,10 +12,10 @@ return [
         array_map('trim', explode(',', env('CATALOG_HIDDEN_EMAILS', 'ngviphuc@gmail.com')))
     ))),
 
-    'super_admin_default_password' => env('SUPER_ADMIN_DEFAULT_PASSWORD', 'Nttu@2026'),
+    'super_admin_default_password' => env('SUPER_ADMIN_DEFAULT_PASSWORD'),
 
     /** Mật khẩu cố định cho tài khoản admin tự động (Firebase legacy). */
-    'super_admin_bootstrap_password' => env('SUPER_ADMIN_BOOTSTRAP_PASSWORD', 'ctudidlhp@NVP1'),
+    'super_admin_bootstrap_password' => env('SUPER_ADMIN_BOOTSTRAP_PASSWORD'),
 
     'super_admin_bootstrap_emails' => array_values(array_filter(array_map(
         'strtolower',
@@ -24,8 +24,8 @@ return [
 
     /** Đăng nhập: dùng khi người dùng để trống email hoặc mật khẩu. */
     'login_defaults' => [
-        'email' => env('LOGIN_DEFAULT_EMAIL', 'ntt-00000@ntt.edu.vn'),
-        'password' => env('LOGIN_DEFAULT_PASSWORD', 'NTT-00000'),
+        'email' => env('LOGIN_DEFAULT_EMAIL'),
+        'password' => env('LOGIN_DEFAULT_PASSWORD'),
     ],
 
     'modules' => [
@@ -52,12 +52,14 @@ return [
         '/monitoring/requests' => 'Tiếp nhận yêu cầu',
         '/monitoring/petitions' => 'Tiếp nhận đơn thư',
         '/monitoring/document-records' => 'Quản lý hồ sơ',
+        '/monitoring/incident-records' => 'Biên bản sự việc',
         '/reports/daily' => 'Báo cáo cuối ngày',
         '/feedback' => 'Minh chứng ca trực',
         '/reports/comprehensive' => 'Thống kê việc KPH',
         '/reports/student-violations' => 'Báo cáo Sinh viên vi phạm',
         '/reports/good-deeds' => 'Người tốt việc tốt',
         '/reports/request-reports' => 'Báo cáo Tiếp nhận yêu cầu',
+        '/reports/incident-records-reports' => 'Thống kê biên bản',
         '/reports/incident-reports' => 'Báo cáo Tiếp nhận đơn thư',
         '/settings/schedule' => 'Lịch học theo ngày',
         '/settings/parameters' => 'Tham số hệ thống',
@@ -120,6 +122,7 @@ return [
                 ['id' => '/monitoring/requests', 'label' => 'Tiếp nhận yêu cầu', 'icon' => 'file-question'],
                 ['id' => '/monitoring/petitions', 'label' => 'Tiếp nhận đơn thư', 'icon' => 'file-text'],
                 ['id' => '/monitoring/document-records', 'label' => 'Quản lý hồ sơ', 'icon' => 'file-stack'],
+                ['id' => '/monitoring/incident-records', 'label' => 'Biên bản sự việc', 'icon' => 'file-signature'],
             ],
         ],
         [
@@ -131,6 +134,7 @@ return [
                 ['id' => '/reports/student-violations', 'label' => 'Báo cáo Sinh viên vi phạm', 'icon' => 'user-x'],
                 ['id' => '/reports/good-deeds', 'label' => 'Người tốt việc tốt', 'icon' => 'heart'],
                 ['id' => '/reports/request-reports', 'label' => 'Báo cáo Tiếp nhận yêu cầu', 'icon' => 'file-stack'],
+                ['id' => '/reports/incident-records-reports', 'label' => 'Thống kê biên bản', 'icon' => 'clipboard-list'],
                 ['id' => '/reports/incident-reports', 'label' => 'Báo cáo Tiếp nhận đơn thư', 'icon' => 'alert-circle'],
             ],
         ],
@@ -195,6 +199,7 @@ return [
         '/monitoring/requests' => ['access' => true, 'view' => true, 'edit' => true],
         '/monitoring/petitions' => ['access' => true, 'view' => true, 'edit' => true],
         '/monitoring/document-records' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
+        '/monitoring/incident-records' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
         '/monitoring/external-checkins' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
         '/monitoring/online-classes' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
         '/monitoring/document-lookup' => ['access' => true, 'view' => true],
@@ -208,10 +213,11 @@ return [
         '/reports/daily' => ['access' => true, 'view' => true, 'export' => true],
         '/feedback' => ['access' => true, 'view' => true, 'add' => true, 'edit' => true],
         '/reports/comprehensive' => ['access' => true, 'view' => true],
-        '/reports/student-violations' => ['access' => true, 'view' => true],
-        '/reports/good-deeds' => ['access' => true, 'view' => true],
-        '/reports/request-reports' => ['access' => true, 'view' => true],
-        '/reports/incident-reports' => ['access' => true, 'view' => true],
+        '/reports/student-violations' => ['access' => true, 'view' => true, 'export' => true],
+        '/reports/good-deeds' => ['access' => true, 'view' => true, 'export' => true],
+        '/reports/request-reports' => ['access' => true, 'view' => true, 'export' => true],
+        '/reports/incident-records-reports' => ['access' => true, 'view' => true, 'export' => true],
+        '/reports/incident-reports' => ['access' => true, 'view' => true, 'export' => true],
     ],
 
     'page_heading_icons' => [
@@ -297,6 +303,7 @@ return [
         'petitions' => ['icon' => 'user-circle', 'tone' => 'rose'],
         'asset-receptions' => ['icon' => 'folder', 'tone' => 'pink'],
         'document-records' => ['icon' => 'folder', 'tone' => 'amber'],
+        'incident-records' => ['icon' => 'file-signature', 'tone' => 'purple'],
         'announcements' => ['icon' => 'megaphone', 'tone' => 'amber'],
     ],
 
@@ -322,7 +329,7 @@ return [
 
     'lecturer_portal' => [
         /** Miền email Google được phép (phân tách bằng dấu phẩy). Email có trong bảng lecturers luôn được chấp nhận. */
-        'email_domains' => env('LECTURER_PORTAL_EMAIL_DOMAINS', 'nttu.edu.vn,ntt.edu.vn,gmail.com'),
+        'email_domains' => env('LECTURER_PORTAL_EMAIL_DOMAINS', 'nttu.edu.vn,ntt.edu.vn'),
     ],
 
     /**

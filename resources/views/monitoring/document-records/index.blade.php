@@ -12,6 +12,7 @@
     storage-key="document-records"
     modal-wide
     form-mode="document-record"
+    server-paginated
     form-layout="document-record"
     advanced-filter-mode="documents"
     :advanced-filter-options="[
@@ -73,6 +74,7 @@
         'importPreview' => route('document-records.import-preview'),
         'import' => route('document-records.import'),
         'extract' => route('document-records.extract'),
+            'list' => route('document-records.index'),
     ]"
 />
 @endsection

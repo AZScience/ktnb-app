@@ -11,7 +11,8 @@ use PhpOffice\PhpSpreadsheet\Shared\Font as SharedFont;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -74,12 +75,14 @@ class DailyReportExportService
             $sheetsUpdated = 0;
 
             foreach ($categories as $cfg) {
-                if ($cfg['data'] === []) {
+                $worksheet = $sheetMap[$this->normalizeSheetName($cfg['key'])] ?? null;
+                if (! $worksheet instanceof Worksheet) {
                     continue;
                 }
 
-                $worksheet = $sheetMap[$this->normalizeSheetName($cfg['key'])] ?? null;
-                if (! $worksheet instanceof Worksheet) {
+                if ($cfg['data'] === []) {
+                    $sheetIndex = $spreadsheet->getIndex($worksheet);
+                    $spreadsheet->removeSheetByIndex($sheetIndex);
                     continue;
                 }
 
@@ -107,6 +110,8 @@ class DailyReportExportService
             if ($sheetsUpdated === 0) {
                 abort(422, 'Không tìm thấy sheet mẫu phù hợp để xuất.');
             }
+
+            $spreadsheet->setActiveSheetIndex(0);
 
             $filename = $this->buildFilename($officerFullName);
 
@@ -247,11 +252,12 @@ class DailyReportExportService
                 if ($colKey === '__gap__') {
                     $cell->setValue('');
                 } elseif ($colKey === 'is_notification') {
+                    // Unicode checkbox + TYPE_STRING: tránh TYPE_BOOL (TRUE/FALSE) và tránh
+                    // chỉnh style từng ô trước duplicateStyle (gây đệ quy getQuotePrefix).
                     $cell->setValueExplicit(
-                        filter_var($item[$colKey] ?? false, FILTER_VALIDATE_BOOLEAN),
-                        DataType::TYPE_BOOL,
+                        $this->notificationCheckboxGlyph($item[$colKey] ?? false),
+                        DataType::TYPE_STRING,
                     );
-                    $this->normalizeNotificationCellStyle($cell);
                 } else {
                     $raw = $item[$colKey] ?? '';
                     if (is_numeric($raw) && (float) $raw == 0.0) {
@@ -326,7 +332,7 @@ class DailyReportExportService
 
     private function estimateWrappedTextHeight(
         string $text,
-        \PhpOffice\PhpSpreadsheet\Style\Font $font,
+        Font $font,
         int $colWidthPx,
         float $lineHeight,
     ): float {
@@ -402,9 +408,14 @@ class DailyReportExportService
                 continue;
             }
 
-            $worksheet->getStyle("{$colLetter}{$dataStartRow}:{$colLetter}{$lastDataRow}")
-                ->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $colRange = "{$colLetter}{$dataStartRow}:{$colLetter}{$lastDataRow}";
+            $colStyle = $worksheet->getStyle($colRange);
+            $colStyle->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            if ($colKey === 'is_notification') {
+                $colStyle->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
+                $colStyle->getFont()->setBold(false)->setSize(self::DATA_FONT_SIZE + 1)->setName('Segoe UI Symbol');
+            }
         }
 
         if ($sheetKey === 'VIPHAM') {
@@ -459,14 +470,9 @@ class DailyReportExportService
         }
     }
 
-    private function normalizeNotificationCellStyle(\PhpOffice\PhpSpreadsheet\Cell\Cell $cell): void
+    private function notificationCheckboxGlyph(mixed $value): string
     {
-        $style = $cell->getStyle();
-        $style->getFont()->setBold(false)->setSize(self::DATA_FONT_SIZE);
-        $style->getFill()->setFillType(Fill::FILL_NONE);
-        $style->getAlignment()
-            ->setHorizontal(Alignment::HORIZONTAL_CENTER)
-            ->setVertical(Alignment::VERTICAL_CENTER);
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '☑' : '☐';
     }
 
     private function setFooterLine(Worksheet $worksheet, int $row, string $text, bool $bold, bool $italic, int $mergeStartCol, int $mergeEndCol): void

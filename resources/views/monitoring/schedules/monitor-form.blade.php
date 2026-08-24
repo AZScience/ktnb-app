@@ -38,8 +38,8 @@
                 <input name="recognition_date" value="{{ old('recognition_date', $item->recognition_date ?? date('d/m/Y')) }}" class="nttu-form-control focus:border-cyan-500 focus:ring-cyan-500">
             </div>
             <div class="md:col-span-2">
-                <x-form-label>Chi tiết việc phát sinh</x-form-label>
-                <textarea name="incident_detail" rows="3" class="nttu-form-control focus:border-cyan-500 focus:ring-cyan-500">{{ old('incident_detail', $item->incident_detail) }}</textarea>
+                <x-form-label>Chi tiết việc phát sinh @if(in_array($module, ['homeroom', 'external-practice']))<span class="text-red-600">*</span>@endif</x-form-label>
+                <textarea name="incident_detail" rows="3" class="nttu-form-control focus:border-cyan-500 focus:ring-cyan-500" @if(in_array($module, ['homeroom', 'external-practice'])) required @endif>{{ old('incident_detail', $item->incident_detail) }}</textarea>
             </div>
             <div class="md:col-span-2">
                 <x-form-label>Bằng chứng / Ghi chú</x-form-label>

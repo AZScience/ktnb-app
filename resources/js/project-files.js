@@ -151,9 +151,7 @@ export function registerProjectFiles(Alpine) {
 
         showToast(message, type = 'success') {
             this.toast = { message, type };
-            setTimeout(() => {
-                if (this.toast?.message === message) this.toast = null;
-            }, 3200);
+            setTimeout(() => { this.toast = null; }, 30000);
         },
 
         get visibleColumnKeys() {

@@ -55,7 +55,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('catalog') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-show="isMenuOpen('catalog')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="isMenuOpen('catalog')" class="nttu-sidebar-sub">
             @foreach ($catalogItems as [, $route, $label, $pattern, $iconColor, $path])
                 <a href="{{ route($route) }}" class="{{ $linkClass($active($pattern)) }} text-[13px] py-1.5 gap-2" title="{{ $label }}">
                     <svg class="h-4 w-4 {{ $iconColor }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $path }}"/></svg>
@@ -72,6 +72,7 @@
             ['/monitoring/exams', 'monitoring.exams.index', 'Thi kết thúc môn', 'monitoring.exams.*', 'exams', 'text-purple-500', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'],
             ['/monitoring/external-practice', 'monitoring.external-practice.index', 'Thực hành ngoài', 'monitoring.external-practice.*', 'external-practice', 'text-orange-500', 'M13 10V3L4 14h7v7l9-11h-7z'],
             ['/monitoring/student-violations', 'student-violations.index', 'Sinh viên vi phạm', 'student-violations.*', null, 'text-rose-500', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'],
+            ['/monitoring/incident-records', 'incident-records.index', 'Biên bản sự việc', 'incident-records.*', null, 'text-cyan-600', 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'],
             ['/monitoring/asset-check', 'asset-check.index', 'Nhận - Trả tài sản', 'asset-check.*', null, 'text-pink-500', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
             ['/monitoring/requests', 'requests.index', 'Tiếp nhận yêu cầu', 'requests.*', null, 'text-teal-500', 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
             ['/monitoring/petitions', 'petitions.index', 'Tiếp nhận đơn thư', 'petitions.*', null, 'text-red-500', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
@@ -86,7 +87,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('monitor') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-show="isMenuOpen('monitor')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="isMenuOpen('monitor')" class="nttu-sidebar-sub">
             @foreach ($monitorItems as [, $route, $label, $pattern, $mod, $iconColor, $path])
                 @php
                     $isActive = $active($pattern) || ($mod && request()->routeIs('monitoring.schedules.*') && request()->route('module') === $mod);
@@ -106,6 +107,7 @@
             ['/reports/student-violations', 'reports.student-violations', 'Sinh viên vi phạm', 'reports.student-violations', 'text-rose-500', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'],
             ['/reports/good-deeds', 'reports.good-deeds', 'Người tốt việc tốt', 'reports.good-deeds', 'text-green-500', 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'],
             ['/reports/request-reports', 'reports.request-reports', 'Tiếp nhận yêu cầu', 'reports.request-reports', 'text-teal-500', 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+            ['/reports/incident-records-reports', 'reports.incident-records-reports', 'Thống kê biên bản', 'reports.incident-records-reports', 'text-cyan-600', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'],
             ['/reports/incident-reports', 'reports.incident-reports', 'Tiếp nhận đơn thư', 'reports.incident-reports', 'text-red-500', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
         ]); @endphp
         @if (count($reportItems) > 0)
@@ -117,7 +119,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('reports') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-show="isMenuOpen('reports')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="isMenuOpen('reports')" class="nttu-sidebar-sub">
             @foreach ($reportItems as [, $route, $label, $pattern, $iconColor, $path])
                 <a href="{{ route($route) }}" class="{{ $linkClass($active($pattern)) }} text-[13px] py-1.5 gap-2" title="{{ $label }}">
                     <svg class="h-4 w-4 {{ $iconColor }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $path }}"/></svg>
@@ -144,7 +146,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('system') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-show="isMenuOpen('system')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="isMenuOpen('system')" class="nttu-sidebar-sub">
             @foreach ($systemItems as [, $route, $label, $pattern, $iconColor, $path])
                 <a href="{{ route($route) }}" class="{{ $linkClass($active($pattern)) }} text-[13px] py-1.5 gap-2" title="{{ $label }}">
                     <svg class="h-4 w-4 {{ $iconColor }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $path }}"/></svg>
@@ -178,7 +180,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('tools') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-show="isMenuOpen('tools')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="isMenuOpen('tools')" class="nttu-sidebar-sub">
             @foreach ($toolItems as [, $route, $label, $pattern, $iconColor, $path])
                 <a href="{{ route($route) }}"
                     @if (in_array($route, $toolItemsNewTab, true)) target="_blank" rel="noopener noreferrer" @endif

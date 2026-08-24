@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDisplayDateColumns;
 use Illuminate\Database\Eloquent\Model;
 
 class StudentViolation extends Model
 {
+    use NormalizesDisplayDateColumns;
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -15,6 +18,13 @@ class StudentViolation extends Model
         'signed', 'officer', 'note', 'building', 'department', 'identifier',
         'signature_base64', 'portrait_photo', 'document_photo',
     ];
+
+    protected static function displayDateIsoColumns(): array
+    {
+        return [
+            'violation_date' => 'violation_date_iso',
+        ];
+    }
 
     /** Columns for list views — heavy blobs loaded on edit via show endpoint. */
     public const INDEX_COLUMNS = [

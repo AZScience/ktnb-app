@@ -75,6 +75,7 @@ class ReportPresenterService
                     $item->proctor2,
                     $item->proctor3,
                 ])),
+                '_recognition' => $this->dash(DailySchedule::resolveRecognitionName($item) ?? ''),
             ];
         })->values()->all();
     }
@@ -147,6 +148,7 @@ class ReportPresenterService
                 'gift' => $this->dash($item->gratitude_gift),
                 'appreciationId' => $this->dash($item->giver_id ?: $item->giver_phone),
                 'appreciationDept' => $this->dash($item->giver_unit),
+                'property' => $this->dash($item->content),
                 'refCode' => $this->dash($item->entry_number),
                 'note' => $this->dash($item->receiver_feedback ?: $item->note),
                 '_building' => $this->dash($this->buildingBlocks->reportBuildingLabel($item->building_block)),
@@ -182,6 +184,22 @@ class ReportPresenterService
     }
 
     /** @return list<array<string, mixed>> */
+        public function incidentRecordsRows(Collection $records): array
+    {
+        return $records->map(function ($record) {
+            return [
+                '_rowId' => $record->id,
+                'id' => 'BB' . str_pad($record->id, 5, '0', STR_PAD_LEFT),
+                'incident_time' => $record->incident_time->format('d/m/Y H:i'),
+                'location' => $record->location,
+                'creator_name' => $record->creator_name,
+                'witness_name' => $record->witness_name,
+                'creator_signature' => $record->creator_signature,
+                'witness_signature' => $record->witness_signature,
+            ];
+        })->values()->toArray();
+    }
+
     public function petitionRows(Collection $items): array
     {
         return $items->map(function (Petition $item) {

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDisplayDateColumns;
 use Illuminate\Database\Eloquent\Model;
 
 class AssetReception extends Model
 {
+    use NormalizesDisplayDateColumns;
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -22,7 +25,17 @@ class AssetReception extends Model
         'gratitude_staff', 'gratitude_status', 'gratitude_evidence',
         'note',
     ];
+
     protected $casts = [
         'is_gratitude' => 'boolean',
     ];
+
+    protected static function displayDateIsoColumns(): array
+    {
+        return [
+            'reception_date' => 'reception_date_iso',
+            'resolution_date' => 'resolution_date_iso',
+            'gratitude_date' => 'gratitude_date_iso',
+        ];
+    }
 }

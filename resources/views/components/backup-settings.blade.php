@@ -73,9 +73,13 @@
     class="space-y-6"
 >
     <div x-show="toast" x-cloak
-        class="fixed top-4 right-4 z-[70] max-w-md rounded-lg px-4 py-3 text-sm text-white shadow-lg"
-        :class="toast?.type === 'success' ? 'bg-green-600' : 'bg-red-600'"
-        x-text="toast?.message"></div>
+        class="fixed top-4 right-4 z-[70] max-w-md rounded-lg px-4 py-3 text-sm text-white shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'success' ? 'bg-green-600' : 'bg-red-600'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 
     <div @class([
         'rounded-lg border px-4 py-3 text-sm',
@@ -193,7 +197,7 @@
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 Xóa dữ liệu vận hành theo khoảng ngày
             </h2>
-            <p class="mt-1 text-sm text-red-800/80">Xóa trực tiếp bản ghi trong CSDL (nhật ký, lịch học, yêu cầu, đơn thư…), không xóa danh mục nhân sự. Khác với xóa file backup.</p>
+            <p class="mt-1 text-sm text-red-800/80">Xóa trực tiếp bản ghi trong CSDL theo loại dữ liệu đã chọn (nhật ký, sinh viên, giảng viên, lịch học, yêu cầu, đơn thư…). Khác với xóa file backup.</p>
         </div>
         <div class="p-6">
             <button type="button" @click="openPurgeDialog()" class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 sm:w-auto">
@@ -273,7 +277,7 @@
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 Xóa dữ liệu CSDL theo khoảng ngày
             </h3>
-            <p class="mt-2 text-sm text-gray-600">Chọn loại dữ liệu vận hành cần xóa trong khoảng thời gian. Không xóa danh mục nhân sự, phòng học hay tài khoản.</p>
+            <p class="mt-2 text-sm text-gray-600">Chọn loại dữ liệu vận hành cần xóa trong khoảng thời gian. Không xóa danh mục nhân sự, phòng học hay tài khoản. Với <strong>Lịch học theo ngày</strong>: chỉ xóa dòng chưa ghi nhận (# không khoanh đỏ); giữ lại dòng đã ghi nhận.</p>
             <div class="mt-4 grid grid-cols-2 gap-4">
                 <div class="space-y-1">
                     <x-filter-label class="uppercase">Từ ngày</x-filter-label>
@@ -299,16 +303,18 @@
                             <input type="checkbox"
                                    class="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600"
                                    :value="item.key"
-                                   x-model="purgeSelectedTypes">
+                                   :checked="isPurgeTypeSelected(item.key)"
+                                   @change="togglePurgeType(item.key)">
                             <span class="text-sm text-gray-800" x-text="item.label"></span>
                         </label>
                     </template>
                 </div>
+                <p class="text-xs text-gray-500" x-show="!purgeFromDate || !purgeToDate" x-cloak>Vui lòng chọn Từ ngày và Đến ngày.</p>
                 <p class="text-xs text-gray-500" x-show="purgeSelectedTypes.length === 0" x-cloak>Vui lòng chọn ít nhất một loại dữ liệu.</p>
             </div>
             <div class="mt-6 flex justify-end gap-2">
                 <x-nttu-button type="button" action="cancel" x-bind:disabled="purging" @click="purgeOpen = false">Hủy</x-nttu-button>
-                <x-nttu-button type="button" action="delete" x-bind:disabled="purging || !purgeFromDate || !purgeToDate || purgeSelectedTypes.length === 0" @click="purgeData()">
+                <x-nttu-button type="button" action="delete" x-bind:disabled="!canPurge" @click="purgeData()">
                     <span x-show="!purging">Xóa dữ liệu CSDL</span>
                     <span x-show="purging" x-cloak>Đang xóa...</span>
                 </x-nttu-button>

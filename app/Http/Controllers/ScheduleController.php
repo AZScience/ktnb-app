@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\DailySchedule;
 use App\Models\UserSetting;
-use App\Services\ScheduleLocationService;
+use App\Services\ReportQueryService;
 use App\Services\ScheduleExcelService;
+use App\Services\ScheduleLocationService;
 use App\Services\ScheduleMasterDataService;
 use App\Services\ScheduleRoomChecklistExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -24,6 +26,7 @@ class ScheduleController extends Controller
         private ScheduleRoomChecklistExportService $roomChecklistExport,
         private ScheduleLocationService $locations,
         private ScheduleMasterDataService $masterDataService,
+        private ReportQueryService $reportQueries,
     ) {}
 
     public function index(): View
@@ -44,7 +47,7 @@ class ScheduleController extends Controller
         return $this->excel->downloadImportTemplate('Mau_Import_LichHoc.xlsx');
     }
 
-    /** @return \Illuminate\Support\Collection<int, array<string, mixed>> */
+    /** @return Collection<int, array<string, mixed>> */
     private function listTableItems(?Request $request = null)
     {
         $query = DailySchedule::query()->forListTable();
@@ -53,7 +56,8 @@ class ScheduleController extends Controller
             if ($date = $request->get('date')) {
                 $query->where('date', $this->normalizeScheduleDate($date));
             } elseif ($request->boolean('all')) {
-                $query->orderByRaw('STR_TO_DATE(date, "%d/%m/%Y") DESC')->limit(5000);
+                $this->reportQueries->orderByDisplayDate($query, 'date', 'desc');
+                $query->limit(5000);
             } else {
                 $query->where('date', date('d/m/Y'));
             }

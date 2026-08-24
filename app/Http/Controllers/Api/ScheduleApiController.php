@@ -47,7 +47,17 @@ class ScheduleApiController extends Controller
 
     public function update(Request $request, DailySchedule $schedule): JsonResponse
     {
-        $data = $request->all();
+        $data = $request->validate([
+            'actualStudentCount' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'studentCount' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'meetingLink' => ['nullable', 'string', 'max:500'],
+            'attendanceList' => ['nullable', 'array', 'max:500'],
+            'attendanceDetails' => ['nullable', 'array', 'max:500'],
+            'status' => ['nullable', 'string', 'max:100'],
+            'lastSeenAt' => ['nullable', 'string', 'max:50'],
+            'endTime' => ['nullable', 'string', 'max:50'],
+            'hostName' => ['nullable', 'string', 'max:200'],
+        ]);
 
         if (isset($data['actualStudentCount']) || isset($data['studentCount'])) {
             $schedule->actual_student_count = (string) ($data['actualStudentCount'] ?? $data['studentCount']);

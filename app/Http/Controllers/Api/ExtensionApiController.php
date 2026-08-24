@@ -16,13 +16,22 @@ class ExtensionApiController extends Controller
     public function __construct(private DiscussionModeratorService $moderators) {}
     public function createPoll(Request $request): JsonResponse
     {
-        $data = $request->all();
+        $data = $request->validate([
+            'question' => ['required', 'string', 'max:500'],
+            'options' => ['required', 'array', 'min:2', 'max:20'],
+            'options.*' => ['string', 'max:255'],
+            'duration' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'attendanceList' => ['nullable', 'array', 'max:500'],
+            'classId' => ['nullable', 'string', 'max:120'],
+            'lecturer' => ['nullable', 'string', 'max:200'],
+        ]);
+
         $duration = (int) ($data['duration'] ?? 10);
 
         $poll = Poll::create([
             'id' => (string) Str::uuid(),
-            'question' => $data['question'] ?? '',
-            'options' => $data['options'] ?? [],
+            'question' => $data['question'],
+            'options' => $data['options'],
             'duration' => $duration,
             'attendance_list' => $data['attendanceList'] ?? [],
             'class_id' => $data['classId'] ?? null,
@@ -53,10 +62,16 @@ class ExtensionApiController extends Controller
 
     public function votePoll(Request $request, string $poll): JsonResponse
     {
+        $data = $request->validate([
+            'optionIndex' => ['required', 'integer', 'min:0', 'max:50'],
+            'voterEmail' => ['nullable', 'email', 'max:255'],
+            'voterName' => ['nullable', 'string', 'max:200'],
+        ]);
+
         $model = Poll::findOrFail($poll);
-        $optionIndex = $request->input('optionIndex');
-        $voterEmail = $request->input('voterEmail');
-        $voterName = $request->input('voterName', 'Người dùng');
+        $optionIndex = (int) $data['optionIndex'];
+        $voterEmail = $data['voterEmail'] ?? null;
+        $voterName = $data['voterName'] ?? 'Người dùng';
 
         $voters = $model->voters ?? [];
         if ($voterEmail) {
@@ -75,7 +90,15 @@ class ExtensionApiController extends Controller
 
     public function createExam(Request $request): JsonResponse
     {
-        $data = $request->all();
+        $data = $request->validate([
+            'title' => ['nullable', 'string', 'max:255'],
+            'classId' => ['nullable', 'string', 'max:120'],
+            'courseName' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'max:50'],
+            'duration' => ['nullable', 'integer', 'min:1', 'max:600'],
+            'questions' => ['nullable', 'array', 'max:100'],
+            'source' => ['nullable', 'string', 'max:255'],
+        ]);
 
         $exam = Exam::create([
             'id' => (string) Str::uuid(),
@@ -120,7 +143,19 @@ class ExtensionApiController extends Controller
 
     public function createDiscussion(Request $request): JsonResponse
     {
-        $data = $request->all();
+        $data = $request->validate([
+            'sectionId' => ['nullable', 'string', 'max:64'],
+            'moderatorToken' => ['nullable', 'string', 'max:255'],
+            'moderator_token' => ['nullable', 'string', 'max:255'],
+            'content' => ['nullable', 'string', 'max:20000'],
+            'authorName' => ['nullable', 'string', 'max:200'],
+            'author' => ['nullable', 'string', 'max:200'],
+            'authorEmail' => ['nullable', 'email', 'max:255'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'studentContent' => ['nullable', 'string', 'max:20000'],
+            'classId' => ['nullable', 'string', 'max:120'],
+            'class' => ['nullable', 'string', 'max:120'],
+        ]);
 
         if (! empty($data['sectionId'])) {
             $section = DiscussionSection::findOrFail($data['sectionId']);

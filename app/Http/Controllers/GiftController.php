@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Gift;
+use App\Services\CatalogExcelService;
 use App\Services\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GiftController extends Controller
 {
-    public function __construct(private ReportExportService $export) {}
+    public function __construct(
+        private ReportExportService $export,
+        private CatalogExcelService $catalogExcel,
+    ) {}
 
     public function index(): View
     {
@@ -74,29 +77,7 @@ class GiftController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
-        return $this->parseNameNoteSheet($path, ['tên quà tặng', 'tên'], ['Tên quà tặng', 'Tên']);
-    }
-
-    private function parseNameNoteSheet(string $path, array $skipHeaders, array $nameKeys): array
-    {
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        $rows = [];
-        foreach ($sheet->getRowIterator(8) as $row) {
-            $cells = [];
-            foreach ($row->getCellIterator() as $cell) { $cells[] = trim((string) $cell->getValue()); }
-            $name = $cells[0] ?? '';
-            if ($name === '' || in_array(mb_strtolower($name), $skipHeaders, true)) continue;
-            $rows[] = ['name' => $name, 'note' => $cells[1] ?? ''];
-        }
-        if ($rows !== []) return $rows;
-        foreach ($sheet->toArray() as $line) {
-            $name = '';
-            foreach ($nameKeys as $key) { $name = trim((string) ($line[$key] ?? '')); if ($name !== '') break; }
-            if ($name === '') $name = trim((string) ($line[0] ?? ''));
-            if ($name === '' || in_array(mb_strtolower($name), $skipHeaders, true)) continue;
-            $rows[] = ['name' => $name, 'note' => trim((string) ($line['Ghi chú'] ?? $line[1] ?? ''))];
-        }
-        return $rows;
+        return $this->catalogExcel->parseNameNoteRows($path, 'Tên quà tặng', ['Tên']);
     }
 
     private function makeUniqueId(string $name): string

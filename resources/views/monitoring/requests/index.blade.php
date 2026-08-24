@@ -41,6 +41,7 @@
     storage-key="service-requests"
     modal-wide
     form-mode="service-request"
+    server-paginated
     form-layout="service-request"
     advanced-filter-mode="assets"
     :advanced-filter-options="$advancedFilterOptions"
@@ -106,6 +107,7 @@
         'export' => route('requests.export'),
         'importPreview' => route('requests.import-preview'),
         'import' => route('requests.import'),
+            'list' => route('service-requests.index'),
     ]"
     :import-columns="$requestImportColumns"
 />

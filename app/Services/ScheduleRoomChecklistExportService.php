@@ -77,7 +77,7 @@ class ScheduleRoomChecklistExportService
             ->select([
                 'id', 'date', 'building', 'room', 'period', 'type', 'department', 'class',
                 'student_count', 'lecturer', 'proctor1', 'proctor2', 'proctor3',
-                'content', 'status', 'note',
+                'content', 'status', 'note', 'incident_detail', 'recognition_date', 'employee'
             ])
             ->get();
         $session = (string) $request->get('period_session', 'all');

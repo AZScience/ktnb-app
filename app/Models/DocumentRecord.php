@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDisplayDateColumns;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DocumentRecord extends Model
 {
+    use NormalizesDisplayDateColumns;
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -22,6 +25,14 @@ class DocumentRecord extends Model
     protected $casts = [
         'keywords' => 'array',
     ];
+
+    protected static function displayDateIsoColumns(): array
+    {
+        return [
+            'issue_date' => 'issue_date_iso',
+            'received_date' => 'received_date_iso',
+        ];
+    }
 
     /** Columns for lookup — includes file ref, excludes long extracted text. */
     public const LOOKUP_LIST_COLUMNS = [

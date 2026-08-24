@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDisplayDateColumns;
 use App\Services\EvidenceStorageService;
 use App\Services\ScheduleLocationService;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,6 +11,8 @@ use Illuminate\Support\Collection;
 
 class DailySchedule extends Model
 {
+    use NormalizesDisplayDateColumns;
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -30,6 +33,14 @@ class DailySchedule extends Model
         'last_seen_at' => 'datetime',
         'session_end_at' => 'datetime',
     ];
+
+    protected static function displayDateIsoColumns(): array
+    {
+        return [
+            'date' => 'date_iso',
+            'recognition_date' => 'recognition_date_iso',
+        ];
+    }
 
     public function setEvidenceAttribute(?string $value): void
     {
@@ -148,8 +159,8 @@ class DailySchedule extends Model
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, self>|\Illuminate\Database\Eloquent\Collection<int, self>  $items
-     * @return \Illuminate\Support\Collection<int, self>
+     * @param  Collection<int, self>|\Illuminate\Database\Eloquent\Collection<int, self>  $items
+     * @return Collection<int, self>
      */
     public static function sortForListTable($items)
     {
@@ -245,6 +256,28 @@ class DailySchedule extends Model
             'homeroom' => 'Cố vấn học tập',
             default => null,
         };
+    }
+
+    /** Tên Việc ghi nhận tương ứng với một dòng lịch (dùng cho bộ lọc báo cáo). */
+    public static function resolveRecognitionName(self $item): ?string
+    {
+        foreach (['exams', 'online', 'external-practice', 'homeroom', 'in-person'] as $module) {
+            if (! self::itemMatchesModule($item, $module)) {
+                continue;
+            }
+
+            if ($module === 'exams') {
+                $building = mb_strtolower((string) ($item->building ?? ''));
+
+                return str_contains($building, 'trực tuyến')
+                    ? 'Thi trực tuyến'
+                    : 'Thi kết thúc học phần';
+            }
+
+            return self::moduleRecognitionName($module);
+        }
+
+        return null;
     }
 
     public static function showsAttendingStudents(string $module): bool

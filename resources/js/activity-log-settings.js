@@ -440,9 +440,7 @@ export function registerActivityLogSettings(Alpine) {
 
         showToast(message, type = 'success') {
             this.toast = { message, type };
-            setTimeout(() => {
-                if (this.toast?.message === message) this.toast = null;
-            }, 2800);
+            setTimeout(() => { this.toast = null; }, 30000);
         },
 
         setFilter(key, value) {

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\ProjectBackupService;
+use App\Services\ReportQueryService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +29,7 @@ class BackupController extends Controller
 
     public function __construct(
         private ProjectBackupService $projectBackup,
+        private ReportQueryService $reportQueries,
     ) {}
 
     public function index(Request $request): View
@@ -47,7 +50,9 @@ class BackupController extends Controller
     {
         return [
             ['key' => 'activity_logs', 'label' => 'Nhật ký truy cập'],
-            ['key' => 'daily_schedules', 'label' => 'Lịch học / giám sát'],
+            ['key' => 'students', 'label' => 'Sinh viên'],
+            ['key' => 'lecturers', 'label' => 'Giảng viên'],
+            ['key' => 'daily_schedules', 'label' => 'Lịch học theo ngày'],
             ['key' => 'student_violations', 'label' => 'Vi phạm sinh viên'],
             ['key' => 'service_requests', 'label' => 'Tiếp nhận yêu cầu'],
             ['key' => 'petitions', 'label' => 'Đơn thư / khiếu nại'],
@@ -240,18 +245,20 @@ class BackupController extends Controller
             'types.*' => 'string|in:'.implode(',', $allowedTypes),
         ]);
 
-        $from = \Carbon\Carbon::parse($data['from_date'])->startOfDay();
-        $to = \Carbon\Carbon::parse($data['to_date'])->endOfDay();
+        $from = Carbon::parse($data['from_date'])->startOfDay();
+        $to = Carbon::parse($data['to_date'])->endOfDay();
         $deletedByType = [];
         $deleted = 0;
 
-        foreach (array_values(array_unique($data['types'])) as $type) {
-            $count = $this->purgeDataType($type, $from, $to);
-            if ($count > 0) {
-                $deletedByType[$type] = $count;
-                $deleted += $count;
+        DB::transaction(function () use ($data, $from, $to, &$deletedByType, &$deleted) {
+            foreach (array_values(array_unique($data['types'])) as $type) {
+                $count = $this->purgeDataType($type, $from, $to);
+                if ($count > 0) {
+                    $deletedByType[$type] = $count;
+                    $deleted += $count;
+                }
             }
-        }
+        });
 
         $typeLabels = collect(self::purgeDataTypeOptions())->pluck('label', 'key');
         $selectedLabels = collect($data['types'])
@@ -275,7 +282,7 @@ class BackupController extends Controller
         return redirect()->route('backup.index', ['tab' => 'database'])->with('success', $message);
     }
 
-    private function purgeDataType(string $type, \Carbon\Carbon $from, \Carbon\Carbon $to): int
+    private function purgeDataType(string $type, Carbon $from, Carbon $to): int
     {
         if (! $this->tableExists($type)) {
             return 0;
@@ -285,11 +292,18 @@ class BackupController extends Controller
             'activity_logs' => (int) DB::table('activity_logs')
                 ->whereBetween('logged_at', [$from, $to])
                 ->delete(),
+            // Chỉ xóa lịch chưa ghi nhận (# không khoanh đỏ): thiếu ngày ghi nhận hoặc người ghi nhận.
             'daily_schedules' => (int) DB::table('daily_schedules')
-                ->whereRaw(
-                    "STR_TO_DATE(date, '%d/%m/%Y') BETWEEN ? AND ?",
-                    [$from->toDateString(), $to->toDateString()]
-                )
+                ->where(fn ($query) => $this->reportQueries->whereDisplayDateBetween(
+                    $query,
+                    'date',
+                    $from->format('d/m/Y'),
+                    $to->format('d/m/Y'),
+                ))
+                ->where(function ($query) {
+                    $query->whereRaw("TRIM(IFNULL(recognition_date, '')) = ''")
+                        ->orWhereRaw("TRIM(IFNULL(employee, '')) = ''");
+                })
                 ->delete(),
             default => (int) DB::table($type)
                 ->whereBetween('created_at', [$from, $to])

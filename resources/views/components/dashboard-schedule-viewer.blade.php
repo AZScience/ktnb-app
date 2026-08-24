@@ -166,11 +166,12 @@
         <div class="flex flex-wrap items-center justify-center gap-4">
             <div class="flex items-center gap-2">
                 <p class="text-sm text-gray-500 shrink-0">Số dòng</p>
-                <select class="nttu-rows-per-page-select" x-model.number="rowsPerPage" @change="setRowsPerPage($event.target.value)">
-                    <template x-for="n in rowsPerPageOptions" :key="n">
-                        <option :value="n" x-text="n" :selected="normalizedRowsPerPage === n"></option>
-                    </template>
-                </select>
+                <input type="number" class="nttu-rows-per-page-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" list="{{ $datalistId = uniqid('dl_') }}" x-model.number="rowsPerPage" @change="setRowsPerPage($event.target.value)">
+<datalist id="{{ $datalistId }}">
+    <template x-for="n in rowsPerPageOptions" :key="n">
+        <option :value="n"></option>
+    </template>
+</datalist>
             </div>
             <div class="flex items-center gap-2">
                 <button type="button" @click="goToPage(1)" :disabled="safeCurrentPage === 1" class="h-8 w-8 rounded border disabled:opacity-40">«</button>

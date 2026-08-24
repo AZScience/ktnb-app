@@ -120,6 +120,29 @@ class CatalogExcelService
         return $rows;
     }
 
+    /**
+     * @param  list<string>  $nameAliases
+     * @return list<array{name: string, note: string}>
+     */
+    public function parseNameNoteRows(string $path, string $nameLabel, array $nameAliases = []): array
+    {
+        $aliases = [];
+        foreach (array_merge([$nameLabel], $nameAliases) as $alias) {
+            $aliases[mb_strtolower(trim($alias))] = 'name';
+        }
+        $aliases['ghi chú'] = 'note';
+        $aliases['ghichu'] = 'note';
+
+        return $this->parseRows($path, [
+            'name' => $nameLabel,
+            'note' => 'Ghi chú',
+        ], [
+            'aliases' => $aliases,
+            'requiredKey' => 'name',
+            'headerRowIndices' => [0, 7],
+        ]);
+    }
+
     /** @param  array<string, string>  $fieldLabels */
     public static function toBool(mixed $value): bool
     {

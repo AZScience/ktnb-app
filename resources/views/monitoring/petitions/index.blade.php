@@ -34,6 +34,7 @@
     storage-key="petitions"
     modal-wide
     form-mode="petition"
+    server-paginated
     form-layout="petition"
     advanced-filter-mode="assets"
     :advanced-filter-options="$assetAdvancedFilterOptions"
@@ -87,6 +88,7 @@
         'export' => route('petitions.export'),
         'importPreview' => route('petitions.import-preview'),
         'import' => route('petitions.import'),
+            'list' => route('petitions.index'),
     ]"
     :import-columns="$petitionImportColumns"
 />

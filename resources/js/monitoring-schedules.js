@@ -207,6 +207,29 @@ function formSnapshotWithoutLocalNote(form, excludeNote) {
     return snapshot;
 }
 
+async function compressIncidentPhoto(file, maxSize = 1600, quality = 0.85) {
+    const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Không đọc được file ảnh.'));
+        reader.readAsDataURL(file);
+    });
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error('File không phải ảnh hợp lệ.'));
+        img.src = dataUrl;
+    });
+}
+
 export function monitoringSchedulesPage(config) {
     const storageKey = `nttu_monitoring_${config.module}_colvis`;
     const pageKey = `nttu_monitoring_${config.module}_page`;
@@ -290,6 +313,14 @@ export function monitoringSchedulesPage(config) {
         rowMenuOpen: null,
         deleteOpen: false,
         deleteTarget: null,
+        clearRecordingOpen: false,
+        clearRecordingTarget: null,
+        incidentDetailExtracting: false,
+        incidentCameraOpen: false,
+        incidentCameraStream: null,
+        incidentCameraFacing: 'environment',
+        incidentCameraDeviceId: '',
+        incidentCameraDevices: [],
         saving: false,
         loading: false,
         toast: null,
@@ -456,9 +487,7 @@ export function monitoringSchedulesPage(config) {
 
         showToast(message, type = 'success') {
             this.toast = { message, type };
-            setTimeout(() => {
-                if (this.toast?.message === message) this.toast = null;
-            }, 2500);
+            setTimeout(() => { this.toast = null; }, 30000);
         },
 
         get visibleColumnKeys() {
@@ -514,6 +543,10 @@ export function monitoringSchedulesPage(config) {
             if (this.modalMode === 'edit') return `${t('Ghi nhận', this.currentLang)} ${entity}`;
             if (this.modalMode === 'copy') return `${t('Sao chép', this.currentLang)} ${entity}`;
             return `${t('Thêm mới', this.currentLang)} ${entity}`;
+        },
+
+        text(key) {
+            return typeof t === "function" ? t(key, this.currentLang) : key;
         },
 
         get isViewMode() {
@@ -1059,6 +1092,9 @@ export function monitoringSchedulesPage(config) {
         },
 
         buildFormFromItem(item, mode) {
+            const isCreateWithoutRecording = (mode === 'add' || mode === 'copy')
+                && this.uiConfig.recordingOnlyOnEdit;
+
             const base = {
                 id: mode === 'copy' || mode === 'add' ? null : item?.id,
                 date: item?.date || this.date || this.todayDate,
@@ -1075,14 +1111,18 @@ export function monitoringSchedulesPage(config) {
                 proctor3: item?.proctor3 || '',
                 content: item?.content || '',
                 status: item?.status || 'Phòng học',
-                employee: item?.employee || this.employeeDefault,
-                attending_students: item?.attending_students ?? '',
-                incident: mode === 'copy' ? '' : (item?.incident || ''),
-                incident_detail: mode === 'copy' ? '' : (item?.incident_detail || ''),
-                evidence: mode === 'copy' ? '' : (item?.evidence || ''),
-                recognition_date: mode === 'copy' ? this.todayDate : (item?.recognition_date || this.todayDate),
+                employee: isCreateWithoutRecording ? '' : (item?.employee || this.employeeDefault),
+                attending_students: isCreateWithoutRecording ? '' : (item?.attending_students ?? ''),
+                incident: mode === 'copy' || isCreateWithoutRecording ? '' : (item?.incident || ''),
+                incident_detail: mode === 'copy' || isCreateWithoutRecording ? '' : (item?.incident_detail || ''),
+                evidence: mode === 'copy' || isCreateWithoutRecording ? '' : (item?.evidence || ''),
+                recognition_date: isCreateWithoutRecording
+                    ? ''
+                    : (mode === 'copy' ? this.todayDate : (item?.recognition_date || this.todayDate)),
                 note: mode === 'copy' ? '' : (item?.note || ''),
-                is_notification: mode === 'copy' ? false : parseNotificationValue(item?.is_notification),
+                is_notification: mode === 'copy' || isCreateWithoutRecording
+                    ? false
+                    : parseNotificationValue(item?.is_notification),
             };
 
             if (mode === 'add') {
@@ -1099,7 +1139,7 @@ export function monitoringSchedulesPage(config) {
                 }
             }
 
-            if ((mode === 'edit' || mode === 'add' || mode === 'copy') && !item?.employee) {
+            if (!isCreateWithoutRecording && (mode === 'edit' || mode === 'add' || mode === 'copy') && !item?.employee) {
                 base.employee = this.employeeDefault;
             }
 
@@ -1176,6 +1216,182 @@ export function monitoringSchedulesPage(config) {
             this.rowMenuOpen = null;
         },
 
+        confirmClearRecording(item) {
+            if (!this.isHandled(item)) {
+                return;
+            }
+            this.clearRecordingTarget = item;
+            this.clearRecordingOpen = true;
+            this.rowMenuOpen = null;
+        },
+
+        async extractIncidentDetailFromPhoto(event) {
+            const file = event?.target?.files?.[0];
+            if (event?.target) {
+                event.target.value = '';
+            }
+            if (!file) {
+                return;
+            }
+
+            let dataUrl = '';
+            try {
+                dataUrl = await compressIncidentPhoto(file);
+            } catch (e) {
+                this.showToast(e.message || 'Không đọc được file ảnh.', 'error');
+                return;
+            }
+
+            await this.extractIncidentDetailFromDataUrl(dataUrl);
+        },
+
+        async extractIncidentDetailFromDataUrl(dataUrl) {
+            this.incidentDetailExtracting = true;
+            this.toast = null;
+            try {
+                const res = await fetch(`/monitoring/${this.module}/extract-incident-detail`, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify({ photo: dataUrl }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Không trích xuất được nội dung từ ảnh.');
+                }
+
+                const current = String(this.form.incident_detail || '').trim();
+                this.form.incident_detail = current ? `${current}; ${data.text}` : data.text;
+                this.showToast(data.message || 'Đã trích xuất nội dung từ ảnh phiếu.', 'success');
+            } catch (e) {
+                this.showToast(e.message || 'Không trích xuất được nội dung từ ảnh.', 'error');
+            } finally {
+                this.incidentDetailExtracting = false;
+            }
+        },
+
+        openIncidentDetailCamera() {
+            if (!navigator.mediaDevices?.getUserMedia) {
+                // Không có webcam API (trình duyệt cũ) — dùng input capture của thiết bị.
+                this.$refs.incidentDetailCameraInput?.click();
+                return;
+            }
+            this.incidentCameraOpen = true;
+            this.$nextTick(() => this.startIncidentDetailCamera());
+        },
+
+        async startIncidentDetailCamera() {
+            this.stopIncidentDetailCamera();
+            try {
+                const video = this.incidentCameraDeviceId
+                    ? { deviceId: { exact: this.incidentCameraDeviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+                    : { facingMode: { ideal: this.incidentCameraFacing }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+                const stream = await navigator.mediaDevices.getUserMedia({ video });
+                this.incidentCameraStream = stream;
+                const el = this.$refs.incidentDetailVideo;
+                if (el) el.srcObject = stream;
+                await this.refreshIncidentCameraDevices();
+            } catch (_) {
+                this.closeIncidentDetailCamera();
+                this.showToast('Không thể truy cập camera. Hãy cấp quyền camera hoặc dùng nút tải ảnh.', 'error');
+            }
+        },
+
+        async refreshIncidentCameraDevices() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                this.incidentCameraDevices = devices
+                    .filter((d) => d.kind === 'videoinput')
+                    .map((d, i) => ({ id: d.deviceId, label: d.label || `Camera ${i + 1}` }));
+
+                if (!this.incidentCameraDeviceId) {
+                    const current = this.incidentCameraStream?.getVideoTracks?.()[0]?.getSettings?.()?.deviceId;
+                    if (current) this.incidentCameraDeviceId = current;
+                }
+            } catch (_) {
+                this.incidentCameraDevices = [];
+            }
+        },
+
+        async selectIncidentDetailCamera(deviceId) {
+            this.incidentCameraDeviceId = deviceId;
+            await this.startIncidentDetailCamera();
+        },
+
+        async flipIncidentDetailCamera() {
+            this.incidentCameraFacing = this.incidentCameraFacing === 'environment' ? 'user' : 'environment';
+            this.incidentCameraDeviceId = '';
+            await this.startIncidentDetailCamera();
+        },
+
+        stopIncidentDetailCamera() {
+            if (this.incidentCameraStream) {
+                this.incidentCameraStream.getTracks().forEach((t) => t.stop());
+                this.incidentCameraStream = null;
+            }
+            const video = this.$refs.incidentDetailVideo;
+            if (video) video.srcObject = null;
+        },
+
+        closeIncidentDetailCamera() {
+            this.stopIncidentDetailCamera();
+            this.incidentCameraOpen = false;
+        },
+
+        async captureIncidentDetailPhoto() {
+            const video = this.$refs.incidentDetailVideo;
+            if (!video || !video.videoWidth) {
+                this.showToast('Camera chưa sẵn sàng. Vui lòng đợi giây lát.', 'error');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+            this.closeIncidentDetailCamera();
+            await this.extractIncidentDetailFromDataUrl(dataUrl);
+        },
+
+        async clearRecording() {
+            if (!this.clearRecordingTarget) {
+                return;
+            }
+
+            this.saving = true;
+            this.toast = null;
+            try {
+                const res = await fetch(`/monitoring/${this.module}/${this.clearRecordingTarget.id}/clear-recording`, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.message || 'Hủy ghi nhận thất bại');
+                }
+                const idx = this.items.findIndex((i) => i.id === data.item.id);
+                if (idx >= 0) {
+                    this.items[idx] = this.mergeMonitoringItem(this.items[idx], data.item);
+                }
+                this.clearRecordingOpen = false;
+                this.clearRecordingTarget = null;
+                this.showToast(data.message, 'success');
+            } catch (e) {
+                this.showToast(e.message, 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
         get isChanged() {
             const excludeNote = this.persistLocalNoteEnabled;
             const form = formSnapshotWithoutLocalNote(this.form, excludeNote);
@@ -1203,6 +1419,7 @@ export function monitoringSchedulesPage(config) {
         closeModal() {
             this.persistLocalNoteDraft();
             this.evidenceCleanupPanel();
+            this.closeIncidentDetailCamera();
             this.modalOpen = false;
         },
 
@@ -1339,7 +1556,7 @@ export function monitoringSchedulesPage(config) {
             }
 
             if (!String(this.form.incident ?? '').trim()) {
-                this.toast = { type: 'error', message: 'Vui lòng chọn Việc phát sinh.' };
+                this.showToast('Vui lòng chọn Việc phát sinh.', 'error');
                 this.openSections = {
                     ...this.openSections,
                     'recording-info': true,
@@ -1391,11 +1608,11 @@ export function monitoringSchedulesPage(config) {
                         this.items.push(data.item);
                     }
                 }
-                this.toast = { type: 'success', message: data.message };
+                this.showToast(data.message, 'success');
                 this.clearLocalNoteDraftSilently();
                 setTimeout(() => this.closeModal(), 600);
             } catch (e) {
-                this.toast = { type: 'error', message: e.message };
+                this.showToast(e.message, 'error');
             } finally {
                 this.saving = false;
             }
@@ -1419,11 +1636,64 @@ export function monitoringSchedulesPage(config) {
                 this.items = this.items.filter((i) => i.id !== data.id);
                 this.deleteOpen = false;
                 this.deleteTarget = null;
-                this.toast = { type: 'success', message: data.message };
+                this.showToast(data.message, 'success');
             } catch (e) {
-                this.toast = { type: 'error', message: e.message };
+                this.showToast(e.message, 'error');
             } finally {
                 this.saving = false;
+            }
+        },
+
+        isFetchingMeetLink: false,
+        async fetchMeetLinkFromEmail(source = 'email') {
+            if (this.isFetchingMeetLink) return;
+            this.isFetchingMeetLink = true;
+            try {
+                const res = await fetch('/monitoring/fetch-meet-link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        module: this.module,
+                        source: source,
+                        room: this.form.room || '',
+                        class: this.form.class || '',
+                        lecturer: this.form.lecturer_name || this.form.lecturer || '',
+                        period: this.form.period || '',
+                        subject: this.form.module_name || ''
+                    })
+                });
+                
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'Lỗi hệ thống');
+                }
+                
+                if (!this.form.note) {
+                    this.form.note = data.link;
+                } else {
+                    if (!this.form.note.includes(data.link)) {
+                        this.form.note += ' ' + data.link;
+                    }
+                }
+                if (typeof this.persistLocalNoteDraft === 'function') {
+                    this.persistLocalNoteDraft();
+                }
+                if (this.showToast) {
+                    this.showToast('Đã tìm thấy và lưu Link Meet!', 'success');
+                } else {
+                    alert('Đã tìm thấy: ' + data.link);
+                }
+            } catch (e) {
+                if (this.showToast) {
+                    this.showToast(e.message, 'error');
+                } else {
+                    alert(e.message);
+                }
+            } finally {
+                this.isFetchingMeetLink = false;
             }
         },
 

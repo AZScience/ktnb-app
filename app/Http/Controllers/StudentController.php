@@ -72,6 +72,15 @@ class StudentController extends Controller
 
 
 
+    public function info(Request $request): JsonResponse
+    {
+        $id = $request->query('id');
+        if (!$id) return response()->json(['item' => null]);
+        
+        $student = Student::where('id', $id)->orWhere('citizen_id', $id)->first();
+        return response()->json(['item' => $student]);
+    }
+
     public function store(Request $request): JsonResponse|RedirectResponse
 
     {

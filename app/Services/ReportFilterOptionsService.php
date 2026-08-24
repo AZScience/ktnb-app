@@ -7,6 +7,8 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\IncidentCategory;
 use App\Models\Lecturer;
+use App\Models\Recognition;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 
 class ReportFilterOptionsService
@@ -30,6 +32,15 @@ class ReportFilterOptionsService
     private function buildingNames(): array
     {
         return Cache::remember('report-filter:buildings', self::CACHE_TTL, fn () => BuildingBlock::query()->pluck('name')->all());
+    }
+
+    /** @return list<string> */
+    private function buildingNotes(): array
+    {
+        return Cache::remember('report-filter:building-notes', self::CACHE_TTL, fn () => BuildingBlock::query()
+            ->whereNotNull('note')
+            ->pluck('note')
+            ->all());
     }
 
     /** @return list<string> */
@@ -63,6 +74,15 @@ class ReportFilterOptionsService
     }
 
     /** @return list<string> */
+    private function recognitionNames(): array
+    {
+        return Cache::remember('report-filter:recognitions', self::CACHE_TTL, fn () => Recognition::query()
+            ->orderBy('name')
+            ->pluck('name')
+            ->all());
+    }
+
+    /** @return list<string> */
     private function employeeNicknames(): array
     {
         return Cache::remember('report-filter:employee-nicknames', self::CACHE_TTL, fn () => Employee::query()->whereNotNull('nickname')->pluck('nickname')->all());
@@ -75,6 +95,7 @@ class ReportFilterOptionsService
         $departments = $this->departmentNames();
         $employees = $this->employeeDisplayNames();
         $lecturers = $this->lecturerNames();
+        $recognitions = $this->recognitionNames();
 
         foreach ($rows as $row) {
             if (! empty($row['_building'])) {
@@ -89,6 +110,9 @@ class ReportFilterOptionsService
             if (! empty($row['_lecturerRaw'])) {
                 $lecturers[] = $row['_lecturerRaw'];
             }
+            if (! empty($row['_recognition']) && $row['_recognition'] !== '---') {
+                $recognitions[] = $row['_recognition'];
+            }
             foreach ($row['_proctors'] ?? [] as $proctor) {
                 if ($proctor) {
                     $lecturers[] = $proctor;
@@ -98,16 +122,30 @@ class ReportFilterOptionsService
 
         return [
             'buildings' => $this->sortedOptions($buildings),
+            'buildingNotes' => $this->sortedOptions($this->buildingNotes()),
             'departments' => $this->sortedOptions($departments),
             'employees' => $this->sortedOptions($employees),
             'lecturers' => $this->sortedOptions($lecturers),
+            'recognitions' => $this->sortedOptions($recognitions),
+            'users' => $this->userOptions(),
         ];
+    }
+
+    /** @return list<array{label: string, value: string}> */
+    public function userOptions(): array
+    {
+        return Cache::remember('report-filter:users', self::CACHE_TTL, function () {
+            $names = User::query()->orderBy('name')->pluck('name')->all();
+
+            return $this->sortedOptions($names);
+        });
     }
 
     /** @return array<string, list<array{label: string, value: string}>> */
     public function withBuildingsAndRecipients(array $rows): array
     {
         $buildings = $this->buildingNames();
+        $buildingNotes = $this->buildingNotes();
         $recipients = $this->employeeNicknames();
 
         foreach ($rows as $row) {
@@ -121,11 +159,33 @@ class ReportFilterOptionsService
 
         return [
             'buildings' => $this->sortedOptions($buildings),
+            'buildingNotes' => $this->sortedOptions($buildingNotes),
             'recipients' => $this->sortedOptions($recipients),
         ];
     }
 
     /** @return array<string, list<array{label: string, value: string}>> */
+        /** @return array<string, list<array{label: string, value: string}>> */
+    public function incidentRecords(array $rows): array
+    {
+        $locations = [];
+        $creator_names = [];
+
+        foreach ($rows as $row) {
+            if (!empty($row['location'])) {
+                $locations[] = $row['location'];
+            }
+            if (!empty($row['creator_name'])) {
+                $creator_names[] = $row['creator_name'];
+            }
+        }
+
+        return [
+            'locations' => $this->sortedOptions($locations),
+            'creator_names' => $this->sortedOptions($creator_names),
+        ];
+    }
+
     public function violations(array $rows): array
     {
         $buildings = $this->buildingNames();

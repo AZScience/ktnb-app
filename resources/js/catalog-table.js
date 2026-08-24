@@ -100,6 +100,14 @@ function defaultAdvancedFilters(mode) {
         };
     }
 
+    if (mode === 'incident-records') {
+        return {
+            start_date: '',
+            end_date: '',
+            officers: [],
+        };
+    }
+
     return {};
 }
 
@@ -111,6 +119,15 @@ function normalizeAdvancedFilters(mode, raw) {
             start_date: filters.start_date || filters.filterDate || '',
             end_date: filters.end_date || filters.filterDate || '',
             buildings: Array.isArray(filters.buildings) ? [...filters.buildings] : [],
+            officers: Array.isArray(filters.officers) ? [...filters.officers] : [],
+        };
+    }
+
+    if (mode === 'incident-records') {
+        const filters = raw || {};
+        return {
+            start_date: filters.start_date || '',
+            end_date: filters.end_date || '',
             officers: Array.isArray(filters.officers) ? [...filters.officers] : [],
         };
     }
@@ -552,6 +569,27 @@ function applyPetitionFormDefaults(mode, data, config) {
     return data;
 }
 
+function matchesIncidentRecordsAdvanced(item, advancedFilters) {
+    if (advancedFilters.officers?.length > 0) {
+        if (!item.creator_name || !advancedFilters.officers.includes(item.creator_name)) {
+            return false;
+        }
+    }
+
+    const { start_date: startDate, end_date: endDate } = advancedFilters;
+    if (!startDate && !endDate) {
+        return true;
+    }
+
+    const dateStr = String(item.incident_time || '').substring(0, 10);
+    if (!dateStr) return false;
+
+    if (startDate && dateStr < startDate) return false;
+    if (endDate && dateStr > endDate) return false;
+
+    return true;
+}
+
 export function catalogTablePage(config) {
     const storagePrefix = config.storageKey || 'catalog';
     const loadJson = (key, fallback) => {
@@ -988,6 +1026,10 @@ export function catalogTablePage(config) {
                     return matchesAnnouncementsAdvanced(item, this.advancedFilters);
                 }
 
+                if (this.advancedFilterMode === 'incident-records') {
+                    return matchesIncidentRecordsAdvanced(item, this.advancedFilters);
+                }
+
                 return true;
             });
 
@@ -1311,7 +1353,7 @@ export function catalogTablePage(config) {
 
         isPrimaryTextColumn(key) {
             const col = this.columns[key];
-            return !!col?.primary && !['boolean_status', 'boolean_yesno', 'avatar', 'date', 'badge'].includes(col.type);
+            return !!col?.primary && !['boolean_status', 'boolean_yesno', 'avatar', 'date', 'badge', 'image'].includes(col.type);
         },
 
         isBadgeColumn(key) {
@@ -1320,7 +1362,7 @@ export function catalogTablePage(config) {
 
         isStandardTextColumn(key) {
             const col = this.columns[key];
-            return !!col && !col.primary && !['boolean_status', 'boolean_yesno', 'avatar', 'date', 'badge'].includes(col.type);
+            return !!col && !col.primary && !['boolean_status', 'boolean_yesno', 'avatar', 'date', 'badge', 'image'].includes(col.type);
         },
 
         requestSort(key, direction) {
@@ -1377,7 +1419,10 @@ export function catalogTablePage(config) {
             if (Number.isNaN(date.getTime())) {
                 return value;
             }
-            return date.toLocaleDateString('vi-VN');
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return `${d}/${m}/${y}`;
         },
 
         initOpenSections() {

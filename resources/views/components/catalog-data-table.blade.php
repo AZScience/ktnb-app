@@ -26,6 +26,7 @@
     'allowAdd' => true,
     'canDelete' => true,
     'allowedDialogModes' => null,
+    'customRowActions' => [],
     'editActionLabel' => 'Chỉnh sửa',
     'modalTitle' => null,
     'staffDefault' => null,
@@ -57,10 +58,11 @@
         $formMode === 'service-request' ? 'service-request' :
         ($formMode === 'asset-reception' ? 'asset-reception' :
         ($formMode === 'petition' ? 'petition' :
+        ($formMode === 'incident-record' ? 'incident-record' :
         ($formMode === 'document-record' ? 'document-record' :
-        (count($formSections) > 0 ? 'sections' : ($modalWide ? 'grid' : 'simple')))))
+        (count($formSections) > 0 ? 'sections' : ($modalWide ? 'grid' : 'simple'))))))
     );
-    $customFormModes = ['service-request', 'asset-reception', 'petition', 'document-record'];
+    $customFormModes = ['service-request', 'asset-reception', 'petition', 'document-record', 'incident-record'];
     $isDocumentRecordModal = $resolvedFormLayout === 'document-record';
     $avatarFields = collect($formFields)->where('type', 'avatar')->values()->all();
     $nonAvatarFields = collect($formFields)->reject(fn ($f) => ($f['type'] ?? 'text') === 'avatar')->values()->all();
@@ -119,6 +121,7 @@
         evidenceUploadUrl: @js($evidenceUploadUrl ?? $routes['evidenceUpload'] ?? route('monitoring.evidence.upload')),
         advancedFilterMode: @js($advancedFilterMode),
         advancedFilterOptions: @js($advancedFilterOptions),
+        customRowActions: @js($customRowActions),
         allowAdd: @js($allowAddCatalog),
         allowedDialogModes: @js($allowedDialogModesResolved),
         canDelete: @js($canDeleteCatalog),
@@ -287,6 +290,12 @@
                                         <div x-show="!item.avatar_url" class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600" x-text="(item.name || '?').charAt(0)"></div>
                                     </div>
                                 </template>
+                                <template x-if="columns[key].type === 'image'">
+                                    <div class="flex justify-center py-1">
+                                        <img x-show="item[key]" :src="item[key]" class="max-h-12 w-auto object-contain bg-white rounded border p-0.5">
+                                        <span x-show="!item[key]" class="text-xs text-slate-400 italic">Trống</span>
+                                    </div>
+                                </template>
                                 <template x-if="columns[key].type === 'boolean_status'">
                                     <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
                                           :class="item[key] ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
@@ -323,6 +332,12 @@
                             </button>
                             <div x-cloak x-float="rowMenuOpen === item.id"
                                 class="nttu-row-action-menu nttu-floating-panel w-44 rounded-md border bg-white py-1 text-left text-sm font-normal shadow-lg">
+                                <template x-for="action in customRowActions" :key="action.label">
+                                    <a :href="action.url.replace('_id_', item.id)" class="flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-50">
+                                        <svg class="h-4 w-4" :class="action.colorClass || 'text-cyan-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                        <span x-text="action.label"></span>
+                                    </a>
+                                </template>
                                 <button type="button" class="flex w-full items-center gap-2 px-3 py-2 hover:bg-slate-50" @click="openDialog('view', item)">
                                     <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     <span x-text="text('Chi tiết')"></span>
@@ -420,6 +435,8 @@
                     <x-asset-reception-form :building-options="$buildingOptions" />
                 @elseif ($resolvedFormLayout === 'petition')
                     <x-petition-form />
+                @elseif ($resolvedFormLayout === 'incident-record')
+                    <x-incident-record-form />
                 @elseif ($resolvedFormLayout === 'sections' && count($formSections) > 0)
                     <div class="space-y-4">
                         @foreach ($formSections as $section)
@@ -471,15 +488,47 @@
                 @endif
 
             </div>
-            <div class="flex justify-end gap-2 border-t px-6 py-4" x-show="dialogMode !== 'view'">
-                <button type="button" class="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm" :disabled="!isChanged" @click="undoForm()">
+            <div class="flex justify-end gap-2 border-t px-6 py-4" x-show="dialogMode !== 'view' || '{{ $formMode }}' === 'incident-record'">
+                <button type="button" x-show="dialogMode !== 'view'" class="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm" :disabled="!isChanged" @click="undoForm()">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
                     <span x-text="text('Hoàn tác')"></span>
                 </button>
-                <button type="button" class="inline-flex items-center gap-2 rounded-md bg-[var(--nttu-table-head)] px-4 py-2 text-sm text-white disabled:opacity-50" :disabled="!isChanged || saving || (ckeditorMounting ?? false)" @click="saveItem()">
+                <button type="button" x-show="dialogMode !== 'view'" class="inline-flex items-center gap-2 rounded-md bg-[var(--nttu-table-head)] px-4 py-2 text-sm text-white disabled:opacity-50" :disabled="!isChanged || saving || (ckeditorMounting ?? false)" @click="saveItem()">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                     <span x-text="savingLabel()"></span>
                 </button>
+                @if ($formMode === 'incident-record')
+                <div x-data="{ printPreviewOpen: false }">
+                    <button type="button" x-cloak x-show="dialogMode === 'view' && selectedItem?.id" @click="printPreviewOpen = true" class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        In biên bản
+                    </button>
+                    
+                    <template x-teleport="body">
+                        <div x-show="printPreviewOpen" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" @keydown.escape.window="printPreviewOpen = false">
+                            <div class="relative w-full max-w-5xl h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col" @click.outside="printPreviewOpen = false">
+                                <div class="flex items-center justify-between border-b px-4 py-3 bg-slate-50 rounded-t-xl">
+                                    <h3 class="text-lg font-bold text-gray-800">Xem trước & In Biên bản</h3>
+                                    <div class="flex gap-2">
+                                        <button type="button" @click="$refs.printFrame.contentWindow.print()" class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                            In ngay
+                                        </button>
+                                        <button type="button" @click="printPreviewOpen = false" class="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-md transition-colors">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex-1 overflow-hidden bg-gray-200 p-2 md:p-6 rounded-b-xl relative">
+                                    <template x-if="printPreviewOpen">
+                                        <iframe x-ref="printFrame" :src="`/monitoring/incident-records/${selectedItem?.id}?popup=1`" class="w-full h-full bg-white shadow-md border-0 mx-auto" style="max-width: 210mm;"></iframe>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                @endif
             </div>
             @endif
         </div>
@@ -813,6 +862,51 @@
                         <span x-text="text('Tiêu đề')"></span>
                     </label>
                     <input type="text" x-model="advancedFilters.title" class="nttu-form-control" placeholder="Tìm trong tiêu đề...">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 border-t bg-slate-50/80 px-6 py-4">
+                <button type="button" @click="resetAdvancedFilters()" class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span x-text="text('Xóa tất cả')"></span>
+                </button>
+                <button type="button" @click="applyAdvancedFilters()" class="inline-flex items-center gap-2 rounded-md bg-[var(--nttu-table-head)] px-4 py-2 text-sm text-white">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span x-text="text('Áp dụng bộ lọc')"></span>
+                </button>
+            </div>
+        </div>
+        @elseif ($advancedFilterMode === 'incident-records')
+        <div class="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl" @click.stop>
+            <div class="flex items-center justify-between border-b bg-slate-50/80 px-4 py-3 pr-12">
+                <div class="flex items-center gap-3">
+                    <svg class="h-5 w-5 text-[var(--nttu-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    <h3 class="text-lg font-bold text-gray-900" x-text="text('Bộ lọc nâng cao')"></h3>
+                </div>
+            </div>
+            <button type="button" class="absolute right-4 top-3 rounded-sm text-gray-400 hover:text-gray-600" @click="advancedOpen = false" aria-label="Đóng">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="grid grid-cols-1 gap-6 overflow-y-auto p-6 text-sm md:grid-cols-2">
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 font-medium text-gray-700">
+                        <svg class="h-4 w-4 text-[var(--nttu-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span x-text="text('Từ ngày lập biên bản')"></span>
+                    </label>
+                    <input type="date" x-model="advancedFilters.start_date" class="nttu-form-control">
+                </div>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2 font-medium text-gray-700">
+                        <svg class="h-4 w-4 text-[var(--nttu-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span x-text="text('Đến ngày lập biên bản')"></span>
+                    </label>
+                    <input type="date" x-model="advancedFilters.end_date" class="nttu-form-control">
+                </div>
+                <div class="space-y-2 md:col-span-2">
+                    <label class="flex items-center gap-2 font-medium text-gray-700">
+                        <svg class="h-4 w-4 text-[var(--nttu-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <span x-text="text('Người lập biên bản')"></span>
+                    </label>
+                    <x-nttu-multi-select field="officers" placeholder="Tất cả nhân viên" search-placeholder="Tìm nhân viên..." chip-mode="count" />
                 </div>
             </div>
             <div class="flex justify-end gap-2 border-t bg-slate-50/80 px-6 py-4">

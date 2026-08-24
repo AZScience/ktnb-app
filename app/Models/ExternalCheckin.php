@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDisplayDateColumns;
 use Illuminate\Database\Eloquent\Model;
 
 class ExternalCheckin extends Model
 {
+    use NormalizesDisplayDateColumns;
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -22,4 +25,11 @@ class ExternalCheckin extends Model
         'location' => 'array',
         'is_notification' => 'boolean',
     ];
+
+    protected static function displayDateIsoColumns(): array
+    {
+        return [
+            'schedule_date' => 'schedule_date_iso',
+        ];
+    }
 }

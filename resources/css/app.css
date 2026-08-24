@@ -326,23 +326,22 @@
         line-clamp: unset !important;
         display: block;
     }
-    /* Zebra + hover/active: áp dụng từng ô để sticky cột Cài đặt cùng màu cả dòng */
+    /* Zebra + hover/active: hover chỉ áp dụng cho dòng chưa chọn */
     .nttu-table tbody tr:nth-child(odd) td {
         @apply bg-white;
     }
     .nttu-table tbody tr:nth-child(even) td {
         @apply bg-slate-50;
     }
-    .nttu-table tbody tr:hover td {
+    .nttu-table tbody tr:hover:not(.row-selected) td {
         @apply bg-yellow-300 text-black;
     }
-    .nttu-table tbody tr.row-selected td {
-        @apply bg-red-800 text-white;
-    }
+    .nttu-table tbody tr.row-selected td,
     .nttu-table tbody tr.row-selected:hover td {
-        @apply bg-yellow-300 text-black;
+        background-color: rgb(153 27 27) !important;
+        color: rgb(255 255 255) !important;
     }
-    /* Sticky cột Cài đặt — cùng zebra / hover / active với cả dòng (ghi đè nền cố định) */
+    /* Sticky cột Cài đặt — cùng zebra / hover / active với cả dòng */
     .nttu-table tbody tr:nth-child(odd) td.catalog-td-settings,
     .nttu-table tbody tr:nth-child(odd) td.sticky-action {
         background-color: #fff !important;
@@ -351,64 +350,82 @@
     .nttu-table tbody tr:nth-child(even) td.sticky-action {
         background-color: rgb(248 250 252) !important;
     }
-    .nttu-table tbody tr:hover td.catalog-td-settings,
-    .nttu-table tbody tr:hover td.sticky-action {
+    .nttu-table tbody tr:hover:not(.row-selected) td.catalog-td-settings,
+    .nttu-table tbody tr:hover:not(.row-selected) td.sticky-action {
         background-color: rgb(253 224 71) !important;
         color: rgb(0 0 0) !important;
     }
     .nttu-table tbody tr.row-selected td.catalog-td-settings,
-    .nttu-table tbody tr.row-selected td.sticky-action {
+    .nttu-table tbody tr.row-selected td.sticky-action,
+    .nttu-table tbody tr.row-selected:hover td.catalog-td-settings,
+    .nttu-table tbody tr.row-selected:hover td.sticky-action {
         background-color: rgb(153 27 27) !important;
         color: rgb(255 255 255) !important;
     }
-    .nttu-table tbody tr.row-selected:hover td.catalog-td-settings,
-    .nttu-table tbody tr.row-selected:hover td.sticky-action {
-        background-color: rgb(253 224 71) !important;
-        color: rgb(0 0 0) !important;
-    }
     /* STT đã ghi nhận */
     .nttu-table .row-handled {
-        @apply inline-flex items-center justify-center min-w-[28px] h-7 px-1 rounded-full border-2 border-red-500 text-red-600 font-black text-sm bg-white;
+        @apply inline-flex items-center justify-center min-w-[28px] h-7 px-1 rounded-full border-2 border-red-500 font-black text-sm bg-white;
+        color: rgb(220 38 38);
     }
-    .nttu-table tbody tr:hover .row-handled {
+    .nttu-table tbody tr:hover:not(.row-selected) .row-handled {
         @apply border-slate-800 text-slate-900 bg-yellow-100;
     }
-    .nttu-table tbody tr.row-selected .row-handled {
+    .nttu-table tbody tr.row-selected .row-handled,
+    .nttu-table tbody tr.row-selected:hover .row-handled {
         @apply border-white text-white bg-red-900/50;
     }
-    .nttu-table tbody tr.row-selected:hover .row-handled {
-        @apply border-red-600 text-red-800 bg-white;
+    /* Chữ trong dòng active — luôn sáng, không đổi khi hover */
+    .nttu-table tbody tr.row-selected td,
+    .nttu-table tbody tr.row-selected:hover td {
+        color: rgb(255 255 255) !important;
     }
-    /* Chữ phụ / link trong dòng active */
-    .nttu-table tbody tr.row-selected td .text-gray-400,
-    .nttu-table tbody tr.row-selected td .text-gray-500 {
-        @apply text-red-100;
+    .nttu-table tbody tr.row-selected td [class*="text-gray-400"],
+    .nttu-table tbody tr.row-selected td [class*="text-gray-500"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-gray-400"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-gray-500"] {
+        color: rgb(254 226 226) !important;
     }
-    .nttu-table tbody tr.row-selected td .text-blue-600,
-    .nttu-table tbody tr.row-selected td .text-blue-700 {
-        @apply text-white;
+    .nttu-table tbody tr.row-selected td [class*="text-gray-600"],
+    .nttu-table tbody tr.row-selected td [class*="text-gray-700"],
+    .nttu-table tbody tr.row-selected td [class*="text-gray-800"],
+    .nttu-table tbody tr.row-selected td [class*="text-gray-900"],
+    .nttu-table tbody tr.row-selected td [class*="text-slate-600"],
+    .nttu-table tbody tr.row-selected td [class*="text-slate-700"],
+    .nttu-table tbody tr.row-selected td [class*="text-slate-800"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-gray-600"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-gray-700"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-gray-800"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-gray-900"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-slate-600"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-slate-700"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-slate-800"] {
+        color: rgb(255 255 255) !important;
     }
-    .nttu-table tbody tr.row-selected td .text-green-600 {
-        @apply text-green-200;
+    .nttu-table tbody tr.row-selected td [class*="text-blue-600"],
+    .nttu-table tbody tr.row-selected td [class*="text-blue-700"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-blue-600"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-blue-700"] {
+        color: rgb(255 255 255) !important;
     }
-    .nttu-table tbody tr.row-selected td [class*="nttu-primary"] {
+    .nttu-table tbody tr.row-selected td [class*="text-green-600"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-green-600"] {
+        color: rgb(187 247 208) !important;
+    }
+    .nttu-table tbody tr.row-selected td [class*="text-red-600"],
+    .nttu-table tbody tr.row-selected td [class*="text-red-700"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-red-600"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-red-700"] {
+        color: rgb(254 226 226) !important;
+    }
+    .nttu-table tbody tr.row-selected td [class*="text-orange-600"],
+    .nttu-table tbody tr.row-selected:hover td [class*="text-orange-600"] {
+        color: rgb(254 215 170) !important;
+    }
+    .nttu-table tbody tr.row-selected td [class*="nttu-primary"],
+    .nttu-table tbody tr.row-selected:hover td [class*="nttu-primary"] {
         color: #fff !important;
     }
-    .nttu-table tbody tr.row-selected:hover td [class*="nttu-primary"] {
-        color: var(--nttu-primary) !important;
-    }
-    .nttu-table tbody tr.row-selected:hover td .text-gray-400,
-    .nttu-table tbody tr.row-selected:hover td .text-gray-500 {
-        @apply text-gray-600;
-    }
-    .nttu-table tbody tr.row-selected:hover td .text-blue-600,
-    .nttu-table tbody tr.row-selected:hover td .text-blue-700 {
-        @apply text-blue-800;
-    }
-    .nttu-table tbody tr.row-selected:hover td .text-green-600 {
-        @apply text-green-700;
-    }
-    /* Badge/chip có nền màu — đảo tương phản khi active/hover */
+    /* Badge/chip có nền màu — đảo tương phản khi active, giữ nguyên khi hover */
     .nttu-table tbody tr.row-selected td [class*="bg-red-"],
     .nttu-table tbody tr.row-selected td [class*="bg-green-"],
     .nttu-table tbody tr.row-selected td [class*="bg-blue-"],
@@ -417,11 +434,17 @@
     .nttu-table tbody tr.row-selected td [class*="bg-gray-"],
     .nttu-table tbody tr.row-selected td [class*="bg-slate-"],
     .nttu-table tbody tr.row-selected td [class*="bg-orange-"],
-    .nttu-table tbody tr.row-selected td [class*="bg-yellow-"] {
-        background-color: rgb(255 255 255 / 0.95) !important;
-        color: rgb(15 23 42) !important;
-        border-color: rgb(203 213 225) !important;
-    }
+    .nttu-table tbody tr.row-selected td [class*="bg-yellow-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-violet-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-purple-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-pink-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-rose-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-fuchsia-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-indigo-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-teal-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-lime-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-emerald-"],
+    .nttu-table tbody tr.row-selected td [class*="bg-sky-"],
     .nttu-table tbody tr.row-selected:hover td [class*="bg-red-"],
     .nttu-table tbody tr.row-selected:hover td [class*="bg-green-"],
     .nttu-table tbody tr.row-selected:hover td [class*="bg-blue-"],
@@ -430,10 +453,20 @@
     .nttu-table tbody tr.row-selected:hover td [class*="bg-gray-"],
     .nttu-table tbody tr.row-selected:hover td [class*="bg-slate-"],
     .nttu-table tbody tr.row-selected:hover td [class*="bg-orange-"],
-    .nttu-table tbody tr.row-selected:hover td [class*="bg-yellow-"] {
-        background-color: rgb(255 255 255) !important;
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-yellow-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-violet-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-purple-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-pink-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-rose-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-fuchsia-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-indigo-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-teal-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-lime-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-emerald-"],
+    .nttu-table tbody tr.row-selected:hover td [class*="bg-sky-"] {
+        background-color: rgb(255 255 255 / 0.95) !important;
         color: rgb(15 23 42) !important;
-        border-color: rgb(148 163 184) !important;
+        border-color: rgb(203 213 225) !important;
     }
     .nttu-table tbody tr:hover:not(.row-selected) td [class*="bg-gray-100"],
     .nttu-table tbody tr:hover:not(.row-selected) td [class*="bg-slate-100"] {
@@ -450,12 +483,10 @@
         @apply transition-colors;
     }
     .nttu-table tbody tr.row-selected td.sticky-action button,
-    .nttu-table tbody tr.row-selected td.catalog-td-settings button {
-        @apply text-white hover:bg-red-900/50;
-    }
+    .nttu-table tbody tr.row-selected td.catalog-td-settings button,
     .nttu-table tbody tr.row-selected:hover td.sticky-action button,
     .nttu-table tbody tr.row-selected:hover td.catalog-td-settings button {
-        @apply text-[var(--nttu-primary)] hover:bg-yellow-400/70;
+        @apply text-white hover:bg-red-900/50;
     }
     .nttu-table tbody tr:hover:not(.row-selected) td.sticky-action button,
     .nttu-table tbody tr:hover:not(.row-selected) td.catalog-td-settings button {
@@ -471,14 +502,12 @@
     .nttu-table tbody tr.row-selected td.sticky-action > button.nttu-row-action-btn,
     .nttu-table tbody tr.row-selected td.catalog-td-settings > button.nttu-row-action-btn,
     .nttu-table tbody tr.row-selected td.sticky-action > .relative > button.nttu-row-action-btn,
-    .nttu-table tbody tr.row-selected td.catalog-td-settings > .relative > button.nttu-row-action-btn {
-        @apply bg-transparent text-white hover:bg-transparent;
-    }
+    .nttu-table tbody tr.row-selected td.catalog-td-settings > .relative > button.nttu-row-action-btn,
     .nttu-table tbody tr.row-selected:hover td.sticky-action > button.nttu-row-action-btn,
     .nttu-table tbody tr.row-selected:hover td.catalog-td-settings > button.nttu-row-action-btn,
     .nttu-table tbody tr.row-selected:hover td.sticky-action > .relative > button.nttu-row-action-btn,
     .nttu-table tbody tr.row-selected:hover td.catalog-td-settings > .relative > button.nttu-row-action-btn {
-        @apply bg-transparent text-[var(--nttu-primary)] hover:bg-transparent;
+        @apply bg-transparent text-white hover:bg-transparent;
     }
     .nttu-table tbody tr:hover:not(.row-selected) td.sticky-action > button.nttu-row-action-btn,
     .nttu-table tbody tr:hover:not(.row-selected) td.catalog-td-settings > button.nttu-row-action-btn,
@@ -492,11 +521,9 @@
     .nttu-catalog-table tbody td.catalog-td-index {
         @apply text-center font-medium text-slate-600;
     }
-    .nttu-table tbody tr.row-selected td.catalog-td-index {
-        @apply text-white;
-    }
+    .nttu-table tbody tr.row-selected td.catalog-td-index,
     .nttu-table tbody tr.row-selected:hover td.catalog-td-index {
-        @apply text-slate-800;
+        @apply text-white;
     }
     .nttu-cell-chip {
         @apply bg-white;
@@ -973,6 +1000,23 @@
     .nttu-interactive-report.report-variant-comprehensive .report-thead th {
         border-color: var(--nttu-th-divider) !important;
     }
+    .nttu-interactive-report.report-variant-comprehensive .nttu-catalog-table tbody td[data-col] {
+        font-size: 0.75rem;
+        line-height: 1.375;
+    }
+    .nttu-interactive-report.report-variant-comprehensive .nttu-catalog-table tbody td[data-col="incident"] {
+        text-align: center !important;
+    }
+    .nttu-interactive-report.report-variant-comprehensive .nttu-catalog-table tbody td[data-col="incidentDetail"] {
+        text-align: left !important;
+    }
+    .nttu-interactive-report.report-variant-comprehensive .nttu-catalog-table tbody td[data-col="incidentDetail"] > span,
+    .nttu-interactive-report.report-variant-comprehensive .nttu-catalog-table tbody td[data-col="incidentDetail"] > div {
+        display: block;
+        text-align: left !important;
+        white-space: normal;
+        word-break: break-word;
+    }
     .nttu-interactive-report .report-table-body-wrap:not(.flush) {
         padding: 1rem;
     }
@@ -1260,6 +1304,9 @@
         background-repeat: no-repeat;
         background-position: right 0.35rem center;
         background-size: 0.75rem;
+    }
+    .nttu-rows-per-page-input {
+        @apply h-7 min-h-7 min-w-[3.75rem] w-[3.75rem] rounded border border-gray-300 bg-white px-1 py-0.5 text-xs text-center leading-tight shadow-sm;
     }
 
     .sr-form .sr-field {

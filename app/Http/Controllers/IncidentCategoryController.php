@@ -4,18 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\IncidentCategory;
 use App\Models\Recognition;
+use App\Services\CatalogExcelService;
 use App\Services\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class IncidentCategoryController extends Controller
 {
-    public function __construct(private ReportExportService $export) {}
+    public function __construct(
+        private ReportExportService $export,
+        private CatalogExcelService $catalogExcel,
+    ) {}
 
     public function index(): View
     {
@@ -141,43 +144,19 @@ class IncidentCategoryController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        $rows = [];
-
-        foreach ($sheet->getRowIterator(8) as $row) {
-            $cells = [];
-            foreach ($row->getCellIterator() as $cell) {
-                $cells[] = trim((string) $cell->getValue());
-            }
-
-            $recognitionName = $cells[0] ?? '';
-            $name = $cells[1] ?? '';
-            if ($name === '' || mb_strtolower($name) === 'tên việc phát sinh') {
-                continue;
-            }
-
-            $rows[] = [
-                'recognition_name' => $recognitionName,
-                'name' => $name,
-                'note' => $cells[2] ?? '',
-            ];
-        }
-
-        if ($rows === []) {
-            foreach ($sheet->toArray() as $line) {
-                $name = trim((string) ($line['Tên việc phát sinh'] ?? $line['Tên'] ?? $line[1] ?? ''));
-                if ($name === '' || mb_strtolower($name) === 'tên việc phát sinh') {
-                    continue;
-                }
-                $rows[] = [
-                    'recognition_name' => trim((string) ($line['Việc ghi nhận'] ?? $line[0] ?? '')),
-                    'name' => $name,
-                    'note' => trim((string) ($line['Ghi chú'] ?? $line[2] ?? '')),
-                ];
-            }
-        }
-
-        return $rows;
+        return $this->catalogExcel->parseRows($path, [
+            'recognition_name' => 'Việc ghi nhận',
+            'name' => 'Tên việc phát sinh',
+            'note' => 'Ghi chú',
+        ], [
+            'requiredKey' => 'name',
+            'aliases' => [
+                'việc ghi nhận' => 'recognition_name',
+                'tên việc phát sinh' => 'name',
+                'tên' => 'name',
+                'ghi chú' => 'note',
+            ],
+        ]);
     }
 
     private function resolveRecognitionId(string $value): ?string

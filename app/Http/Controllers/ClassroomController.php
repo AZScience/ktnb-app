@@ -2,20 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessCatalogImportJob;
 use App\Models\BuildingBlock;
 use App\Models\Classroom;
+use App\Services\CatalogExcelService;
+use App\Services\ImportProgressService;
 use App\Services\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClassroomController extends Controller
 {
-    public function __construct(private ReportExportService $export) {}
+    public function __construct(
+        private ReportExportService $export,
+        private CatalogExcelService $catalogExcel,
+        private ImportProgressService $importProgress,
+    ) {}
 
     public function index(): View
     {
@@ -158,6 +164,18 @@ class ClassroomController extends Controller
             'rows.*.note' => 'nullable|string',
         ]);
 
+        if ($request->boolean('async') || count($data['rows']) > 100) {
+            $progress = $this->importProgress->start(count($data['rows']), 'Import phòng học');
+            ProcessCatalogImportJob::dispatch($progress['id'], 'classrooms', $data['rows'])->afterResponse();
+
+            return response()->json([
+                'message' => 'Đang import nền...',
+                'async' => true,
+                'progress_id' => $progress['id'],
+                'progress_url' => route('imports.status', ['id' => $progress['id']]),
+            ]);
+        }
+
         foreach ($data['rows'] as $row) {
             $name = trim($row['name']);
             if ($name === '') {
@@ -223,51 +241,39 @@ class ClassroomController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        $rows = [];
-        $startRow = 8;
+        $rows = $this->catalogExcel->parseRows($path, [
+            'name' => 'Tên phòng',
+            'building_block' => 'Dãy nhà',
+            'room_type' => 'Loại phòng',
+            'seating_capacity' => 'Số chỗ ngồi',
+            'table_count' => 'Số bàn',
+            'exam_capacity' => 'Số chỗ thi',
+            'note' => 'Ghi chú',
+        ], [
+            'requiredKey' => 'name',
+            'aliases' => [
+                'tên phòng' => 'name',
+                'dãy nhà' => 'building_block',
+                'loại phòng' => 'room_type',
+                'số chỗ ngồi' => 'seating_capacity',
+                'số bàn' => 'table_count',
+                'số chỗ thi' => 'exam_capacity',
+                'ghi chú' => 'note',
+            ],
+        ]);
 
-        foreach ($sheet->getRowIterator($startRow) as $row) {
-            $cells = [];
-            foreach ($row->getCellIterator() as $cell) {
-                $cells[] = trim((string) $cell->getValue());
+        return array_map(function (array $row): array {
+            foreach (['seating_capacity', 'table_count', 'exam_capacity'] as $key) {
+                $value = trim((string) ($row[$key] ?? ''));
+                $row[$key] = $value === '' ? null : (int) $value;
             }
 
-            $name = $cells[0] ?? '';
-            if ($name === '' || mb_strtolower($name) === 'tên phòng') {
-                continue;
+            if (trim((string) ($row['room_type'] ?? '')) === '') {
+                $row['room_type'] = 'Lý thuyết';
             }
 
-            $rows[] = [
-                'name' => $name,
-                'building_block' => $cells[1] ?? '',
-                'room_type' => $cells[2] ?? 'Lý thuyết',
-                'seating_capacity' => $cells[3] !== '' ? (int) $cells[3] : null,
-                'table_count' => $cells[4] !== '' ? (int) $cells[4] : null,
-                'exam_capacity' => $cells[5] !== '' ? (int) $cells[5] : null,
-                'note' => $cells[6] ?? '',
-            ];
-        }
-
-        if ($rows === []) {
-            foreach ($sheet->toArray() as $line) {
-                $name = trim((string) ($line['Tên phòng'] ?? $line[0] ?? ''));
-                if ($name === '' || mb_strtolower($name) === 'tên phòng') {
-                    continue;
-                }
-                $rows[] = [
-                    'name' => $name,
-                    'building_block' => trim((string) ($line['Dãy nhà'] ?? $line[1] ?? '')),
-                    'room_type' => trim((string) ($line['Loại phòng'] ?? $line[2] ?? 'Lý thuyết')),
-                    'seating_capacity' => isset($line['Số chỗ ngồi']) && $line['Số chỗ ngồi'] !== '' ? (int) $line['Số chỗ ngồi'] : null,
-                    'table_count' => isset($line['Số bàn']) && $line['Số bàn'] !== '' ? (int) $line['Số bàn'] : null,
-                    'exam_capacity' => isset($line['Số chỗ thi']) && $line['Số chỗ thi'] !== '' ? (int) $line['Số chỗ thi'] : null,
-                    'note' => trim((string) ($line['Ghi chú'] ?? $line[6] ?? '')),
-                ];
-            }
-        }
-
-        return $rows;
+            return $row;
+        }, $rows);
     }
 
     private function resolveBuildingBlockId(string $value): ?string

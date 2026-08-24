@@ -82,7 +82,12 @@ class ProvisionUsersFromEmployeesCommand extends Command
 
     private function ensureSuperAdminUsers(AuthLoginService $authLogin): void
     {
-        $defaultPassword = (string) config('nttu.super_admin_default_password', 'Nttu@2026');
+        $defaultPassword = (string) config('nttu.super_admin_default_password', '');
+        if ($defaultPassword === '') {
+            $this->warn('SUPER_ADMIN_DEFAULT_PASSWORD chưa cấu hình — bỏ qua tạo super admin mới không có nhân viên.');
+
+            return;
+        }
 
         foreach (config('nttu.super_admin_emails', []) as $email) {
             $email = strtolower(trim($email));

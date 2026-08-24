@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemParameter;
 use App\Models\DailySchedule;
 use App\Models\Employee;
 use App\Models\IncidentCategory;
@@ -9,6 +10,7 @@ use App\Models\Recognition;
 use App\Models\UserSetting;
 use App\Services\ActivityLogService;
 use App\Services\EvidenceStorageService;
+use App\Services\IncidentDetailExtractionService;
 use App\Services\ScheduleExcelService;
 use App\Services\ScheduleLocationService;
 use App\Services\ScheduleMasterDataService;
@@ -16,8 +18,8 @@ use App\Services\ScheduleRoomChecklistExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MonitoringScheduleController extends Controller
@@ -54,6 +56,15 @@ class MonitoringScheduleController extends Controller
     public function homeroom(Request $request): View
     {
         return $this->index($request, 'homeroom');
+    }
+
+    public function extractIncidentDetail(Request $request, string $module, IncidentDetailExtractionService $extraction): JsonResponse
+    {
+        $data = $request->validate([
+            'photo' => 'required|string',
+        ]);
+
+        return response()->json($extraction->extract($data['photo'], $module));
     }
 
     public function data(Request $request, string $module): JsonResponse
@@ -100,12 +111,16 @@ class MonitoringScheduleController extends Controller
         $incidentRule = DailySchedule::requiresIncidentSelection($module)
             ? 'required|string|max:255'
             : 'nullable|string|max:255';
+            
+        $incidentDetailRule = in_array($module, ['homeroom', 'external-practice'])
+            ? 'required|string'
+            : 'nullable|string';
 
         $data = $request->validate([
             'employee' => 'nullable|string|max:255',
             'attending_students' => 'nullable|integer|min:0',
             'incident' => $incidentRule,
-            'incident_detail' => 'nullable|string',
+            'incident_detail' => $incidentDetailRule,
             'evidence' => 'nullable|string',
             'recognition_date' => 'nullable|string|max:20',
             'note' => 'nullable|string',
@@ -127,6 +142,8 @@ class MonitoringScheduleController extends Controller
             'proctor3' => 'sometimes|nullable|string|max:255',
             'content' => 'sometimes|nullable|string|max:500',
             'status' => 'sometimes|nullable|string|max:255',
+        ], [
+            'incident_detail.required' => 'Vui lòng nhập Chi tiết việc phát sinh.',
         ]);
 
         $previous = $schedule->only(['employee', 'incident', 'attending_students', 'evidence']);
@@ -193,8 +210,62 @@ class MonitoringScheduleController extends Controller
             ->with('success', 'Đã cập nhật giám sát.');
     }
 
+    public function clearRecording(Request $request, string $module, DailySchedule $schedule): JsonResponse|RedirectResponse
+    {
+        $previous = $schedule->only([
+            'employee',
+            'recognition_date',
+            'attending_students',
+            'incident',
+            'incident_detail',
+            'evidence',
+            'is_notification',
+        ]);
+
+        $schedule->update([
+            'employee' => '',
+            'recognition_date' => '',
+            'attending_students' => null,
+            'incident' => '',
+            'incident_detail' => '',
+            'evidence' => '',
+            'is_notification' => false,
+        ]);
+
+        $this->activityLog->log(
+            'Hủy ghi nhận giám sát',
+            'DailySchedule',
+            "Module {$module} · Lớp {$schedule->class} · Tiết {$schedule->period}",
+            $previous,
+            $schedule->fresh()->only([
+                'employee',
+                'recognition_date',
+                'attending_students',
+                'incident',
+                'incident_detail',
+                'evidence',
+                'is_notification',
+            ]),
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã hủy ghi nhận.',
+                'item' => $schedule->fresh()->toListTableArray(),
+            ]);
+        }
+
+        return redirect()->route("monitoring.{$module}.index", ['date' => $schedule->date])
+            ->with('success', 'Đã hủy ghi nhận.');
+    }
+
     public function store(Request $request, string $module): JsonResponse|RedirectResponse
     {
+        $incidentDetailRule = in_array($module, ['homeroom', 'external-practice'])
+            ? 'required|string'
+            : 'nullable|string';
+
         $data = $request->validate([
             'date' => 'required|string|max:20',
             'building' => 'nullable|string|max:255',
@@ -213,13 +284,15 @@ class MonitoringScheduleController extends Controller
             'employee' => 'nullable|string|max:255',
             'attending_students' => 'nullable|integer|min:0',
             'incident' => 'nullable|string|max:255',
-            'incident_detail' => 'nullable|string',
+            'incident_detail' => $incidentDetailRule,
             'evidence' => 'nullable|string',
             'recognition_date' => 'nullable|string|max:20',
             'note' => 'nullable|string',
             'is_notification' => 'nullable|boolean',
             'files' => 'nullable|array',
             'files.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf',
+        ], [
+            'incident_detail.required' => 'Vui lòng nhập Chi tiết việc phát sinh.',
         ]);
 
         $id = 'sched-'.str_replace('-', '', $module).'-'.Str::lower(Str::random(8));
@@ -241,6 +314,8 @@ class MonitoringScheduleController extends Controller
 
         $pair = $this->locations->normalizePair($data['building'] ?? null, $data['room'] ?? null);
 
+        // Thêm/Sao chép chỉ tạo lịch — không tự "Ghi nhận" (khoanh đỏ #).
+        // employee + recognition_date chỉ có khi client gửi (modal Ghi nhận/Sửa).
         $schedule = DailySchedule::create([
             'id' => $id,
             'date' => $data['date'],
@@ -257,12 +332,14 @@ class MonitoringScheduleController extends Controller
             'proctor3' => $data['proctor3'] ?? null,
             'content' => $data['content'] ?? null,
             'status' => $data['status'] ?? 'Phòng học',
-            'employee' => $data['employee'] ?? $this->employeeDefault(),
+            'employee' => array_key_exists('employee', $data) ? trim((string) ($data['employee'] ?? '')) : '',
             'attending_students' => $data['attending_students'] ?? null,
             'incident' => $data['incident'] ?? null,
             'incident_detail' => $data['incident_detail'] ?? null,
             'evidence' => $evidence,
-            'recognition_date' => $data['recognition_date'] ?? date('d/m/Y'),
+            'recognition_date' => array_key_exists('recognition_date', $data)
+                ? trim((string) ($data['recognition_date'] ?? ''))
+                : '',
             'note' => $data['note'] ?? null,
             'is_notification' => $request->boolean('is_notification'),
         ]);
@@ -503,5 +580,252 @@ class MonitoringScheduleController extends Controller
             'message' => 'Đã lưu bộ lọc',
             'presets' => $data['presets'],
         ]);
+    }
+
+    public function fetchMeetLink(Request $request)
+    {
+        $module = $request->input('module');
+        $source = $request->input('source', 'email'); // 'email' or 'lcms'
+        
+        $room = $request->input('room');
+        $class = $request->input('class');
+        $lecturer = $request->input('lecturer');
+        $period = $request->input('period');
+        $subject = $request->input('subject');
+
+        $bestLink = null;
+        $bestScore = 0;
+        $newestTime = 0;
+
+        // --- NGUỒN 1: TÌM TRONG EMAIL (IMAP) ---
+        if ($source === 'email' || $source === 'both') {
+            $username = \App\Models\SystemParameter::where('key', 'smtpUser')->value('value');
+            $password = \App\Models\SystemParameter::where('key', 'smtpPass')->value('value');
+            
+            if ($username && $password) {
+                try {
+                    $hostname = '{imap.gmail.com:993/imap/ssl}INBOX';
+                    $inbox = @imap_open($hostname, $username, $password, OP_READONLY);
+                    if ($inbox) {
+                        $date = date('d-M-Y', strtotime('-14 days'));
+                        $emails = imap_search($inbox, 'SINCE "' . $date . '" TEXT "meet.google.com"');
+                        
+                        if ($emails) {
+                            rsort($emails); 
+                            $emails = array_slice($emails, 0, 50);
+
+                            foreach ($emails as $email_number) {
+                                $overview = imap_fetch_overview($inbox, $email_number, 0);
+                                
+                                $message = imap_fetchbody($inbox, $email_number, 1);
+                                if (empty(trim($message))) {
+                                    $message = imap_fetchbody($inbox, $email_number, 2);
+                                }
+                                
+                                $struct = imap_fetchstructure($inbox, $email_number);
+                                $encoding = $struct->parts[0]->encoding ?? ($struct->encoding ?? 0);
+                                
+                                if ($encoding == 3) {
+                                    $message = base64_decode($message);
+                                } elseif ($encoding == 4) {
+                                    $message = quoted_printable_decode($message);
+                                }
+                                
+                                $mailSubject = $overview[0]->subject ?? '';
+                                $decodedSubject = '';
+                                $subjElements = imap_mime_header_decode($mailSubject);
+                                foreach ($subjElements as $element) {
+                                    $decodedSubject .= $element->text;
+                                }
+                                
+                                $message = strip_tags($message);
+                                $content = mb_strtolower($decodedSubject . ' ' . $message, 'UTF-8');
+                                
+                                if (preg_match('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $content, $matches)) {
+                                    $link = $matches[0];
+                                    
+                                    $score = 0;
+                                    if ($room && mb_stripos($content, mb_strtolower(trim($room), 'UTF-8')) !== false) $score++;
+                                    if ($class && mb_stripos($content, mb_strtolower(trim($class), 'UTF-8')) !== false) $score++;
+                                    if ($lecturer && mb_stripos($content, mb_strtolower(trim($lecturer), 'UTF-8')) !== false) $score++;
+                                    if ($subject && mb_stripos($content, mb_strtolower(trim($subject), 'UTF-8')) !== false) $score++;
+                                    if ($period && mb_stripos($content, mb_strtolower(trim((string)$period), 'UTF-8')) !== false) $score++;
+                                    
+                                    if ($score > 0) {
+                                        $time = strtotime($overview[0]->date);
+                                        if ($score > $bestScore || ($score == $bestScore && $time > $newestTime)) {
+                                            $bestScore = $score;
+                                            $bestLink = $link;
+                                            $newestTime = $time;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        imap_close($inbox);
+                    }
+                } catch (\Exception $e) {
+                }
+            } else if ($source === 'email') {
+                return response()->json(['error' => 'Chưa cấu hình tài khoản Email trong hệ thống.'], 400);
+            }
+        }
+
+        // --- NGUỒN 2: TÌM TRONG LCMS (Moodle Scraper) ---
+        if ($source === 'lcms' || $source === 'both') {
+            $lcmsUrl = \App\Models\SystemParameter::where('key', 'lcmsUrl')->value('value') ?: 'https://lcms.ntt.edu.vn';
+            $lcmsUser = \App\Models\SystemParameter::where('key', 'lcmsUser')->value('value');
+            $lcmsPass = \App\Models\SystemParameter::where('key', 'lcmsPass')->value('value');
+
+            if ($lcmsUrl && $lcmsUser && $lcmsPass) {
+                try {
+                    \Illuminate\Support\Facades\Log::info("LCMS Login: $lcmsUser");
+                    $client = new \GuzzleHttp\Client(['cookies' => true, 'verify' => false, 'headers' => [
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    ]]);
+                    
+                    $loginUrl = rtrim($lcmsUrl, '/') . '/login/index.php';
+                    $res1 = $client->get($loginUrl);
+                    $html1 = (string)$res1->getBody();
+                    
+                    if (preg_match('/name="logintoken" value="([^"]+)"/', $html1, $mToken)) {
+                        $loginToken = $mToken[1];
+                        
+                        $client->post($loginUrl, [
+                            'form_params' => [
+                                'username' => $lcmsUser,
+                                'password' => $lcmsPass,
+                                'logintoken' => $loginToken
+                            ]
+                        ]);
+                        
+                        // Trích xuất Mã môn từ subject (vd: "011007558111 - Kinh tế Chính trị" -> "011007558111")
+                        $searchTerm = '';
+                        if ($subject) {
+                            if (preg_match('/^([A-Z0-9]+)\s*-/', $subject, $m)) {
+                                $searchTerm = $m[1]; // Lấy mã môn
+                            } else {
+                                $searchTerm = explode(' ', $subject)[0]; // Hoặc lấy từ đầu tiên
+                            }
+                        }
+                        
+                        // Nếu vẫn không có mã môn thì dùng lớp
+                        if (!$searchTerm) {
+                            $searchTerm = $class;
+                        }
+                        
+                        // Nếu vẫn không có thì ghép lại tìm chung
+                        if (!$searchTerm) {
+                            $searchTerm = trim($class . ' ' . $subject);
+                        }
+                        
+                        if ($searchTerm) {
+                            \Illuminate\Support\Facades\Log::info("LCMS Search: " . $searchTerm);
+                            $searchQuery = urlencode($searchTerm);
+                            $searchUrl = rtrim($lcmsUrl, '/') . '/course/search.php?areaids=core_course-course&q=' . $searchQuery;
+                            
+                            $resSearch = $client->get($searchUrl, [
+                                'allow_redirects' => ['track_redirects' => true]
+                            ]);
+                            $htmlSearch = (string)$resSearch->getBody();
+                            
+                            $courseUrls = [];
+                            $redirectHistory = $resSearch->getHeader('X-Guzzle-Redirect-History');
+                            $currentUrl = empty($redirectHistory) ? $searchUrl : end($redirectHistory);
+                            
+                            // Moodle redirects directly to course view if there's exactly 1 match
+                            if (strpos($currentUrl, 'course/view.php') !== false) {
+                                $courseUrls[] = $currentUrl;
+                                \Illuminate\Support\Facades\Log::info("LCMS Redirected exactly to course: " . $currentUrl);
+                            } else {
+                                if (preg_match_all('/href="([^"]+course\/view\.php\?id=\d+)[^"]*"/i', $htmlSearch, $mCourses)) {
+                                    $courseUrls = array_unique($mCourses[1]);
+                                    \Illuminate\Support\Facades\Log::info("LCMS Found " . count($courseUrls) . " course links");
+                                }
+                            }
+                            
+                            foreach (array_slice($courseUrls, 0, 3) as $courseUrl) {
+                                $courseUrl = str_replace('&amp;', '&', $courseUrl);
+                                
+                                // Nếu là URL bị redirect thì không cần fetch lại vì htmlSearch đã chứa
+                                if ($courseUrl !== $currentUrl) {
+                                    $resCourse = $client->get($courseUrl);
+                                    $htmlCourse = (string)$resCourse->getBody();
+                                } else {
+                                    $htmlCourse = $htmlSearch;
+                                }
+                                
+                                // 1. Tìm MỌI link Google Meet lộ rõ trong HTML (kể cả trong văn bản thuần)
+                                if (preg_match_all('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlCourse, $mLinks)) {
+                                    foreach ($mLinks[0] as $link) {
+                                        \Illuminate\Support\Facades\Log::info("LCMS Found explicit link: " . $link);
+                                        $score = 0;
+                                        $contentCourse = mb_strtolower(strip_tags($htmlCourse), 'UTF-8');
+                                        if ($room && mb_stripos($contentCourse, mb_strtolower(trim($room), 'UTF-8')) !== false) $score++;
+                                        if ($class && mb_stripos($contentCourse, mb_strtolower(trim($class), 'UTF-8')) !== false) $score++;
+                                        if ($lecturer && mb_stripos($contentCourse, mb_strtolower(trim($lecturer), 'UTF-8')) !== false) $score++;
+                                        if ($subject && mb_stripos($contentCourse, mb_strtolower(trim($subject), 'UTF-8')) !== false) $score++;
+                                        
+                                        $score += 2; // Bonus points for LCMS match
+                                        
+                                        if ($score > $bestScore) {
+                                            $bestScore = $score;
+                                            $bestLink = $link;
+                                        }
+                                    }
+                                }
+
+                                // 2. Tìm link Meet bị ẩn trong resource dạng URL của Moodle (VD: <a href="...mod/url/view.php?id=123">...</a>)
+                                if (preg_match_all('/href="([^"]*mod\/url\/view\.php\?id=\d+)"/i', $htmlCourse, $mUrlMods)) {
+                                    $checkedUrls = [];
+                                    foreach (array_unique($mUrlMods[1]) as $urlMod) {
+                                        if (count($checkedUrls) >= 5) break; // Giới hạn kiểm tra 5 module URL mỗi khóa để tránh treo máy
+                                        $checkedUrls[] = $urlMod;
+                                        
+                                        $urlMod = str_replace('&amp;', '&', $urlMod);
+                                        try {
+                                            $resUrl = $client->get($urlMod);
+                                            $htmlUrl = (string)$resUrl->getBody();
+                                            
+                                            if (preg_match('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlUrl, $mMeetHidden)) {
+                                                $link = $mMeetHidden[0];
+                                                \Illuminate\Support\Facades\Log::info("LCMS Found hidden module link: " . $link);
+                                                
+                                                $score = 0;
+                                                $contentCourse = mb_strtolower(strip_tags($htmlCourse), 'UTF-8');
+                                                if ($room && mb_stripos($contentCourse, mb_strtolower(trim($room), 'UTF-8')) !== false) $score++;
+                                                if ($class && mb_stripos($contentCourse, mb_strtolower(trim($class), 'UTF-8')) !== false) $score++;
+                                                if ($lecturer && mb_stripos($contentCourse, mb_strtolower(trim($lecturer), 'UTF-8')) !== false) $score++;
+                                                if ($subject && mb_stripos($contentCourse, mb_strtolower(trim($subject), 'UTF-8')) !== false) $score++;
+                                                
+                                                $score += 3; // Thêm bonus cao hơn vì đây là link từ module URL chính thức
+                                                
+                                                if ($score > $bestScore) {
+                                                    $bestScore = $score;
+                                                    $bestLink = $link;
+                                                }
+                                            }
+                                        } catch (\Exception $e) {
+                                            // Bỏ qua lỗi
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("LCMS Exception: " . $e->getMessage());
+                }
+            } else if ($source === 'lcms') {
+                return response()->json(['error' => 'Chưa cấu hình tài khoản LCMS trong hệ thống.'], 400);
+            }
+        }
+
+        if ($bestLink) {
+            return response()->json(['link' => $bestLink, 'score' => $bestScore]);
+        }
+        
+        $sourceName = $source === 'email' ? 'Email' : ($source === 'lcms' ? 'hệ thống E-Learning (LCMS)' : 'Email hoặc LCMS');
+        return response()->json(['error' => "Không tìm thấy Link Google Meet nào từ $sourceName khớp với tiêu chí."], 404);
     }
 }

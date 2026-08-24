@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\ActivityLogService;
 use App\Services\PermissionService;
+use App\Services\ProjectFilePermissionService;
 use App\Services\ProjectFileService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class ProjectFileController extends Controller
     public function __construct(
         private ProjectFileService $files,
         private PermissionService $permissions,
+        private ProjectFilePermissionService $pathPermissions,
         private ActivityLogService $activityLog,
     ) {}
 
@@ -30,8 +32,14 @@ class ProjectFileController extends Controller
         $this->authorizeAccess();
 
         $path = (string) $request->query('path', '');
+        $this->pathPermissions->assertPathAction($path, 'view');
 
-        return response()->json($this->files->listDirectory($path));
+        $listing = $this->files->listDirectory($path);
+        $listing['items'] = $this->pathPermissions->annotateItems(
+            $this->pathPermissions->filterVisibleItems($listing['items']),
+        );
+
+        return response()->json($listing);
     }
 
     public function show(Request $request): JsonResponse
@@ -41,6 +49,8 @@ class ProjectFileController extends Controller
         $data = $request->validate([
             'path' => 'required|string|max:500',
         ]);
+
+        $this->pathPermissions->assertPathAction($data['path'], 'view');
 
         return response()->json($this->files->readFile($data['path']));
     }
@@ -58,6 +68,7 @@ class ProjectFileController extends Controller
         ]);
 
         $parent = (string) ($data['path'] ?? '');
+        $this->pathPermissions->assertPathAction($parent, 'add');
         $createdPath = match ($data['type']) {
             'folder' => $this->files->createDirectory($parent, $data['name']),
             'file' => $this->files->createFile($parent, $data['name'], $data['content'] ?? ''),
@@ -90,6 +101,7 @@ class ProjectFileController extends Controller
         ]);
 
         $parent = (string) ($data['path'] ?? '');
+        $this->pathPermissions->assertPathAction($parent, 'add');
         $uploads = [];
         foreach ($data['files'] as $index => $file) {
             $uploads[] = [
@@ -132,6 +144,9 @@ class ProjectFileController extends Controller
             'destination' => 'required|string|max:500',
         ]);
 
+        $this->pathPermissions->assertPathAction($data['path'], 'edit');
+        $this->pathPermissions->assertPathAction($data['destination'], 'add');
+
         $newPath = $this->files->move($data['path'], $data['destination']);
         $parent = dirname(str_replace('\\', '/', $newPath));
         $parent = $parent === '.' ? '' : $parent;
@@ -163,6 +178,13 @@ class ProjectFileController extends Controller
         $paths = $data['paths'] ?? (($data['path'] ?? null) ? [$data['path']] : []);
         if ($paths === []) {
             abort(422, 'Chưa chọn file nén.');
+        }
+
+        foreach ($paths as $archivePath) {
+            $this->pathPermissions->assertPathAction($archivePath, 'edit');
+        }
+        if (($data['destination'] ?? null) !== null) {
+            $this->pathPermissions->assertPathAction($data['destination'], 'add');
         }
 
         if (count($paths) === 1 && ($data['destination'] ?? null) !== null) {
@@ -215,6 +237,11 @@ class ProjectFileController extends Controller
         ]);
 
         $parent = (string) ($data['path'] ?? '');
+        foreach ($data['paths'] as $selectedPath) {
+            $this->pathPermissions->assertPathAction($selectedPath, 'edit');
+        }
+        $this->pathPermissions->assertPathAction($parent, 'add');
+
         $archivePath = $this->files->createArchive(
             $data['paths'],
             $parent,
@@ -243,6 +270,10 @@ class ProjectFileController extends Controller
             'paths.*' => 'string|max:500',
         ]);
 
+        foreach ($data['paths'] as $selectedPath) {
+            $this->pathPermissions->assertPathAction($selectedPath, 'download');
+        }
+
         return $this->files->downloadSelection($data['paths']);
     }
 
@@ -254,6 +285,8 @@ class ProjectFileController extends Controller
             'path' => 'required|string|max:500',
             'content' => 'required|string',
         ]);
+
+        $this->pathPermissions->assertPathAction($data['path'], 'edit');
 
         $this->files->writeFile($data['path'], $data['content']);
 
@@ -277,6 +310,8 @@ class ProjectFileController extends Controller
             'path' => 'required|string|max:500',
             'name' => 'required|string|max:255',
         ]);
+
+        $this->pathPermissions->assertPathAction($data['path'], 'edit');
 
         $newPath = $this->files->rename($data['path'], $data['name']);
         $parent = dirname(str_replace('\\', '/', $newPath));
@@ -308,6 +343,10 @@ class ProjectFileController extends Controller
         $paths = $data['paths'] ?? (($data['path'] ?? null) ? [$data['path']] : []);
         if ($paths === []) {
             abort(422, 'Chưa chọn mục nào để xóa.');
+        }
+
+        foreach ($paths as $selectedPath) {
+            $this->pathPermissions->assertPathAction($selectedPath, 'delete');
         }
 
         $parent = dirname(str_replace('\\', '/', $paths[0]));
@@ -350,6 +389,8 @@ class ProjectFileController extends Controller
         $data = $request->validate([
             'path' => 'required|string|max:500',
         ]);
+
+        $this->pathPermissions->assertPathAction($data['path'], 'download');
 
         return $this->files->download($data['path']);
     }

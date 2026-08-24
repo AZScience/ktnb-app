@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDisplayDateColumns;
 use Illuminate\Database\Eloquent\Model;
 
 class Petition extends Model
 {
+    use NormalizesDisplayDateColumns;
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -22,4 +25,11 @@ class Petition extends Model
         'is_returned' => 'boolean',
         'is_forwarded' => 'boolean',
     ];
+
+    protected static function displayDateIsoColumns(): array
+    {
+        return [
+            'reception_date' => 'reception_date_iso',
+        ];
+    }
 }

@@ -19,7 +19,7 @@ class DailyReportTemplateBuilder
 
     private const DATA_FONT_SIZE = 12;
 
-  /** @var array<string, string> */
+    /** @var array<string, string> */
     private const EXPORT_LABELS = [
         'employee' => 'Nhân viên',
         'date' => 'Ngày',
@@ -165,7 +165,7 @@ class DailyReportTemplateBuilder
         foreach ($exportCols as $offset => $colKey) {
             $coordinate = Coordinate::stringFromColumnIndex($offset + 2).$dataRow;
             if ($colKey === 'is_notification') {
-                $sheet->getCell($coordinate)->setValueExplicit(false, DataType::TYPE_BOOL);
+                $sheet->getCell($coordinate)->setValueExplicit('☐', DataType::TYPE_STRING);
             } else {
                 $sheet->setCellValue($coordinate, '');
             }

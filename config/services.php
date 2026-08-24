@@ -36,7 +36,7 @@ return [
     ],
 
     'nttu' => [
-        'api_key' => env('EXTERNAL_API_KEY', 'kiemtranoibo_default_secret_key_2026'),
+        'api_key' => env('EXTERNAL_API_KEY'),
     ],
 
     'google' => [

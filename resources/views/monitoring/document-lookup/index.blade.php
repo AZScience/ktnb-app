@@ -15,9 +15,13 @@
     @keydown.escape.window="fullPreview = false"
 >
     <div x-show="toast" x-cloak
-        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg"
-        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'"
-        x-text="toast?.message"></div>
+        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 
     <div class="space-y-6 pb-8">
         {{-- Search card --}}
@@ -99,11 +103,12 @@
                         <span class="text-xs font-bold text-slate-500 uppercase tracking-wider" x-text="`Danh sách kết quả (${sortedItems.length})`"></span>
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] text-slate-500 font-medium">Số dòng</span>
-                            <select class="nttu-rows-per-page-select" :value="normalizedRowsPerPage" @change="setRowsPerPage($event.target.value)">
-                                <template x-for="n in rowsPerPageOptions" :key="n">
-                                    <option :value="n" x-text="n" :selected="normalizedRowsPerPage === n"></option>
-                                </template>
-                            </select>
+                            <input type="number" class="nttu-rows-per-page-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" list="{{ $datalistId = uniqid('dl_') }}" :value="normalizedRowsPerPage" @change="setRowsPerPage($event.target.value)">
+<datalist id="{{ $datalistId }}">
+    <template x-for="n in rowsPerPageOptions" :key="n">
+        <option :value="n"></option>
+    </template>
+</datalist>
                         </div>
                     </div>
 

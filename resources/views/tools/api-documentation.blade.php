@@ -358,6 +358,31 @@ Authorization: Bearer your_secret_key_here</code></pre>
             @endforeach
 
             <article class="rounded-xl border border-slate-200 p-4">
+                            <article class="rounded-xl border border-slate-200 overflow-hidden">
+                <div class="flex flex-wrap items-center gap-2 border-b bg-slate-50 px-4 py-3">
+                    <span class="rounded px-2 py-0.5 text-xs font-bold text-white bg-blue-600">POST</span>
+                    <code class="text-xs font-semibold">/v1/incident-records</code>
+                    <span class="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">API key</span>
+                </div>
+                <div class="space-y-2 p-4">
+                    <h4 class="font-bold text-gray-900">Ghi nhận biên bản sự việc</h4>
+                    <p class="text-xs text-gray-500">Body JSON:</p>
+                    <pre class="overflow-x-auto rounded bg-slate-900 p-3 text-xs text-slate-100"><code>{
+  "incident_time": "2026-06-17T08:30:00",
+  "location": "Phòng A101",
+  "creator_name": "Nguyễn Văn A",
+  "witness_name": "Trần Văn B",
+  "participants": [
+    {"name": "Nguyễn Văn A", "role": "Người lập biên bản"},
+    {"name": "Trần Văn B", "role": "Người chứng kiến"}
+  ],
+  "content": "Sinh viên sử dụng tài liệu trong giờ thi",
+  "evidence": []
+}</code></pre>
+                </div>
+            </article>
+
+            <article class="rounded-xl border border-slate-200 p-4">
                 <h4 class="font-bold">Bình chọn — sinh viên gửi vote (không cần API key)</h4>
                 <p class="mt-1 text-xs text-gray-600">PATCH <code>/polls/{pollId}</code></p>
                 <pre class="mt-2 overflow-x-auto rounded bg-slate-900 p-3 text-xs text-slate-100"><code>{

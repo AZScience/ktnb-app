@@ -47,14 +47,26 @@ class NttuSeeder extends Seeder
             ], $dept));
         }
 
-        $admin = User::updateOrCreate(
-            ['email' => 'ngviphuc@gmail.com'],
-            [
-                'name' => 'Nguyễn Vĩnh Phúc',
-                'password' => Hash::make('Nttu@2026'),
-                'email_verified_at' => now(),
-            ]
-        );
+        $adminPassword = (string) config('nttu.super_admin_default_password', '');
+        if ($adminPassword === '') {
+            $adminPassword = (string) env('SEEDER_ADMIN_PASSWORD', '');
+        }
+
+        $admin = User::query()->where('email', 'ngviphuc@gmail.com')->first();
+        if ($adminPassword !== '') {
+            $admin = User::updateOrCreate(
+                ['email' => 'ngviphuc@gmail.com'],
+                [
+                    'name' => 'Nguyễn Vĩnh Phúc',
+                    'password' => Hash::make($adminPassword),
+                    'email_verified_at' => now(),
+                ]
+            );
+        }
+
+        if (! $admin) {
+            return;
+        }
 
         foreach ([
             ['id' => 'chuyen-vien', 'name' => 'Chuyên viên'],

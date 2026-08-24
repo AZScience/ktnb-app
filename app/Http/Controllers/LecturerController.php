@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessCatalogImportJob;
 use App\Models\Department;
 use App\Models\Lecturer;
 use App\Models\Position;
 use App\Services\CatalogExcelService;
+use App\Services\ImportProgressService;
 use App\Services\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -18,6 +21,7 @@ class LecturerController extends Controller
     public function __construct(
         private ReportExportService $export,
         private CatalogExcelService $catalogExcel,
+        private ImportProgressService $importProgress,
     ) {}
 
     public function index(): View
@@ -183,6 +187,18 @@ class LecturerController extends Controller
             'rows.*.note' => 'nullable|string',
         ]);
 
+        if ($request->boolean('async') || count($data['rows']) > 50) {
+            $progress = $this->importProgress->start(count($data['rows']), 'Import giảng viên');
+            ProcessCatalogImportJob::dispatch($progress['id'], 'lecturers', $data['rows'])->afterResponse();
+
+            return response()->json([
+                'message' => 'Đang import nền...',
+                'async' => true,
+                'progress_id' => $progress['id'],
+                'progress_url' => route('imports.status', ['id' => $progress['id']]),
+            ]);
+        }
+
         foreach ($data['rows'] as $row) {
             $id = trim($row['id']);
             $name = trim($row['name']);
@@ -339,9 +355,9 @@ class LecturerController extends Controller
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<string, string>|null  $departmentNames
-     * @param  \Illuminate\Support\Collection<string, string>|null  $positionNames
-     * @param  \Illuminate\Support\Collection<string, string>|null  $positionIdsByName
+     * @param  Collection<string, string>|null  $departmentNames
+     * @param  Collection<string, string>|null  $positionNames
+     * @param  Collection<string, string>|null  $positionIdsByName
      */
     private function hydrateItem(
         Lecturer $lecturer,

@@ -213,12 +213,11 @@ export function violationFormMethods() {
             return String(this.form.student_id || this.form.identifier || '').trim();
         },
 
-        violationResolveStudentState() {
+        async violationResolveStudentState() {
             const code = this.violationStudentCode().toLowerCase();
             if (!code) {
                 this.violationStudentInSystem = false;
                 this.violationStudentNotInSystem = false;
-
                 return;
             }
 
@@ -226,10 +225,26 @@ export function violationFormMethods() {
             if (student) {
                 this.violationStudentInSystem = true;
                 this.violationStudentNotInSystem = false;
-            } else {
-                this.violationStudentInSystem = false;
-                this.violationStudentNotInSystem = true;
+                return;
             }
+
+            // Fetch from API
+            try {
+                const res = await fetch(`/personnel/students-info?id=${encodeURIComponent(code)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                
+                if (data.item) {
+                    if (!this.violationStudentMap) Object.assign(this, { violationStudentMap: {} });
+                    this.violationStudentMap[code] = data.item;
+                    this.violationApplyStudent(data.item);
+                    this.violationStudentInSystem = true;
+                    this.violationStudentNotInSystem = false;
+                } else {
+                    this.violationStudentInSystem = false;
+                    this.violationStudentNotInSystem = true;
+                }
+            } catch (err) {}
         },
 
         violationStudentFieldEditable() {
@@ -1258,9 +1273,7 @@ export function violationFormMethods() {
 
         showToast(message, type = 'success') {
             this.toast = { message, type };
-            setTimeout(() => {
-                if (this.toast?.message === message) this.toast = null;
-            }, 3500);
+            setTimeout(() => { this.toast = null; }, 30000);
         },
     };
 }

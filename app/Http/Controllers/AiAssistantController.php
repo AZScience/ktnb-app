@@ -40,4 +40,67 @@ class AiAssistantController extends Controller
 
         return response()->json(['answer' => $answer]);
     }
+
+    public function extractAssetReception(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|string',
+        ]);
+
+        try {
+            $base64 = preg_replace('/^data:image\/\w+;base64,/', '', $request->input('image'));
+            
+            $mime = 'image/jpeg';
+            if (preg_match('/^data:(image\/\w+);base64,/', $request->input('image'), $matches)) {
+                $mime = $matches[1];
+            }
+
+            $result = $this->assistant->extractAssetReception($base64, $mime);
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function extractServiceRequest(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|string',
+        ]);
+
+        try {
+            $base64 = preg_replace('/^data:image\/\w+;base64,/', '', $request->input('image'));
+            
+            $mime = 'image/jpeg';
+            if (preg_match('/^data:(image\/\w+);base64,/', $request->input('image'), $matches)) {
+                $mime = $matches[1];
+            }
+
+            $result = $this->assistant->extractServiceRequest($base64, $mime);
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function extractPetition(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|string',
+        ]);
+
+        try {
+            $base64 = preg_replace('/^data:image\/\w+;base64,/', '', $request->input('image'));
+            
+            $mime = 'image/jpeg';
+            if (preg_match('/^data:(image\/\w+);base64,/', $request->input('image'), $matches)) {
+                $mime = $matches[1];
+            }
+
+            $result = $this->assistant->extractPetition($base64, $mime);
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

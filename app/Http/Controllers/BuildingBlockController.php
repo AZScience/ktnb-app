@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\BuildingBlock;
+use App\Services\CatalogExcelService;
 use App\Services\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BuildingBlockController extends Controller
 {
-    public function __construct(private ReportExportService $export) {}
+    public function __construct(
+        private ReportExportService $export,
+        private CatalogExcelService $catalogExcel,
+    ) {}
 
     public function index(): View
     {
@@ -164,43 +167,19 @@ class BuildingBlockController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        $rows = [];
-        $startRow = 8;
-
-        foreach ($sheet->getRowIterator($startRow) as $row) {
-            $cells = [];
-            foreach ($row->getCellIterator() as $cell) {
-                $cells[] = trim((string) $cell->getValue());
-            }
-
-            $code = $cells[0] ?? '';
-            if ($code === '' || mb_strtolower($code) === 'mã phòng') {
-                continue;
-            }
-
-            $rows[] = [
-                'code' => $code,
-                'name' => $cells[1] ?? '',
-                'note' => $cells[2] ?? '',
-            ];
-        }
-
-        if ($rows === []) {
-            foreach ($sheet->toArray() as $line) {
-                $code = trim((string) ($line['Mã phòng'] ?? $line[0] ?? ''));
-                if ($code === '' || mb_strtolower($code) === 'mã phòng') {
-                    continue;
-                }
-                $rows[] = [
-                    'code' => $code,
-                    'name' => trim((string) ($line['Dãy nhà'] ?? $line[1] ?? '')),
-                    'note' => trim((string) ($line['Ghi chú'] ?? $line[2] ?? '')),
-                ];
-            }
-        }
-
-        return $rows;
+        return $this->catalogExcel->parseRows($path, [
+            'code' => 'Mã phòng',
+            'name' => 'Dãy nhà',
+            'note' => 'Ghi chú',
+        ], [
+            'requiredKey' => 'code',
+            'aliases' => [
+                'mã phòng' => 'code',
+                'dãy nhà' => 'name',
+                'tên' => 'name',
+                'ghi chú' => 'note',
+            ],
+        ]);
     }
 
     private function makeUniqueId(string $code): string

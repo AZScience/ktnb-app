@@ -11,9 +11,9 @@ class VerifyApiKey
     public function handle(Request $request, Closure $next): Response
     {
         $token = $request->bearerToken() ?? $request->header('x-api-key');
-        $expected = config('services.nttu.api_key', 'kiemtranoibo_default_secret_key_2026');
+        $expected = (string) config('services.nttu.api_key', '');
 
-        if (! $token || ! hash_equals($expected, $token)) {
+        if ($expected === '' || ! is_string($token) || $token === '' || ! hash_equals($expected, $token)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized. Invalid API Key.'], 401);
         }
 

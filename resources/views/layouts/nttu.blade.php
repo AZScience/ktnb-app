@@ -64,7 +64,7 @@
 
             <x-nttu-header />
 
-            <main class="flex-1 overflow-y-auto bg-[var(--nttu-bg)] p-4 md:p-6">
+            <main class="flex-1 overflow-y-scroll bg-[var(--nttu-bg)] p-4 md:p-6">
 
                 @php
                     use App\Support\PageHeading;

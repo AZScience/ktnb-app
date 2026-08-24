@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Recognition;
+use App\Services\CatalogExcelService;
 use App\Services\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RecognitionController extends Controller
 {
-    public function __construct(private ReportExportService $export) {}
+    public function __construct(
+        private ReportExportService $export,
+        private CatalogExcelService $catalogExcel,
+    ) {}
 
     public function index(): View
     {
@@ -74,22 +77,7 @@ class RecognitionController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        $rows = [];
-        foreach ($sheet->getRowIterator(8) as $row) {
-            $cells = [];
-            foreach ($row->getCellIterator() as $cell) { $cells[] = trim((string) $cell->getValue()); }
-            $name = $cells[0] ?? '';
-            if ($name === '' || in_array(mb_strtolower($name), ['tên việc ghi nhận', 'việc ghi nhận'], true)) continue;
-            $rows[] = ['name' => $name, 'note' => $cells[1] ?? ''];
-        }
-        if ($rows !== []) return $rows;
-        foreach ($sheet->toArray() as $line) {
-            $name = trim((string) ($line['Tên việc ghi nhận'] ?? $line['Việc ghi nhận'] ?? $line[0] ?? ''));
-            if ($name === '' || in_array(mb_strtolower($name), ['tên việc ghi nhận', 'việc ghi nhận'], true)) continue;
-            $rows[] = ['name' => $name, 'note' => trim((string) ($line['Ghi chú'] ?? $line[1] ?? ''))];
-        }
-        return $rows;
+        return $this->catalogExcel->parseNameNoteRows($path, 'Tên việc ghi nhận', ['Việc ghi nhận']);
     }
 
     private function makeUniqueId(string $name): string

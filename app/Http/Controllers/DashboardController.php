@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Announcement;
 use App\Models\AssetReception;
+use App\Models\BuildingBlock;
 use App\Models\DailySchedule;
 use App\Models\Employee;
-use App\Models\BuildingBlock;
 use App\Models\Message;
 use App\Models\Petition;
 use App\Models\StudentViolation;
@@ -20,6 +20,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -74,7 +75,7 @@ class DashboardController extends Controller
             ->filter(fn ($item) => trim((string) ($item->incident ?? '')) !== '');
 
         $birthdays = Employee::with(['user', 'positionRecord'])
-            ->whereRaw("DATE_FORMAT(STR_TO_DATE(birth_date, '%Y-%m-%d'), '%m-%d') = ?", [$todayMd])
+            ->whereRaw('substr(birth_date, 6, 5) = ?', [$todayMd])
             ->orderBy('name')
             ->get();
 
@@ -255,7 +256,7 @@ class DashboardController extends Controller
                 'file',
                 'max:10240',
                 function (string $attribute, $value, $fail): void {
-                    if (! $value instanceof \Illuminate\Http\UploadedFile) {
+                    if (! $value instanceof UploadedFile) {
                         $fail('File không hợp lệ.');
 
                         return;
@@ -311,7 +312,7 @@ class DashboardController extends Controller
                 'file',
                 'max:10240',
                 function (string $attribute, $value, $fail): void {
-                    if (! $value instanceof \Illuminate\Http\UploadedFile) {
+                    if (! $value instanceof UploadedFile) {
                         $fail('File không hợp lệ.');
 
                         return;

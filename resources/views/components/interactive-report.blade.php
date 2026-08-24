@@ -25,9 +25,137 @@
      :data-table-card-theme="tableCardTheme"
      :data-table-head-theme="tableHeadTheme">
     <div x-show="toast" x-cloak
-        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg"
-        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'"
-        x-text="toast?.message"></div>
+        class="fixed bottom-4 right-4 z-[70] rounded-lg px-4 py-3 text-sm shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+
+    <div x-show="goodDeedsTemplateModalOpen" x-cloak
+        class="fixed inset-0 z-[80] flex items-center justify-center p-4 print:hidden"
+        @keydown.escape.window="cancelGoodDeedsTemplateForm()">
+        <div class="absolute inset-0 bg-black/50" @click="cancelGoodDeedsTemplateForm()"></div>
+        <form class="relative w-full max-w-lg rounded-xl bg-white shadow-2xl"
+            @submit.prevent="submitGoodDeedsTemplateForm()">
+            <div class="border-b px-5 py-4 flex items-start justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Thông tin xuất mẫu Người tốt việc tốt</h3>
+                    <p class="mt-1 text-sm text-gray-500">Các số lượng trong tháng sẽ được hệ thống tự tính từ dữ liệu Excel.</p>
+                </div>
+                <button type="button" class="text-gray-400 hover:text-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--nttu-primary)]" @click="cancelGoodDeedsTemplateForm()">
+                    <span class="sr-only">Đóng</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="grid gap-4 px-5 py-4 sm:grid-cols-2">
+                <div class="space-y-1 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700">Dãy nhà / Cơ sở</label>
+                    <select x-model="goodDeedsTemplateForm.campus" class="nttu-form-control" required>
+                        <option value="">Chọn dãy nhà / cơ sở</option>
+                        <template x-for="option in goodDeedsTemplateCampusOptions" :key="'good-deeds-template-campus-' + option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">Từ ngày</label>
+                    <input type="date" x-model="goodDeedsTemplateForm.titleFromDate"
+                        class="nttu-form-control" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">Đến ngày</label>
+                    <input type="date" x-model="goodDeedsTemplateForm.titleToDate"
+                        class="nttu-form-control" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">Số lượng thư tri ân tồn</label>
+                    <input type="number" min="0" x-model="goodDeedsTemplateForm.letterRemain"
+                        class="nttu-form-control" placeholder="Nhập số lượng" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">Số lượng quà tồn</label>
+                    <input type="number" min="0" x-model="goodDeedsTemplateForm.giftRemain"
+                        class="nttu-form-control" placeholder="Nhập số lượng" required>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 border-t bg-slate-50 px-5 py-4">
+                <button type="button" class="rounded-md border bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    @click="cancelGoodDeedsTemplateForm()">Hủy</button>
+                <button type="submit" class="rounded-md bg-[var(--nttu-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+                    Xuất Excel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div x-show="monthlyReportModalOpen" x-cloak
+        class="fixed inset-0 z-[80] flex items-center justify-center p-4 print:hidden"
+        @keydown.escape.window="cancelMonthlyReportForm()">
+        <div class="absolute inset-0 bg-black/50" @click="cancelMonthlyReportForm()"></div>
+        <form class="relative w-full max-w-lg rounded-xl bg-white shadow-2xl"
+            @submit.prevent="submitMonthlyReportForm()">
+            <div class="border-b px-5 py-4 flex items-start justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Thông tin Báo cáo tháng</h3>
+                    <p class="mt-1 text-sm text-gray-500">Nhập khoảng ngày, cơ sở và user (có thể chọn nhiều). Các số màu đỏ trong mẫu Word được tổng hợp từ dữ liệu đã ghi nhận.</p>
+                </div>
+                <button type="button" class="text-gray-400 hover:text-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--nttu-primary)]" @click="cancelMonthlyReportForm()">
+                    <span class="sr-only">Đóng</span>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="grid gap-4 px-5 py-4 sm:grid-cols-2">
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">Từ ngày</label>
+                    <input type="date" x-model="monthlyReportForm.fromDate"
+                        class="nttu-form-control" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">Đến ngày</label>
+                    <input type="date" x-model="monthlyReportForm.toDate"
+                        class="nttu-form-control" required>
+                </div>
+                <div class="space-y-1 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700">Cơ sở</label>
+                    <select x-model="monthlyReportForm.campus" class="nttu-form-control" required>
+                        <option value="">Chọn cơ sở</option>
+                        <template x-for="option in monthlyReportCampusOptions" :key="'monthly-report-campus-' + option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="space-y-1 sm:col-span-2">
+                    <label class="text-sm font-medium text-gray-700">User</label>
+                    <x-nttu-multi-select
+                        field="monthlyReportUsers"
+                        placeholder="Chọn user"
+                        search-placeholder="Tìm user..."
+                        empty-text="Không tìm thấy user"
+                        :allow-create="false"
+                        chip-mode="chips"
+                        size="sm"
+                    />
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 border-t bg-slate-50 px-5 py-4">
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--nttu-primary)] focus:ring-offset-2"
+                    @click="clearMonthlyReportForm()">
+                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Xóa tất cả
+                </button>
+                <button type="submit" class="inline-flex items-center gap-1.5 rounded-md bg-[var(--nttu-primary)] px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--nttu-primary)] focus:ring-offset-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                    Xuất báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
 
     {{-- Sticky filter toolbar --}}
     <div class="report-filter-toolbar overflow-visible rounded-lg print:hidden"
@@ -35,14 +163,56 @@
         <div class="p-4">
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 relative">
                         <svg class="report-accent-icon h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                         <span class="font-bold text-gray-700 text-sm sidebar-label" data-i18n="Bộ lọc nâng cao">Bộ lọc nâng cao</span>
                         <button type="button" class="report-accent-btn ml-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs"
                             @click="filtersExpanded = !filtersExpanded">
-                            <svg class="h-4 w-4 transition-transform" :class="filtersExpanded && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <svg class="h-4 w-4 text-orange-500 transition-transform" :class="filtersExpanded && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             <span x-text="filtersExpanded ? labelText('Thu gọn') : labelText('Mở rộng bộ lọc')"></span>
                         </button>
+                        
+                        <div class="relative inline-block ml-2" @click.outside="filterDropdownOpen = false">
+                            <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 border border-blue-200" @click="filterDropdownOpen = !filterDropdownOpen">
+                                <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                <span class="sidebar-label" data-i18n="Lưu bộ lọc">Lưu bộ lọc</span>
+                            </button>
+                            
+                            <div x-show="filterDropdownOpen" x-cloak class="absolute left-0 mt-1 w-80 rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5 z-[60] p-3 border border-gray-100">
+                                <div class="flex gap-2 mb-3">
+                                    <input type="text" x-model="newFilterName" class="nttu-form-control flex-1 text-sm h-8" placeholder="Tên bộ lọc..." @keydown.enter.prevent="saveCurrentFilter()">
+                                    <button type="button" class="inline-flex items-center justify-center rounded-md bg-[var(--nttu-primary)] px-2 py-1 text-sm font-medium text-white hover:opacity-90 h-8 w-8" @click="saveCurrentFilter()" title="Lưu">
+                                        <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                    </button>
+                                </div>
+                                
+                                <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Danh sách bộ lọc đã lưu</div>
+                                <div class="max-h-48 overflow-y-auto -mx-3 px-3 space-y-1">
+                                    <template x-if="savedFilters.length === 0">
+                                        <div class="text-xs text-gray-400 italic py-2">Chưa có bộ lọc nào được lưu.</div>
+                                    </template>
+                                    <template x-for="filter in savedFilters" :key="filter.id">
+                                        <div class="flex items-center justify-between group rounded-md hover:bg-gray-50 px-2 py-1.5 border border-transparent hover:border-gray-100">
+                                            <div class="flex-1 cursor-pointer truncate text-sm text-gray-700" @click="applySavedFilter(filter)">
+                                                <span x-show="editingFilterId !== filter.id" x-text="filter.name"></span>
+                                                <input x-show="editingFilterId === filter.id" type="text" x-model="editingFilterName" class="h-6 w-full rounded border-gray-300 px-1 text-xs" @keydown.enter.prevent="updateFilterName(filter.id)" @keydown.escape.prevent="editingFilterId = null" @click.stop>
+                                            </div>
+                                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
+                                                <button x-show="editingFilterId === filter.id" type="button" class="text-green-600 hover:text-green-700" @click.stop="updateFilterName(filter.id)" title="Lưu tên">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                </button>
+                                                <button x-show="editingFilterId !== filter.id" type="button" class="text-blue-500 hover:text-blue-600" @click.stop="startEditFilter(filter)" title="Sửa tên">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                </button>
+                                                <button type="button" class="text-red-500 hover:text-red-600" @click.stop="deleteSavedFilter(filter.id)" title="Xóa">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="flex items-center gap-2 w-full md:w-auto">
                         <button type="button" @click="printReport()" class="report-btn-outline inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-sm shadow-sm">
@@ -52,6 +222,10 @@
                         <button type="button" x-show="canExport" x-cloak @click="exportExcel()" class="report-btn-export inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-sm shadow-sm">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <span class="sidebar-label" data-i18n="Xuất Excel">Xuất Excel</span>
+                        </button>
+                        <button type="button" x-show="canExport && config.monthlyReportUrl" x-cloak @click="exportMonthlyReport()" class="report-btn-export inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-sm shadow-sm">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                            <span class="sidebar-label" data-i18n="Báo cáo tháng">Báo cáo tháng</span>
                         </button>
                     </div>
                 </div>
@@ -118,6 +292,19 @@
                         </div>
                     </template>
 
+                                        <template x-if="config.advancedFilters?.includes('locations')">
+                        <div class="flex flex-col gap-1">
+                            <x-filter-label>Địa điểm</x-filter-label>
+                            @include('components.partials.report-multi-select', ['field' => 'locations', 'placeholder' => 'Tất cả địa điểm'])
+                        </div>
+                    </template>
+                    <template x-if="config.advancedFilters?.includes('creator_names')">
+                        <div class="flex flex-col gap-1">
+                            <x-filter-label>Người lập biên bản</x-filter-label>
+                            @include('components.partials.report-multi-select', ['field' => 'creator_names', 'placeholder' => 'Tất cả người lập'])
+                        </div>
+                    </template>
+
                     <template x-if="config.advancedFilters?.includes('departments')">
                         <div class="flex flex-col gap-1">
                             <x-filter-label>Khoa / Đơn vị</x-filter-label>
@@ -136,6 +323,17 @@
                         <div class="flex flex-col gap-1">
                             <x-filter-label>Giảng viên / CBCT</x-filter-label>
                             @include('components.partials.report-multi-select', ['field' => 'lecturers', 'placeholder' => 'Tất cả giảng viên'])
+                        </div>
+                    </template>
+
+                    <template x-if="config.advancedFilters?.includes('recognitions')">
+                        <div class="flex flex-col gap-1">
+                            <x-filter-label>Việc ghi nhận</x-filter-label>
+                            @include('components.partials.report-multi-select', [
+                                'field' => 'recognitions',
+                                'placeholder' => 'Tất cả việc ghi nhận',
+                                'emptyText' => 'Không tìm thấy',
+                            ])
                         </div>
                     </template>
 
@@ -177,9 +375,9 @@
             :class="activeTab === @js($tab['key']) ? 'report-tab-active shadow-sm' : 'text-gray-700 hover:bg-white/60'"
             @click="switchTab(@js($tab['key']))">
             @if (($tab['icon'] ?? '') === 'package')
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <svg class="h-4 w-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             @elseif (($tab['icon'] ?? '') === 'star')
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            <svg class="h-4 w-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
             @endif
             <span class="sidebar-label" x-text="labelText(@js($tab['label']))">{{ $tab['label'] }}</span>
         </button>
@@ -353,7 +551,7 @@
                     </template>
                     <template x-for="(row, idx) in pagedRows" :key="row.id || idx">
                         <tr @click="selectRow(row)"
-                            :class="selectedRowId === row.id ? 'row-selected font-medium' : ''"
+                            :class="isRowSelected(row.id) ? 'row-selected font-medium' : ''"
                             class="cursor-pointer border-b border-gray-200 transition-colors">
                             <td class="catalog-td-index text-center font-medium border-r border-gray-200 align-middle"
                                 :class="config.variant === 'good-deeds' ? (activeTab === 'deed' ? 'p-2 w-[60px]' : 'p-2') : (config.variant === 'incident-reports' ? 'p-2' : 'py-3')" x-text="(safeCurrentPage - 1) * normalizedRowsPerPage + idx + 1"></td>
@@ -378,23 +576,18 @@
              :class="config.tableFrame ? 'report-footer-framed' : 'border-t'">
             <div>
                 <span class="sidebar-label" data-i18n="Tổng cộng">Tổng cộng</span> <strong x-text="filteredRows.length"></strong> <span class="sidebar-label" data-i18n="bản ghi">bản ghi</span>.
-                <span x-show="selectedRowId" x-cloak x-text="' ' + labelText('Đã chọn 1 dòng.')"></span>
+                <span x-show="selectedRowIds.length" x-cloak
+                      x-text="' ' + labelText(selectedRowIds.length === 1 ? 'Đã chọn 1 dòng.' : ('Đã chọn ' + selectedRowIds.length + ' dòng.'))"></span>
             </div>
             <div class="flex flex-wrap items-center gap-3">
                 <div class="flex items-center gap-2">
                     <span class="text-xs text-gray-500 sidebar-label" data-i18n="Số dòng">Số dòng</span>
-                    <select class="nttu-rows-per-page-select" :value="normalizedRowsPerPage" @change="setRowsPerPage($event.target.value)">
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="15">15</option>
-                        <option value="20">20</option>
-                        <option value="25">25</option>
-                        <option value="30">30</option>
-                        <option value="35">35</option>
-                        <option value="40">40</option>
-                        <option value="45">45</option>
-                        <option value="50">50</option>
-                    </select>
+                    <input type="number" class="nttu-rows-per-page-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" list="{{ $datalistId = uniqid('dl_') }}" x-model.number="rowsPerPage" @change="setRowsPerPage($event.target.value)">
+<datalist id="{{ $datalistId }}">
+    <template x-for="n in [5,10,15,20,25,30,35,40,45,50]" :key="n">
+        <option :value="n"></option>
+    </template>
+</datalist>
                 </div>
                 <div class="flex items-center gap-1">
                     <button type="button" class="h-8 w-8 rounded border border-gray-200 bg-white disabled:opacity-40 inline-flex items-center justify-center" :disabled="safeCurrentPage <= 1" @click="currentPage = 1" :title="labelText('Trang đầu')">

@@ -83,11 +83,7 @@ export function registerBackupSettings(Alpine) {
 
         showToast(message, type = 'success') {
             this.toast = { message, type };
-            setTimeout(() => {
-                if (this.toast?.message === message) {
-                    this.toast = null;
-                }
-            }, 6000);
+            setTimeout(() => { this.toast = null; }, 30000);
         },
 
         persistFlash(message, type = 'success') {
@@ -366,8 +362,27 @@ export function registerBackupSettings(Alpine) {
         openPurgeDialog() {
             this.purgeFromDate = '';
             this.purgeToDate = '';
-            this.purgeSelectedTypes = this.purgeDataTypes.map((item) => item.key);
+            this.purgeSelectedTypes = [];
             this.purgeOpen = true;
+        },
+
+        get canPurge() {
+            return !this.purging
+                && Boolean(this.purgeFromDate)
+                && Boolean(this.purgeToDate)
+                && this.purgeSelectedTypes.length > 0;
+        },
+
+        isPurgeTypeSelected(key) {
+            return this.purgeSelectedTypes.includes(key);
+        },
+
+        togglePurgeType(key) {
+            if (this.purgeSelectedTypes.includes(key)) {
+                this.purgeSelectedTypes = this.purgeSelectedTypes.filter((item) => item !== key);
+                return;
+            }
+            this.purgeSelectedTypes = [...this.purgeSelectedTypes, key];
         },
 
         selectAllPurgeTypes() {
@@ -379,7 +394,7 @@ export function registerBackupSettings(Alpine) {
         },
 
         async purgeData() {
-            if (!this.routes.purgeData || !this.purgeFromDate || !this.purgeToDate || this.purgeSelectedTypes.length === 0) {
+            if (!this.routes.purgeData || !this.canPurge) {
                 return;
             }
             this.purging = true;

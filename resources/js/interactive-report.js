@@ -4,6 +4,7 @@ import { createNttuMultiSelectMixin } from './nttu-multi-select.js';
 import { headerIconPathForColumn, iconPathForName } from './nttu-icons.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, ROWS_PER_PAGE_OPTIONS } from './nttu-pagination.js';
+import { incidentBadgeClass } from './nttu-incident-colors.js';
 
 function loadJson(key, fallback) {
     try {
@@ -30,6 +31,7 @@ const DEFAULT_ADVANCED = {
     recipients: [],
     officers: [],
     violationTypes: [],
+    recognitions: [],
     periodSession: 'all',
     periodStart: '1',
     periodEnd: '5',
@@ -125,6 +127,20 @@ function parseIsoDate(str) {
     return new Date(y, m - 1, d, 12, 0, 0, 0);
 }
 
+function isoToDisplayDate(value) {
+    if (!value) return '';
+    const parts = String(value).split('-');
+    if (parts.length !== 3) return value;
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+}
+
+function previousMonthPadded(date = new Date()) {
+    const previous = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+
+    return String(previous.getMonth() + 1).padStart(2, '0');
+}
+
 function rowInDateRange(row, dateField, dateFields, fromDate, toDate) {
     const fields = dateFields?.length ? dateFields : [dateField];
     const start = parseIsoDate(fromDate);
@@ -188,13 +204,13 @@ function mergeOptions(configOptions, rowOptions) {
     return [...map.values()].sort((a, b) => a.label.localeCompare(b.label, 'vi'));
 }
 
-function normalizeRowsPerPage(value, fallback = 15) {
+function normalizeRowsPerPage(value, fallback = 10) {
     const parsed = parseInt(String(value ?? ''), 10);
     if (!Number.isFinite(parsed) || parsed < 1) {
-        return fallback;
+        return parseInt(String(fallback ?? 10), 10) || 10;
     }
 
-    return ROWS_PER_PAGE_OPTIONS.includes(parsed) ? parsed : fallback;
+    return Math.min(parsed, 1000);
 }
 
 function rowsPerPageStorageKey(config) {
@@ -210,6 +226,7 @@ function advancedFilterOptionsKey(field) {
         recipients: 'recipientOptions',
         officers: 'officerOptions',
         violationTypes: 'violationTypeOptions',
+        recognitions: 'recognitionOptions',
     };
 
     return map[field] || `${field}Options`;
@@ -230,11 +247,31 @@ export function registerInteractiveReport(Alpine) {
     const multiSelectMixin = createNttuMultiSelectMixin({
         valuesKey: 'advanced',
         resolveOptions(field) {
+            if (field === 'monthlyReportUsers') {
+                return this.monthlyReportUserOptions || [];
+            }
             const key = advancedFilterOptionsKey(field);
             return this[key] || [];
         },
-        onChange() {
-            this.currentPage = 1;
+        getSelectedValues(field) {
+            if (field === 'monthlyReportUsers') {
+                return this.monthlyReportForm?.users || [];
+            }
+
+            return this.advanced?.[field] || [];
+        },
+        setSelectedValues(field, values) {
+            if (field === 'monthlyReportUsers') {
+                this.monthlyReportForm = { ...this.monthlyReportForm, users: values };
+                return;
+            }
+
+            this.advanced = { ...this.advanced, [field]: values };
+        },
+        onChange(field) {
+            if (field !== 'monthlyReportUsers') {
+                this.currentPage = 1;
+            }
         },
     });
 
@@ -260,10 +297,11 @@ export function registerInteractiveReport(Alpine) {
         sortDir: initialTabPrefs.sortDir || 'asc',
         headerPopover: null,
         settingsOpen: false,
-        selectedRowId: null,
+        savingPresets: false,
+        selectedRowIds: [],
         currentPage: normalizeCurrentPage(initialTabPrefs.currentPage || 1, 1),
         pageInput: 1,
-        rowsPerPage: normalizeRowsPerPage(loadJson(rowsPerPageStorageKey(config), 15)),
+        rowsPerPage: normalizeRowsPerPage(loadJson(rowsPerPageStorageKey(config), 10)),
         rowsPerPageOptions: ROWS_PER_PAGE_OPTIONS,
         columnVisibility: {},
         currentLang: getLanguage(),
@@ -273,6 +311,28 @@ export function registerInteractiveReport(Alpine) {
         availableTabs: [],
         targetTabName: config.defaultSheetTab || '',
         toast: null,
+        savedFilters: loadJson(`nttu_interactive_report_saved_filters_${config?.variant || 'default'}`, []),
+        filterDropdownOpen: false,
+        newFilterName: '',
+        editingFilterId: null,
+        editingFilterName: '',
+        goodDeedsTemplateModalOpen: false,
+        goodDeedsTemplateForm: {
+            campus: '',
+            titleFromDate: '',
+            titleToDate: '',
+            letterRemain: '',
+            giftRemain: '',
+        },
+        goodDeedsTemplateResolve: null,
+        monthlyReportModalOpen: false,
+        monthlyReportForm: {
+            fromDate: '',
+            toDate: '',
+            campus: '',
+            users: [],
+        },
+        monthlyReportResolve: null,
         loadingRows: false,
         _dateFetchTimer: null,
         _skipDateFetch: true,
@@ -359,7 +419,7 @@ export function registerInteractiveReport(Alpine) {
                     this.config.filterOptions = payload.filterOptions;
                 }
             } catch (error) {
-                this.toast = { message: error.message || 'Lỗi tải dữ liệu', type: 'error' };
+                this.showToast(error.message || 'Lỗi tải dữ liệu', 'error');
             } finally {
                 this.loadingRows = false;
             }
@@ -661,6 +721,9 @@ export function registerInteractiveReport(Alpine) {
                         || adv.lecturers.some((v) => proctors.includes(v));
                 });
             }
+            if (this.config.advancedFilters?.includes('recognitions') && adv.recognitions.length) {
+                result = result.filter((row) => adv.recognitions.includes(row._recognition));
+            }
             if (this.config.advancedFilters?.includes('recipients') && adv.recipients.length) {
                 result = result.filter((row) => adv.recipients.includes(row._recipient));
             }
@@ -731,6 +794,15 @@ export function registerInteractiveReport(Alpine) {
             return mergeOptions(this.config.filterOptions?.buildings, uniqueOptions(this.currentRows, '_building'));
         },
 
+        
+        get creator_namesOptions() {
+            return mergeOptions(this.config.filterOptions?.creator_names, uniqueOptions(this.currentRows, 'creator_name'));
+        },
+
+        get locationsOptions() {
+            return mergeOptions(this.config.filterOptions?.locations, uniqueOptions(this.currentRows, 'location'));
+        },
+
         get departmentOptions() {
             return mergeOptions(this.config.filterOptions?.departments, uniqueOptions(this.currentRows, 'department'));
         },
@@ -741,6 +813,10 @@ export function registerInteractiveReport(Alpine) {
 
         get lecturerOptions() {
             return mergeOptions(this.config.filterOptions?.lecturers, uniqueOptions(this.currentRows, 'lecturer'));
+        },
+
+        get recognitionOptions() {
+            return mergeOptions(this.config.filterOptions?.recognitions, uniqueOptions(this.currentRows, '_recognition'));
         },
 
         get recipientOptions() {
@@ -764,7 +840,7 @@ export function registerInteractiveReport(Alpine) {
             if (this.config.variant === 'good-deeds' && key !== 'property') {
                 this.pushDialogOpen = false;
             }
-            this.selectedRowId = null;
+            this.selectedRowIds = [];
             const tabPrefs = loadTabPrefs(loadUserPrefs(this.config), reportTabKey(this.config, key));
             this.columnFilters = { ...(tabPrefs.columnFilters || {}) };
             this.sortKey = tabPrefs.sortKey || '';
@@ -900,11 +976,25 @@ export function registerInteractiveReport(Alpine) {
         },
 
         selectRow(row) {
-            this.selectedRowId = this.selectedRowId === row.id ? null : row.id;
+            if (!row?.id && row?.id !== 0) {
+                return;
+            }
+            const id = row.id;
+            const set = new Set(this.selectedRowIds);
+            if (set.has(id)) {
+                set.delete(id);
+            } else {
+                set.add(id);
+            }
+            this.selectedRowIds = [...set];
+        },
+
+        isRowSelected(id) {
+            return this.selectedRowIds.includes(id);
         },
 
         setRowsPerPage(value) {
-            this.rowsPerPage = normalizeRowsPerPage(value, 15);
+            this.rowsPerPage = normalizeRowsPerPage(value, 10);
             this.currentPage = 1;
             this.pageInput = 1;
             localStorage.setItem(rowsPerPageStorageKey(this.config), JSON.stringify(this.rowsPerPage));
@@ -965,6 +1055,9 @@ export function registerInteractiveReport(Alpine) {
                 if (column.align === 'center' || TABLE_CENTER_DATA_COLS.has(column.key)) {
                     classes.push('text-center');
                 }
+                if (column.align === 'left') {
+                    classes.push('text-left');
+                }
                 if (column.group === 'Giao trả') {
                     classes.push('report-td-return');
                 }
@@ -993,6 +1086,12 @@ export function registerInteractiveReport(Alpine) {
                 }
                 return `text-gray-800 ${wrap}`;
             }
+            if (this.config.variant === 'comprehensive') {
+                const align = column.align === 'center'
+                    ? 'text-center'
+                    : (column.align === 'left' || column.key === 'incidentDetail' ? 'text-left' : '');
+                return `text-xs text-gray-800 leading-snug ${align} ${wrap}`.trim();
+            }
             const styles = {
                 medium: `text-gray-900 font-medium ${wrap}`,
                 'mono-xs': `font-mono text-[10px] text-gray-800 ${wrap}`,
@@ -1019,8 +1118,9 @@ export function registerInteractiveReport(Alpine) {
 
         renderCell(row, column) {
             if (column.type === 'signature') {
-                return row.signature
-                    ? `<img src="${row.signature}" alt="Chữ ký" class="mx-auto h-8 max-w-[120px] object-contain" />`
+                const sig = row[column.key];
+                return sig
+                    ? `<img src="${sig}" alt="Chữ ký" class="mx-auto h-8 max-w-[120px] object-contain" />`
                     : '<span class="text-gray-400 text-xs italic">Chưa ký</span>';
             }
             if (column.type === 'citizen') {
@@ -1036,6 +1136,13 @@ export function registerInteractiveReport(Alpine) {
                 return String(row[column.key] || '---').replace(/\n/g, '<br>');
             }
             const value = row[column.key] ?? '---';
+            if (column.key === 'incident') {
+                const text = String(value ?? '').trim();
+                if (text === '' || text === '---') {
+                    return '<span class="text-gray-400">---</span>';
+                }
+                return `<span class="inline-flex rounded-full px-2.5 py-1 text-xs ${incidentBadgeClass(text)}">${text}</span>`;
+            }
             const innerClass = this.cellInnerClass(column);
             if (innerClass) {
                 return `<span class="${innerClass}">${value}</span>`;
@@ -1045,6 +1152,7 @@ export function registerInteractiveReport(Alpine) {
 
         isHtmlCell(column) {
             return ['signature', 'citizen', 'multiline'].includes(column.type)
+                || column.key === 'incident'
                 || ['badge-danger', 'badge-info'].includes(column.tone);
         },
 
@@ -1056,6 +1164,15 @@ export function registerInteractiveReport(Alpine) {
                 url.searchParams.set('to', this.toDate);
                 if (this.config.variant === 'good-deeds' && this.activeTab) {
                     url.searchParams.set('tab', this.activeTab);
+                    if (this.activeTab === 'deed') {
+                        const templateInputs = await this.collectGoodDeedsTemplateInputs();
+                        if (templateInputs === null) {
+                            return;
+                        }
+                        Object.entries(templateInputs).forEach(([key, value]) => {
+                            url.searchParams.set(key, value);
+                        });
+                    }
                 }
                 window.location.href = url.toString();
                 return;
@@ -1122,6 +1239,239 @@ export function registerInteractiveReport(Alpine) {
             }
             XLSX.utils.book_append_sheet(book, sheet, sheetName);
             XLSX.writeFile(book, fileName);
+        },
+
+        async exportMonthlyReport() {
+            if (!this.canExport || !this.config.monthlyReportUrl) return;
+            const form = await this.collectMonthlyReportInputs();
+            if (form === null) {
+                return;
+            }
+
+            const url = new URL(this.config.monthlyReportUrl, window.location.origin);
+            url.searchParams.set('from', form.fromDate);
+            url.searchParams.set('to', form.toDate);
+            url.searchParams.set('titleFromDate', isoToDisplayDate(form.fromDate));
+            url.searchParams.set('titleToDate', isoToDisplayDate(form.toDate));
+            url.searchParams.set('campus', form.campus);
+            (form.users || []).forEach((user) => {
+                if (user) {
+                    url.searchParams.append('users[]', user);
+                }
+            });
+            window.location.href = url.toString();
+        },
+
+        collectMonthlyReportInputs() {
+            this.monthlyReportForm = {
+                fromDate: this.monthlyReportForm.fromDate || this.fromDate,
+                toDate: this.monthlyReportForm.toDate || this.toDate,
+                campus: this.monthlyReportForm.campus || this.defaultMonthlyReportCampus(),
+                users: this.monthlyReportForm.users?.length
+                    ? this.monthlyReportForm.users
+                    : this.defaultMonthlyReportUsers(),
+            };
+            this.nttuMultiCloseAll();
+            this.monthlyReportModalOpen = true;
+
+            return new Promise((resolve) => {
+                this.monthlyReportResolve = (form) => {
+                    resolve(form);
+                };
+            });
+        },
+
+        clearMonthlyReportForm() {
+            this.monthlyReportForm = {
+                fromDate: '',
+                toDate: '',
+                campus: '',
+                users: [],
+            };
+        },
+
+        persistSavedFilters() {
+            saveJson(`nttu_interactive_report_saved_filters_${this.config?.variant || 'default'}`, this.savedFilters);
+        },
+
+        saveCurrentFilter() {
+            const name = this.newFilterName.trim();
+            if (!name) return;
+            
+            const newFilter = {
+                id: Date.now().toString(),
+                name,
+                advanced: JSON.parse(JSON.stringify(this.advanced)),
+                columnFilters: JSON.parse(JSON.stringify(this.columnFilters)),
+                fromDate: this.fromDate,
+                toDate: this.toDate,
+            };
+            
+            this.savedFilters.push(newFilter);
+            this.persistSavedFilters();
+            this.newFilterName = '';
+        },
+
+        applySavedFilter(filter) {
+            if (this.editingFilterId === filter.id) return;
+            
+            this.advanced = { ...DEFAULT_ADVANCED, ...(filter.advanced || {}) };
+            this.columnFilters = { ...(filter.columnFilters || {}) };
+            if (filter.fromDate) this.fromDate = filter.fromDate;
+            if (filter.toDate) this.toDate = filter.toDate;
+            
+            this.currentPage = 1;
+            this.persistUserPrefs();
+            this.filterDropdownOpen = false;
+        },
+
+        deleteSavedFilter(id) {
+            this.savedFilters = this.savedFilters.filter((f) => f.id !== id);
+            this.persistSavedFilters();
+        },
+
+        startEditFilter(filter) {
+            this.editingFilterId = filter.id;
+            this.editingFilterName = filter.name;
+        },
+
+        updateFilterName(id) {
+            const filter = this.savedFilters.find((f) => f.id === id);
+            if (filter && this.editingFilterName.trim()) {
+                filter.name = this.editingFilterName.trim();
+                this.persistSavedFilters();
+            }
+            this.editingFilterId = null;
+        },
+
+        submitMonthlyReportForm() {
+            const form = { ...this.monthlyReportForm };
+            if (!isValidIsoDate(form.fromDate) || !isValidIsoDate(form.toDate)) {
+                window.alert('Vui lòng chọn Từ ngày và Đến ngày.');
+                return;
+            }
+            if (!form.campus) {
+                window.alert('Vui lòng chọn Cơ sở.');
+                return;
+            }
+            if (!form.users?.length) {
+                window.alert('Vui lòng chọn ít nhất một User.');
+                return;
+            }
+            this.nttuMultiCloseAll();
+            this.monthlyReportModalOpen = false;
+            this.monthlyReportResolve?.(form);
+            this.monthlyReportResolve = null;
+        },
+
+        cancelMonthlyReportForm() {
+            this.nttuMultiCloseAll();
+            this.monthlyReportModalOpen = false;
+            this.monthlyReportResolve?.(null);
+            this.monthlyReportResolve = null;
+        },
+
+        defaultMonthlyReportCampus() {
+            const selected = this.advanced?.buildings?.[0];
+            if (selected) {
+                const noteMatch = this.monthlyReportCampusOptions.find((option) => option.value === selected || option.label === selected);
+                if (noteMatch) {
+                    return noteMatch.value;
+                }
+            }
+
+            return this.monthlyReportCampusOptions[0]?.value || '';
+        },
+
+        defaultMonthlyReportUsers() {
+            const current = this.config.currentUserName || '';
+            if (current) {
+                return [current];
+            }
+
+            const first = this.monthlyReportUserOptions[0]?.value;
+            return first ? [first] : [];
+        },
+
+        get monthlyReportCampusOptions() {
+            return this.config.filterOptions?.buildingNotes?.length
+                ? this.config.filterOptions.buildingNotes
+                : (this.config.filterOptions?.buildings || []);
+        },
+
+        get monthlyReportUserOptions() {
+            return this.config.filterOptions?.users || [];
+        },
+
+        collectGoodDeedsTemplateInputs() {
+            const now = new Date();
+            const reportMonth = String(now.getMonth() + 1);
+            const reportYear = String(now.getFullYear());
+            const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+
+            this.goodDeedsTemplateForm = {
+                campus: this.goodDeedsTemplateForm.campus || this.defaultGoodDeedsTemplateCampus(),
+                titleFromDate: this.fromDate,
+                titleToDate: this.toDate,
+                letterRemain: this.goodDeedsTemplateForm.letterRemain || '',
+                giftRemain: this.goodDeedsTemplateForm.giftRemain || '',
+            };
+            this.goodDeedsTemplateModalOpen = true;
+
+            return new Promise((resolve) => {
+                this.goodDeedsTemplateResolve = (form) => {
+                    if (form === null) {
+                        resolve(null);
+                        return;
+                    }
+
+                    resolve({
+                        reportMonth,
+                        reportYear,
+                        titleFromDate: isoToDisplayDate(form.titleFromDate),
+                        titleToDate: isoToDisplayDate(form.titleToDate),
+                        summaryMonth: currentMonth,
+                        giftMonth: previousMonthPadded(now),
+                        campus: form.campus,
+                        letterRemain: form.letterRemain,
+                        giftRemain: form.giftRemain,
+                    });
+                };
+            });
+        },
+
+        submitGoodDeedsTemplateForm() {
+            const form = { ...this.goodDeedsTemplateForm };
+            if (!form.campus) {
+                window.alert('Vui lòng chọn Cơ sở.');
+                return;
+            }
+            if (!isValidIsoDate(form.titleFromDate) || !isValidIsoDate(form.titleToDate)) {
+                window.alert('Vui lòng chọn Từ ngày và Đến ngày.');
+                return;
+            }
+            this.goodDeedsTemplateModalOpen = false;
+            this.goodDeedsTemplateResolve?.(form);
+            this.goodDeedsTemplateResolve = null;
+        },
+
+        cancelGoodDeedsTemplateForm() {
+            this.goodDeedsTemplateModalOpen = false;
+            this.goodDeedsTemplateResolve?.(null);
+            this.goodDeedsTemplateResolve = null;
+        },
+
+        defaultGoodDeedsTemplateCampus() {
+            const selected = this.advanced?.buildings?.[0];
+            if (selected) {
+                return selected;
+            }
+
+            return this.goodDeedsTemplateCampusOptions[0]?.value || '';
+        },
+
+        get goodDeedsTemplateCampusOptions() {
+            return this.config.filterOptions?.buildingNotes || [];
         },
 
         printReport() {
@@ -1204,11 +1554,7 @@ export function registerInteractiveReport(Alpine) {
 
         showToast(message, type = 'success') {
             this.toast = { message, type };
-            setTimeout(() => {
-                if (this.toast?.message === message) {
-                    this.toast = null;
-                }
-            }, 4000);
+            setTimeout(() => { this.toast = null; }, 30000);
         },
 
         csrfToken() {

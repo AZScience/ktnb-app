@@ -3,17 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Services\CatalogExcelService;
 use App\Services\ReportExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DepartmentController extends Controller
 {
-    public function __construct(private ReportExportService $export) {}
+    public function __construct(
+        private ReportExportService $export,
+        private CatalogExcelService $catalogExcel,
+    ) {}
 
     public function index(): View
     {
@@ -191,48 +194,23 @@ class DepartmentController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
-        $sheet = IOFactory::load($path)->getActiveSheet();
-        $rows = [];
-        $startRow = 8;
-
-        foreach ($sheet->getRowIterator($startRow) as $row) {
-            $cells = [];
-            foreach ($row->getCellIterator() as $cell) {
-                $cells[] = trim((string) $cell->getValue());
-            }
-
-            $departmentId = $cells[0] ?? '';
-            if ($departmentId === '' || mb_strtolower($departmentId) === 'mã đơn vị') {
-                continue;
-            }
-
-            $rows[] = [
-                'department_id' => $departmentId,
-                'name' => $cells[1] ?? '',
-                'head' => $cells[2] ?? '',
-                'phone' => $cells[3] ?? '',
-                'email' => $cells[4] ?? '',
-                'note' => $cells[5] ?? '',
-            ];
-        }
-
-        if ($rows === []) {
-            foreach ($sheet->toArray() as $line) {
-                $departmentId = trim((string) ($line['Mã đơn vị'] ?? $line[0] ?? ''));
-                if ($departmentId === '' || mb_strtolower($departmentId) === 'mã đơn vị') {
-                    continue;
-                }
-                $rows[] = [
-                    'department_id' => $departmentId,
-                    'name' => trim((string) ($line['Tên đơn vị'] ?? $line[1] ?? '')),
-                    'head' => trim((string) ($line['Trưởng đơn vị'] ?? $line[2] ?? '')),
-                    'phone' => trim((string) ($line['Điện thoại'] ?? $line[3] ?? '')),
-                    'email' => trim((string) ($line['Email'] ?? $line[4] ?? '')),
-                    'note' => trim((string) ($line['Ghi chú'] ?? $line[5] ?? '')),
-                ];
-            }
-        }
-
-        return $rows;
+        return $this->catalogExcel->parseRows($path, [
+            'department_id' => 'Mã đơn vị',
+            'name' => 'Tên đơn vị',
+            'head' => 'Trưởng đơn vị',
+            'phone' => 'Điện thoại',
+            'email' => 'Email',
+            'note' => 'Ghi chú',
+        ], [
+            'requiredKey' => 'department_id',
+            'aliases' => [
+                'mã đơn vị' => 'department_id',
+                'tên đơn vị' => 'name',
+                'trưởng đơn vị' => 'head',
+                'điện thoại' => 'phone',
+                'email' => 'email',
+                'ghi chú' => 'note',
+            ],
+        ]);
     }
 }

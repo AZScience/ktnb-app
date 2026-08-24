@@ -5,13 +5,19 @@ namespace App\Services;
 use App\Models\AssetReception;
 use App\Models\DailySchedule;
 use App\Models\Petition;
+use App\Models\IncidentRecord;
 use App\Models\ServiceRequest;
 use App\Models\StudentViolation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ReportQueryService
 {
+    /** @var array<string, bool> */
+    private array $isoColumnCache = [];
+
     public function normalizeDate(?string $date): string
     {
         if (! $date) {
@@ -92,7 +98,7 @@ class ReportQueryService
             ->whereNotNull('incident')
             ->where('incident', '!=', '')
             ->where(fn (Builder $q) => $this->whereDisplayDateBetween($q, 'date', $from, $to))
-            ->orderByRaw('STR_TO_DATE(date, "%d/%m/%Y") DESC')
+            ->tap(fn (Builder $q) => $this->orderByDisplayDate($q, 'date', 'desc'))
             ->orderBy('period')
             ->get();
     }
@@ -113,7 +119,7 @@ class ReportQueryService
         return StudentViolation::query()
             ->select(StudentViolation::INDEX_COLUMNS)
             ->where(fn (Builder $q) => $this->whereDisplayDateBetween($q, 'violation_date', $from, $to))
-            ->orderByRaw('STR_TO_DATE(violation_date, "%d/%m/%Y") DESC')
+            ->tap(fn (Builder $q) => $this->orderByDisplayDate($q, 'violation_date', 'desc'))
             ->get();
     }
 
@@ -133,7 +139,7 @@ class ReportQueryService
                     $q->orWhere(fn (Builder $inner) => $this->whereDisplayDateBetween($inner, $field, $from, $to));
                 }
             })
-            ->orderByRaw('STR_TO_DATE(reception_date, "%d/%m/%Y") DESC')
+            ->tap(fn (Builder $q) => $this->orderByDisplayDate($q, 'reception_date', 'desc'))
             ->get();
     }
 
@@ -148,17 +154,26 @@ class ReportQueryService
         $to = $this->normalizeDate($to ?? $from);
 
         return ServiceRequest::query()
-            ->whereRaw(
-                "STR_TO_DATE(COALESCE(reception_date, request_date), '%d/%m/%Y') BETWEEN STR_TO_DATE(?, '%d/%m/%Y') AND STR_TO_DATE(?, '%d/%m/%Y')",
-                [$from, $to]
-            )
-            ->orderByRaw('STR_TO_DATE(COALESCE(reception_date, request_date), "%d/%m/%Y") DESC')
+            ->where(fn (Builder $q) => $this->whereDisplayDateBetween($q, 'COALESCE(reception_date_iso, request_date_iso)', $from, $to, true))
+            ->tap(fn (Builder $q) => $this->orderByDisplayDate($q, 'COALESCE(reception_date_iso, request_date_iso)', 'desc', true))
             ->get();
     }
 
     public function allServiceRequests(): Collection
     {
         return $this->serviceRequests(date('d/m/Y'), date('d/m/Y'));
+    }
+
+        public function incidentRecords(?string $from, ?string $to): Collection
+    {
+        $query = IncidentRecord::query();
+
+        if ($from && $to) {
+            $query->whereDate('incident_time', '>=', $this->isoFromDisplayDate($from))
+                  ->whereDate('incident_time', '<=', $this->isoFromDisplayDate($to));
+        }
+
+        return $query->orderBy('incident_time', 'desc')->get();
     }
 
     public function petitions(?string $from, ?string $to): Collection
@@ -168,7 +183,7 @@ class ReportQueryService
 
         return Petition::query()
             ->where(fn (Builder $q) => $this->whereDisplayDateBetween($q, 'reception_date', $from, $to))
-            ->orderByRaw('STR_TO_DATE(reception_date, "%d/%m/%Y") DESC')
+            ->tap(fn (Builder $q) => $this->orderByDisplayDate($q, 'reception_date', 'desc'))
             ->get();
     }
 
@@ -177,19 +192,79 @@ class ReportQueryService
         return $this->petitions(date('d/m/Y'), date('d/m/Y'));
     }
 
-    private function whereDisplayDateBetween(
-        Builder $query,
+    public function whereDisplayDateBetween(
+        $query,
         string $column,
         string $from,
         string $to,
         bool $raw = false
     ): void {
-        $expression = $raw ? $column : $column;
+        $expression = $this->displayDateKeyExpression($query, $column, $raw);
 
         $query->whereRaw(
-            "STR_TO_DATE({$expression}, '%d/%m/%Y') BETWEEN STR_TO_DATE(?, '%d/%m/%Y') AND STR_TO_DATE(?, '%d/%m/%Y')",
-            [$from, $to]
+            "{$expression} BETWEEN ? AND ?",
+            [$this->normalizeIsoDate($from), $this->normalizeIsoDate($to)]
         );
+    }
+
+    public function orderByDisplayDate($query, string $column, string $direction = 'asc', bool $raw = false): void
+    {
+        $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+        $query->orderByRaw($this->displayDateKeyExpression($query, $column, $raw).' '.$direction);
+    }
+
+    private function displayDateKeyExpression($query, string $column, bool $raw = false): string
+    {
+        $value = $this->preferredDateColumnExpression($query, $column, $raw);
+        $driver = DB::connection($query->getConnection()->getName())->getDriverName();
+
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            return "CASE
+                WHEN {$value} REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN {$value}
+                WHEN {$value} REGEXP '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$' THEN DATE_FORMAT(STR_TO_DATE({$value}, '%d/%m/%Y'), '%Y-%m-%d')
+                ELSE NULL
+            END";
+        }
+
+        return "CASE
+            WHEN {$value} LIKE '____-__-__' THEN {$value}
+            WHEN {$value} LIKE '__/__/____' THEN substr({$value}, 7, 4) || '-' || substr({$value}, 4, 2) || '-' || substr({$value}, 1, 2)
+            WHEN {$value} LIKE '_/__/____' THEN substr({$value}, 6, 4) || '-' || substr({$value}, 3, 2) || '-0' || substr({$value}, 1, 1)
+            WHEN {$value} LIKE '__/_/____' THEN substr({$value}, 6, 4) || '-0' || substr({$value}, 4, 1) || '-' || substr({$value}, 1, 2)
+            WHEN {$value} LIKE '_/_/____' THEN substr({$value}, 5, 4) || '-0' || substr({$value}, 3, 1) || '-0' || substr({$value}, 1, 1)
+            ELSE NULL
+        END";
+    }
+
+    private function preferredDateColumnExpression($query, string $column, bool $raw): string
+    {
+        if ($raw) {
+            return $column;
+        }
+
+        $grammar = $query->getQuery()->getGrammar();
+        $table = method_exists($query, 'getModel')
+            ? $query->getModel()->getTable()
+            : (string) $query->from;
+        $table = trim(preg_split('/\s+as\s+|\s+/i', $table)[0] ?? $table, '`"[] ');
+        $isoColumn = $column.'_iso';
+        $cacheKey = "{$table}.{$isoColumn}";
+
+        if (! array_key_exists($cacheKey, $this->isoColumnCache)) {
+            $this->isoColumnCache[$cacheKey] = $table !== '' && Schema::hasColumn($table, $isoColumn);
+        }
+
+        return $grammar->wrap($this->isoColumnCache[$cacheKey] ? $isoColumn : $column);
+    }
+
+    private function normalizeIsoDate(?string $date): string
+    {
+        $normalized = $this->normalizeDate($date);
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $normalized, $m)) {
+            return sprintf('%04d-%02d-%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+        }
+
+        return $normalized;
     }
 
     private function dateInRange(?string $date, string $from, string $to): bool

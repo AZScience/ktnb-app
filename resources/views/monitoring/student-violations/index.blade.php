@@ -34,8 +34,8 @@
 
 
 
-    $classOptions = collect($students)->pluck('class')
-        ->merge(collect($items)->pluck('class'))
+    $classOptions = App\Models\Student::select('class')->distinct()->pluck('class')
+        ->merge(App\Models\StudentViolation::select('class')->distinct()->pluck('class'))
         ->filter()
         ->unique()
         ->sort()
@@ -87,7 +87,8 @@
 
 
 
-    :violation-students="$students"
+    :
+    server-paginated="$serverPaginated"
 
 
 
@@ -97,9 +98,6 @@
 
         'compareFaces' => route('student-violations.compare-faces'),
         'extractCard' => route('student-violations.extract-card'),
-
-
-
     ]"
 
 
@@ -121,10 +119,6 @@
 
 
     ]"
-
-
-
-    :items="$items"
 
 
 
@@ -277,6 +271,7 @@
 
 
     :routes="[
+
         'store' => route('student-violations.store'),
         'show' => route('student-violations.show', ['student_violation' => '__ID__']),
         'update' => route('student-violations.update', ['student_violation' => '__ID__']),
@@ -284,6 +279,7 @@
         'export' => route('student-violations.export'),
         'importPreview' => route('student-violations.import-preview'),
         'import' => route('student-violations.import'),
+            'list' => route('student-violations.index'),
     ]"
     :import-columns="$violationImportColumns"
 />

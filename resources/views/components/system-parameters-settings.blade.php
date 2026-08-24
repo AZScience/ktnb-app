@@ -9,6 +9,7 @@
     $tabs = [
         ['id' => 'interface', 'label' => 'Giao diện', 'icon' => 'layout', 'tone' => 'rose'],
         ['id' => 'integration', 'label' => 'Tích hợp', 'icon' => 'database', 'tone' => 'green'],
+        ['id' => 'lcms', 'label' => 'Trang LCMS', 'icon' => 'globe', 'tone' => 'orange'],
         ['id' => 'lecturer-portal', 'label' => 'Cổng Giảng viên', 'icon' => 'user-circle', 'tone' => 'indigo'],
         ['id' => 'email', 'label' => 'Email', 'icon' => 'mail', 'tone' => 'blue'],
         ['id' => 'ai', 'label' => 'AI', 'icon' => 'sparkles', 'tone' => 'purple'],
@@ -29,9 +30,13 @@
     class="space-y-4"
 >
     <div x-show="toast" x-cloak
-        class="fixed top-4 right-4 z-[70] max-w-md rounded-lg px-4 py-3 text-sm text-white shadow-lg"
-        :class="toast?.type === 'success' ? 'bg-green-600' : 'bg-red-600'"
-        x-text="toast?.message"></div>
+        class="fixed top-4 right-4 z-[70] max-w-md rounded-lg px-4 py-3 text-sm text-white shadow-lg flex items-center justify-between gap-3"
+        :class="toast?.type === 'success' ? 'bg-green-600' : 'bg-red-600'">
+        <span x-text="toast?.message"></span>
+        <button type="button" @click="toast = null" class="shrink-0 rounded-full p-1 text-white/70 hover:bg-black/10 hover:text-white transition-colors" title="Đóng">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 
     <div x-show="isChanged" x-cloak class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         Bạn có thay đổi chưa lưu. Hãy nhấn <strong>Lưu tất cả thay đổi</strong> ở cuối trang trước khi rời đi.
@@ -103,22 +108,45 @@
                         </div>
                     </div>
                     <div class="lg:col-span-2">
-                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Xem trước trên thanh menu</p>
-                        <div class="overflow-hidden rounded-lg border bg-white shadow-sm">
-                            <div class="flex items-center gap-3 border-b bg-[var(--nttu-table-head)] px-4 py-2.5">
-                                <div class="flex h-8 min-w-[4rem] items-center justify-center overflow-hidden rounded bg-white/10 px-2">
-                                    <template x-if="hasBanner()">
-                                        <img :src="localParams.bannerUrl" alt="Logo" class="max-w-full object-contain" :style="`height:${bannerPreviewHeight()}px`">
-                                    </template>
-                                    <template x-if="!hasBanner()">
-                                        <span class="text-[10px] font-medium text-white/70">LOGO</span>
-                                    </template>
-                                </div>
-                                <span class="text-xs text-white/80">Menu hệ thống</span>
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Xem trước Sidebar Menu</p>
+                    <div class="overflow-hidden rounded-lg border bg-white shadow-sm flex h-40">
+                        <!-- Sidebar preview -->
+                        <div class="w-48 shrink-0 border-r bg-white flex flex-col">
+                            <div class="flex h-16 shrink-0 items-center justify-center overflow-hidden border-b px-2">
+                                <template x-if="hasBanner()">
+                                    <img :src="localParams.bannerUrl" alt="Logo" class="w-full object-contain" :style="height:px; max-height:px">
+                                </template>
+                                <template x-if="!hasBanner()">
+                                    <span class="text-xl font-bold text-[var(--nttu-primary)]">N</span>
+                                </template>
                             </div>
-                            <div class="bg-slate-50 px-4 py-6 text-center text-xs italic text-gray-400">Nội dung trang</div>
+                            <div class="flex-1 p-3 space-y-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="h-4 w-4 rounded bg-indigo-500"></div>
+                                    <div class="h-4 flex-1 rounded bg-gray-100"></div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="h-4 w-4 rounded bg-orange-500"></div>
+                                    <div class="h-4 w-2/3 rounded bg-gray-100"></div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="h-4 w-4 rounded bg-green-500"></div>
+                                    <div class="h-4 w-3/4 rounded bg-gray-100"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Main content preview -->
+                        <div class="flex-1 bg-slate-50 flex flex-col">
+                            <div class="h-12 shrink-0 border-b bg-white flex items-center justify-between px-4">
+                                <div class="h-4 w-4 rounded bg-gray-200"></div>
+                                <div class="h-6 w-6 rounded-full bg-blue-100"></div>
+                            </div>
+                            <div class="flex-1 p-4 flex items-center justify-center text-xs italic text-gray-400">
+                                Nội dung trang
+                            </div>
                         </div>
                     </div>
+                </div>
                 </div>
             </section>
 
@@ -273,6 +301,36 @@
                     <x-form-field-icon name="refresh" tone="green" class="h-4 w-4" />
                     <span x-text="isVerifyingSummaryGoogle ? 'Đang kiểm tra...' : 'Kiểm tra Sheet tổng hợp học kỳ'"></span>
                 </button>
+            </div>
+        </div>
+
+        {{-- Trang LCMS --}}
+        <div x-show="tab === 'lcms'" x-cloak class="space-y-4 p-6">
+            <div class="flex items-center gap-4">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10">
+                    <x-form-field-icon name="globe" tone="orange" class="h-5 w-5" />
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Trang E-Learning (LCMS)</h3>
+                    <p class="text-sm text-gray-500">Cấu hình tài khoản đăng nhập để cào dữ liệu và lấy Link Google Meet từ Moodle.</p>
+                </div>
+            </div>
+            <div>
+                <x-form-label icon="link" tone="blue">Đường dẫn trang LCMS (URL)</x-form-label>
+                <input type="text" class="nttu-form-control w-full" x-model="localParams.lcmsUrl" placeholder="https://lcms.ntt.edu.vn">
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <x-form-label icon="user" tone="orange">Tên đăng nhập LCMS</x-form-label>
+                    <input type="text" class="nttu-form-control w-full" x-model="localParams.lcmsUser" placeholder="Tài khoản...">
+                </div>
+                <div>
+                    <x-form-label icon="key" tone="red">Mật khẩu LCMS</x-form-label>
+                    <input type="password" class="nttu-form-control w-full" x-model="localParams.lcmsPass" placeholder="Mật khẩu...">
+                </div>
+            </div>
+            <div class="rounded bg-slate-50 p-4 border border-slate-200 mt-2 text-sm text-slate-700">
+                <p><strong>Lưu ý:</strong> Mật khẩu bạn nhập ở đây sẽ được lưu trữ dưới dạng bản rõ (plaintext) trong cơ sở dữ liệu để hệ thống có thể giả lập thao tác đăng nhập. Vui lòng sử dụng tài khoản chung / tài khoản dành riêng cho bot nếu có thể.</p>
             </div>
         </div>
 

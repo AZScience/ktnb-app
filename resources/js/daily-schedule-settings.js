@@ -260,9 +260,7 @@ export function registerDailyScheduleSettings(Alpine) {
 
             showToast(message, type = 'success') {
                 this.toast = { message, type };
-                setTimeout(() => {
-                    if (this.toast?.message === message) this.toast = null;
-                }, 2500);
+                setTimeout(() => { this.toast = null; }, 30000);
             },
 
             get visibleColumnKeys() {

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesDisplayDateColumns;
 use Illuminate\Database\Eloquent\Model;
 
 class ServiceRequest extends Model
 {
+    use NormalizesDisplayDateColumns;
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -20,4 +23,14 @@ class ServiceRequest extends Model
     ];
 
     protected $casts = ['is_processed_immediately' => 'boolean'];
+
+    protected static function displayDateIsoColumns(): array
+    {
+        return [
+            'request_date' => 'request_date_iso',
+            'reception_date' => 'reception_date_iso',
+            'appointment_date' => 'appointment_date_iso',
+            'resolution_date' => 'resolution_date_iso',
+        ];
+    }
 }

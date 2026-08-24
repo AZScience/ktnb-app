@@ -23,6 +23,7 @@ class RoutePermissionMap
         'petitions' => '/monitoring/petitions',
         'asset-receptions' => '/monitoring/asset-check',
         'document-records' => '/monitoring/document-records',
+        'incident-records' => '/monitoring/incident-records',
         'external-checkins' => '/monitoring/external-checkins',
         'online-classes' => '/monitoring/online-classes',
         'permissions' => '/settings/permissions',
@@ -67,6 +68,13 @@ class RoutePermissionMap
         'monitoring.exams.index' => '/monitoring/exams',
         'monitoring.external-practice.index' => '/monitoring/external-practice',
         'monitoring.homeroom.index' => '/monitoring/homeroom',
+        'monitoring.incident-records.index' => '/monitoring/incident-records',
+        'monitoring.incident-records.create' => '/monitoring/incident-records',
+        'monitoring.incident-records.store' => '/monitoring/incident-records',
+        'monitoring.incident-records.show' => '/monitoring/incident-records',
+        'monitoring.incident-records.edit' => '/monitoring/incident-records',
+        'monitoring.incident-records.update' => '/monitoring/incident-records',
+        'monitoring.incident-records.destroy' => '/monitoring/incident-records',
     ];
 
     /** @var array<string, string> */
@@ -77,6 +85,7 @@ class RoutePermissionMap
         'reports.daily.google-sheets.push' => '/reports/daily',
         'reports.comprehensive' => '/reports/comprehensive',
         'reports.comprehensive.export' => '/reports/comprehensive',
+        'reports.comprehensive.monthly-report' => '/reports/comprehensive',
         'reports.student-violations' => '/reports/student-violations',
         'reports.student-violations.export' => '/reports/student-violations',
         'reports.good-deeds' => '/reports/good-deeds',
@@ -85,6 +94,8 @@ class RoutePermissionMap
         'reports.request-reports.export' => '/reports/request-reports',
         'reports.incident-reports' => '/reports/incident-reports',
         'reports.incident-reports.export' => '/reports/incident-reports',
+        'reports.incident-records-reports' => '/reports/incident-records-reports',
+        'reports.incident-records-reports.export' => '/reports/incident-records-reports',
         'reports.interactive-data' => '/reports/comprehensive',
     ];
 
@@ -99,6 +110,7 @@ class RoutePermissionMap
         'settings.security.sessions.destroy',
         'imports.status',
         'ckeditor.upload',
+        'storage.evidence',
     ];
 
     /**
@@ -181,7 +193,7 @@ class RoutePermissionMap
     {
         $name = strtolower($routeName);
 
-        if (str_contains($name, '.export') || str_contains($name, '-export')) {
+        if (str_contains($name, '.export') || str_contains($name, '-export') || str_contains($name, 'monthly-report')) {
             return 'export';
         }
 
@@ -225,6 +237,7 @@ class RoutePermissionMap
             || str_contains($name, '.save')
             || str_contains($name, '.bulk')
             || str_contains($name, 'bulk-update')
+            || str_contains($name, 'clear-recording')
             || str_contains($name, 'compare-faces')
             || str_contains($name, '.extract')
             || str_contains($name, '.compress')

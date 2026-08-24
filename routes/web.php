@@ -15,6 +15,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\DocumentLookupController;
 use App\Http\Controllers\DocumentRecordController;
+use App\Http\Controllers\IncidentRecordController;
 use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ExternalCheckinController;
@@ -39,6 +40,7 @@ use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\PublicExtensionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RecognitionController;
+use App\Http\Controllers\PublicStorageController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\StudentController;
@@ -163,6 +165,9 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::get('monitoring/document-records-export', [DocumentRecordController::class, 'export'])->name('document-records.export');
     Route::post('monitoring/document-records-import-preview', [DocumentRecordController::class, 'importPreview'])->name('document-records.import-preview');
     Route::post('monitoring/document-records-import', [DocumentRecordController::class, 'import'])->name('document-records.import');
+
+    Route::resource('monitoring/incident-records', IncidentRecordController::class)->names('incident-records');
+    Route::get('monitoring/incident-records/{incident_record}/export', [IncidentRecordController::class, 'export'])->name('incident-records.export');
     Route::get('monitoring/document-lookup', [DocumentLookupController::class, 'index'])->name('document-lookup.index');
     Route::get('monitoring/document-lookup/search', [DocumentLookupController::class, 'search'])->name('document-lookup.search');
     Route::get('monitoring/document-lookup/{document_record}', [DocumentLookupController::class, 'show'])->name('document-lookup.show');
@@ -189,6 +194,12 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::post('monitoring/{module}/import', [MonitoringScheduleController::class, 'import'])
         ->whereIn('module', ['online', 'in-person', 'exams', 'external-practice', 'homeroom'])
         ->name('monitoring.schedules.import');
+    Route::post('monitoring/{module}/extract-incident-detail', [MonitoringScheduleController::class, 'extractIncidentDetail'])
+        ->whereIn('module', ['online', 'in-person', 'exams', 'external-practice', 'homeroom'])
+        ->name('monitoring.schedules.extract-incident-detail');
+    Route::post('monitoring/{module}/{schedule}/clear-recording', [MonitoringScheduleController::class, 'clearRecording'])
+        ->whereIn('module', ['online', 'in-person', 'exams', 'external-practice', 'homeroom'])
+        ->name('monitoring.schedules.clear-recording');
     Route::get('monitoring/{module}/{schedule}', [MonitoringScheduleController::class, 'show'])
         ->whereIn('module', ['online', 'in-person', 'exams', 'external-practice', 'homeroom'])
         ->name('monitoring.schedules.show');
@@ -236,6 +247,9 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::post('monitoring/evidence/upload', [EvidenceController::class, 'upload'])->name('monitoring.evidence.upload');
     Route::get('ai/assistant', [AiAssistantController::class, 'index'])->name('ai.assistant');
     Route::post('ai/assistant/ask', [AiAssistantController::class, 'ask'])->name('ai.assistant.ask');
+    Route::post('ai/extract/asset-reception', [AiAssistantController::class, 'extractAssetReception'])->name('ai.extract.asset-reception');
+    Route::post('ai/extract/petition', [AiAssistantController::class, 'extractPetition'])->name('ai.extract.petition');
+    Route::post('ai/extract/service-request', [AiAssistantController::class, 'extractServiceRequest'])->name('ai.extract.service-request');
     Route::get('tools/api-documentation', [ApiDocumentationController::class, 'index'])->name('api-documentation.index');
     Route::post('tools/ckeditor/upload', [CkeditorUploadController::class, 'upload'])->name('ckeditor.upload');
     Route::get('tools/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
@@ -306,18 +320,25 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
         Route::get('student-violations', [ReportController::class, 'studentViolations'])->name('student-violations');
         Route::get('good-deeds', [ReportController::class, 'goodDeeds'])->name('good-deeds');
         Route::get('request-reports', [ReportController::class, 'requestReports'])->name('request-reports');
+        Route::get('incident-records-reports', [ReportController::class, 'incidentRecordsReports'])->name('incident-records-reports');
         Route::get('incident-reports', [ReportController::class, 'incidentReports'])->name('incident-reports');
         Route::get('interactive-data/{variant}', [ReportController::class, 'interactiveData'])->name('interactive-data');
         Route::get('comprehensive/export', [ReportController::class, 'exportComprehensive'])->name('comprehensive.export');
+        Route::get('comprehensive/monthly-report', [ReportController::class, 'exportComprehensiveMonthlyReport'])->name('comprehensive.monthly-report');
         Route::get('student-violations/export', [ReportController::class, 'exportStudentViolations'])->name('student-violations.export');
         Route::get('good-deeds/export', [ReportController::class, 'exportGoodDeeds'])->name('good-deeds.export');
         Route::get('request-reports/export', [ReportController::class, 'exportRequestReports'])->name('request-reports.export');
+        Route::get('incident-records-reports/export', [ReportController::class, 'exportIncidentRecordsReports'])->name('incident-records-reports.export');
         Route::get('incident-reports/export', [ReportController::class, 'exportIncidentReports'])->name('incident-reports.export');
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('storage/evidence/{path}', [PublicStorageController::class, 'evidence'])
+        ->where('path', '.*')
+        ->name('storage.evidence');
 });
 
 require __DIR__.'/auth.php';
