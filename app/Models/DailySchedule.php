@@ -254,6 +254,7 @@ class DailySchedule extends Model
             'in-person' => 'Lớp học trực tiếp',
             'external-practice' => 'Thực hành ngoài',
             'homeroom' => 'Cố vấn học tập',
+            'exams' => 'Thi kết thúc học phần',
             default => null,
         };
     }

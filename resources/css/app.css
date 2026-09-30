@@ -89,11 +89,14 @@
     .nttu-table th[data-col="note"],
     .nttu-table td[data-col="note"],
     .nttu-table th[data-col="content"],
-    .nttu-table td[data-col="content"] {
+    .nttu-table td[data-col="content"],
+    .nttu-table th[data-col="lecturer"],
+    .nttu-table td[data-col="lecturer"] {
         text-align: left !important;
     }
     .nttu-table tbody td[data-col="note"] > span,
-    .nttu-table tbody td[data-col="content"] > span {
+    .nttu-table tbody td[data-col="content"] > span,
+    .nttu-table tbody td[data-col="lecturer"] > span {
         display: block;
         text-align: left;
         white-space: normal;

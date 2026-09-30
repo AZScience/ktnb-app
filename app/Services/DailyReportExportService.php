@@ -115,10 +115,14 @@ class DailyReportExportService
 
             $filename = $this->buildFilename($officerFullName);
 
-            return response()->streamDownload(function () use ($spreadsheet) {
-                $writer = new Xlsx($spreadsheet);
-                $writer->setPreCalculateFormulas(false);
-                $writer->save('php://output');
+            $writer = new Xlsx($spreadsheet);
+            $writer->setPreCalculateFormulas(false);
+            $tempFile = storage_path('framework/cache/export_' . uniqid() . '.xlsx');
+            $writer->save($tempFile);
+
+            return response()->streamDownload(function () use ($tempFile) {
+                readfile($tempFile);
+                @unlink($tempFile);
             }, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ]);
@@ -236,12 +240,11 @@ class DailyReportExportService
         $lastColLetter = Coordinate::stringFromColumnIndex($colCount);
         $lastDataRow = $dataStartRow + count($data) - 1;
 
+
+
         foreach ($data as $index => $item) {
             $rowIndex = $dataStartRow + $index;
-
-            if ($rowIndex !== $dataStartRow) {
-                $this->duplicateRowStyle($worksheet, $dataStartRow, $rowIndex, $colCount);
-            }
+            $worksheet->getRowDimension($rowIndex)->setRowHeight(-1);
 
             $worksheet->getCell("A{$rowIndex}")->setValue($index + 1);
 
@@ -396,6 +399,11 @@ class DailyReportExportService
                 'vertical' => Alignment::VERTICAL_CENTER,
                 'wrapText' => true,
             ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                ],
+            ],
         ]);
 
         $worksheet->getStyle("A{$dataStartRow}:A{$lastDataRow}")
@@ -432,16 +440,7 @@ class DailyReportExportService
         }
     }
 
-    private function duplicateRowStyle(Worksheet $worksheet, int $templateRow, int $targetRow, int $colCount): void
-    {
-        for ($col = 1; $col <= $colCount; $col++) {
-            $colLetter = Coordinate::stringFromColumnIndex($col);
-            $worksheet->duplicateStyle(
-                $worksheet->getStyle("{$colLetter}{$templateRow}"),
-                "{$colLetter}{$targetRow}",
-            );
-        }
-    }
+
 
     /**
      * @param  list<string>  $cols
@@ -520,3 +519,9 @@ class DailyReportExportService
         return $value !== '' ? $value : 'bao-cao';
     }
 }
+
+
+
+
+
+

@@ -527,19 +527,7 @@ class MonitoringScheduleController extends Controller
 
     private function incidentCategoriesForModule(string $module)
     {
-        if ($module === 'exams') {
-            $thiRecIds = Recognition::query()
-                ->whereRaw('LOWER(name) LIKE ?', ['%thi%'])
-                ->pluck('id');
 
-            if ($thiRecIds->isEmpty()) {
-                return IncidentCategory::orderBy('name')->get();
-            }
-
-            $filtered = IncidentCategory::whereIn('recognition_id', $thiRecIds)->orderBy('name')->get();
-
-            return $filtered->isNotEmpty() ? $filtered : IncidentCategory::orderBy('name')->get();
-        }
 
         $recognitionName = DailySchedule::moduleRecognitionName($module);
         if (! $recognitionName) {
@@ -699,27 +687,49 @@ class MonitoringScheduleController extends Controller
                             ]
                         ]);
                         
-                        // Trích xuất Mã môn từ subject (vd: "011007558111 - Kinh tế Chính trị" -> "011007558111")
-                        $searchTerm = '';
+                        // 4 Cấp độ ưu tiên tìm kiếm trên LCMS
+                        $department = $request->input('department');
+                        $subjectCode = '';
                         if ($subject) {
-                            if (preg_match('/^([A-Z0-9]+)\s*-/', $subject, $m)) {
-                                $searchTerm = $m[1]; // Lấy mã môn
+                            if (preg_match('/^([A-Z0-9]+)\\s*-/', $subject, $m)) {
+                                $subjectCode = $m[1];
                             } else {
-                                $searchTerm = explode(' ', $subject)[0]; // Hoặc lấy từ đầu tiên
+                                $subjectCode = explode(' ', $subject)[0];
                             }
                         }
-                        
-                        // Nếu vẫn không có mã môn thì dùng lớp
-                        if (!$searchTerm) {
-                            $searchTerm = $class;
+
+                        $searchQueries = [];
+                        if ($subjectCode && $class && $lecturer && $department) {
+                            $searchQueries[] = trim("$subjectCode $class $lecturer $department");
+                        }
+                        if ($subjectCode && $class && $lecturer) {
+                            $searchQueries[] = trim("$subjectCode $class $lecturer");
+                        }
+                        if ($subjectCode && $class) {
+                            $searchQueries[] = trim("$subjectCode $class");
                         }
                         
-                        // Nếu vẫn không có thì ghép lại tìm chung
-                        if (!$searchTerm) {
-                            $searchTerm = trim($class . ' ' . $subject);
+                        // Fallbacks
+                        if ($class && $lecturer) {
+                            $searchQueries[] = trim("$class $lecturer");
+                        }
+                        if ($subjectCode) {
+                            $searchQueries[] = trim($subjectCode);
+                        }
+                        if ($class) {
+                            $searchQueries[] = trim($class);
                         }
                         
-                        if ($searchTerm) {
+                        $searchQueries = array_values(array_filter(array_unique($searchQueries)));
+                        
+                        $courseUrls = [];
+                        $lcmsSearchTerm = '';
+                        $htmlSearch = '';
+                        $currentUrl = '';
+                        
+                        foreach ($searchQueries as $searchTerm) {
+                            if (!$searchTerm) continue;
+                            
                             \Illuminate\Support\Facades\Log::info("LCMS Search: " . $searchTerm);
                             $searchQuery = urlencode($searchTerm);
                             $searchUrl = rtrim($lcmsUrl, '/') . '/course/search.php?areaids=core_course-course&q=' . $searchQuery;
@@ -729,22 +739,27 @@ class MonitoringScheduleController extends Controller
                             ]);
                             $htmlSearch = (string)$resSearch->getBody();
                             
-                            $courseUrls = [];
                             $redirectHistory = $resSearch->getHeader('X-Guzzle-Redirect-History');
                             $currentUrl = empty($redirectHistory) ? $searchUrl : end($redirectHistory);
                             
-                            // Moodle redirects directly to course view if there's exactly 1 match
                             if (strpos($currentUrl, 'course/view.php') !== false) {
                                 $courseUrls[] = $currentUrl;
-                                \Illuminate\Support\Facades\Log::info("LCMS Redirected exactly to course: " . $currentUrl);
+                                $lcmsSearchTerm = $searchTerm;
+                                break; // Found!
                             } else {
                                 if (preg_match_all('/href="([^"]+course\/view\.php\?id=\d+)[^"]*"/i', $htmlSearch, $mCourses)) {
                                     $courseUrls = array_unique($mCourses[1]);
-                                    \Illuminate\Support\Facades\Log::info("LCMS Found " . count($courseUrls) . " course links");
+                                    if ($courseUrls) {
+                                        $lcmsSearchTerm = $searchTerm;
+                                        break; // Found!
+                                    }
                                 }
                             }
-                            
-                            foreach (array_slice($courseUrls, 0, 3) as $courseUrl) {
+                        }
+                        
+                        if (!empty($courseUrls)) {
+                            foreach (array_slice($courseUrls, 0, 10) as $courseUrl) {
+
                                 $courseUrl = str_replace('&amp;', '&', $courseUrl);
                                 
                                 // Nếu là URL bị redirect thì không cần fetch lại vì htmlSearch đã chứa
