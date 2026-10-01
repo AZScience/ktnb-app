@@ -603,7 +603,7 @@ class MonitoringScheduleController extends Controller
                     ]),
                     CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
                     CURLOPT_FOLLOWLOCATION => true,
-                    CURLOPT_TIMEOUT        => 15,
+                    CURLOPT_TIMEOUT        => 40, // Increase to 40 seconds
                     CURLOPT_SSL_VERIFYPEER => false,
                 ]);
                 $response = curl_exec($ch);
