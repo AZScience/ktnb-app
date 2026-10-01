@@ -94,6 +94,10 @@
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-5 2H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     <span class="hidden sm:inline">File mới</span>
                 </button>
+                <label x-show="canAdd" x-cloak class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-orange-200 bg-orange-50 px-2 text-sm text-orange-700 hover:bg-orange-100" title="Ghi đè nếu file đã tồn tại trên server">
+                    <input type="checkbox" x-model="overwriteUpload" class="rounded border-orange-400 text-orange-600 focus:ring-orange-500 h-4 w-4">
+                    <span class="hidden sm:inline">Ghi đè</span>
+                </label>
                 <label x-show="canAdd" x-cloak class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-3 text-sm font-medium text-blue-700 hover:bg-blue-100">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                     <span class="hidden sm:inline">Tải file</span>

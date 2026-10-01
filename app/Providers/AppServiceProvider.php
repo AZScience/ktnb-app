@@ -23,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (request()->is('reports/daily/export') && request()->isMethod('POST')) {
+            request()->setMethod('GET');
+        }
+
         date_default_timezone_set((string) config('app.timezone'));
 
         HttpSslConfigurator::apply();

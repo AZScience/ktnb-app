@@ -131,7 +131,7 @@ class Employee extends Model
         });
     }
 
-    private static function normalizeRecipientKey(?string $value): string
+    public static function normalizeRecipientKey(?string $value): string
     {
         $value = trim((string) $value);
         if ($value === '') {
@@ -141,6 +141,53 @@ class Employee extends Model
         $normalized = preg_replace('/\s+/u', ' ', mb_strtolower($value));
 
         return is_string($normalized) ? $normalized : mb_strtolower($value);
+    }
+
+        /**
+     * Map danh sach ten/email sang tat ca cac bi danh (nickname) co the co.
+     * Dung de filter trong cac bao cao.
+     *
+     * @param list<string> $employees
+     * @return list<string>
+     */
+    public static function scheduleEmployeeAliases(array $employees): array
+    {
+        if ($employees === []) {
+            return [];
+        }
+
+        $lookup = self::recipientNicknameLookup();
+        
+        // Build reverse lookup: resolved name -> list of aliases
+        $reverse = [];
+        foreach ($lookup as $key => $resolved) {
+            $reverse[$resolved][] = $key;
+        }
+
+        $aliases = [];
+        foreach ($employees as $emp) {
+            $norm = self::normalizeRecipientKey($emp);
+            $aliases[] = $norm;
+            
+            if (isset($lookup[$norm])) {
+                $resolved = $lookup[$norm];
+                $aliases[] = self::normalizeRecipientKey($resolved);
+                if (isset($reverse[$resolved])) {
+                    foreach ($reverse[$resolved] as $rev) {
+                        $aliases[] = $rev;
+                    }
+                }
+            } else {
+                // Truong hop $emp chinh la resolved name
+                if (isset($reverse[$norm])) {
+                    foreach ($reverse[$norm] as $rev) {
+                        $aliases[] = $rev;
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($aliases)));
     }
 
     public function getPositionNameAttribute(): ?string
@@ -163,3 +210,5 @@ class Employee extends Model
         return $byName?->name;
     }
 }
+
+

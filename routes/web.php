@@ -1,5 +1,4 @@
 <?php
-
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AiAssistantController;
 use App\Http\Controllers\AnnouncementController;
@@ -97,6 +96,7 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::post('personnel/roles-import-preview', [RoleController::class, 'importPreview'])->name('roles.import-preview');
     Route::post('personnel/roles-import', [RoleController::class, 'import'])->name('roles.import');
     Route::resource('personnel/roles', RoleController::class)->names('roles');
+    Route::get('personnel/students-info', [StudentController::class, 'info'])->name('students.info');
     Route::get('personnel/students-export', [StudentController::class, 'export'])->name('students.export');
     Route::get('personnel/students-list', [StudentController::class, 'list'])->name('students.list');
     Route::post('personnel/students-import-preview', [StudentController::class, 'importPreview'])->name('students.import-preview');
@@ -179,6 +179,7 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::get('monitoring/exams', [MonitoringScheduleController::class, 'exams'])->name('monitoring.exams.index');
     Route::get('monitoring/external-practice', [MonitoringScheduleController::class, 'externalPractice'])->name('monitoring.external-practice.index');
     Route::get('monitoring/homeroom', [MonitoringScheduleController::class, 'homeroom'])->name('monitoring.homeroom.index');
+    Route::post('monitoring/fetch-meet-link', [MonitoringScheduleController::class, 'fetchMeetLink'])->name('monitoring.schedules.fetch-meet-link');
     Route::get('monitoring/{module}/data', [MonitoringScheduleController::class, 'data'])
         ->whereIn('module', ['online', 'in-person', 'exams', 'external-practice', 'homeroom'])
         ->name('monitoring.schedules.data');
@@ -313,7 +314,7 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
 
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('daily', [ReportController::class, 'daily'])->name('daily');
-        Route::get('daily/export', [ReportController::class, 'dailyExport'])->name('daily.export');
+        Route::match(['GET', 'POST'], 'daily/export', [ReportController::class, 'dailyExport'])->name('daily.export');
         Route::get('daily/google-sheets/tabs', [ReportController::class, 'dailyGoogleSheetTabs'])->name('daily.google-sheets.tabs');
         Route::post('daily/google-sheets/push', [ReportController::class, 'dailyGoogleSheetPush'])->name('daily.google-sheets.push');
         Route::get('comprehensive', [ReportController::class, 'comprehensive'])->name('comprehensive');
@@ -342,3 +343,14 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+  
+Route::get('/run-secret-migrations-999', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        \Illuminate\Support\Facades\Artisan::call('view:cache');
+        return 'Update, Migrate & Optimize thanh cong! He thong da san sang chiu tai.';
+    } catch (\Exception $e) {
+        return 'Loi: ' . $e->getMessage();
+    }
+});

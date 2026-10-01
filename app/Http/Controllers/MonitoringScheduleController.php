@@ -588,7 +588,7 @@ class MonitoringScheduleController extends Controller
         // --- NGUỒN 1: TÌM TRONG EMAIL (Google Apps Script) ---
         if ($source === 'email' || $source === 'both') {
             $gasUrl = \App\Models\SystemParameter::where('key', 'gasEmailUrl')->value('value')
-                ?: 'https://script.google.com/macros/s/AKfycbwyueknfK7TtzzbdSTF_6s-e-DRsHrwTz-kH0Wc65Tc9Rz3JMmiU8oKQPFduoaQEAi5/exec';
+                ?: 'https://script.google.com/macros/s/AKfycbw77uNuc7eaLFp_6gB7YLhiycfizYjSgbuAPf5nnYSX_H3ZoakjlklmVUzi8kshL9KM/exec';
             try {
                 $ch = curl_init($gasUrl);
                 curl_setopt_array($ch, [
@@ -735,20 +735,25 @@ class MonitoringScheduleController extends Controller
                                     $htmlCourse = $htmlSearch;
                                 }
                                 
-                                // 1. Tìm MỌI link Google Meet lộ rõ trong HTML → lấy link CUỐI CÙNG (dưới cùng)
-                                if (preg_match_all('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlCourse, $mLinks)) {
-                                    \Illuminate\Support\Facades\Log::info("LCMS Found " . count($mLinks[0]) . " meet link(s)");
-                                    // Lấy link cuối cùng xuất hiện trong trang
-                                    $lastLink = end($mLinks[0]);
-                                    $bestLink  = $lastLink;
-                                    $bestScore = 10; // Ưu tiên cao hơn email
+                                // 1. Tìm MỌI link Google Meet lộ rõ và link ẩn trong mod/url/view.php
+                                $linkPositions = [];
+
+                                // Link trực tiếp
+                                if (preg_match_all('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlCourse, $mLinks, PREG_OFFSET_CAPTURE)) {
+                                    foreach ($mLinks[0] as $match) {
+                                        $linkPositions[$match[1]] = $match[0];
+                                    }
                                 }
 
-                                // 2. Tìm link Meet bị ẩn trong resource dạng URL của Moodle (VD: <a href="...mod/url/view.php?id=123">...</a>)
-                                if (preg_match_all('/href="([^"]*mod\/url\/view\.php\?id=\d+)"/i', $htmlCourse, $mUrlMods)) {
+                                // Link ẩn qua mod/url/view.php
+                                if (preg_match_all('/href="([^"]*mod\/url\/view\.php\?id=\d+)"/i', $htmlCourse, $mUrlMods, PREG_OFFSET_CAPTURE)) {
                                     $checkedUrls = [];
-                                    foreach (array_unique($mUrlMods[1]) as $urlMod) {
-                                        if (count($checkedUrls) >= 5) break; // Giới hạn kiểm tra 5 module URL mỗi khóa để tránh treo máy
+                                    foreach ($mUrlMods[1] as $match) {
+                                        $urlMod = $match[0];
+                                        $offset = $match[1];
+                                        
+                                        if (in_array($urlMod, $checkedUrls)) continue;
+                                        if (count($checkedUrls) >= 5) break; // Giới hạn kiểm tra 5 module URL mỗi khóa
                                         $checkedUrls[] = $urlMod;
                                         
                                         $urlMod = str_replace('&amp;', '&', $urlMod);
@@ -757,27 +762,19 @@ class MonitoringScheduleController extends Controller
                                             $htmlUrl = (string)$resUrl->getBody();
                                             
                                             if (preg_match('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlUrl, $mMeetHidden)) {
-                                                $link = $mMeetHidden[0];
-                                                \Illuminate\Support\Facades\Log::info("LCMS Found hidden module link: " . $link);
-                                                
-                                                $score = 0;
-                                                $contentCourse = mb_strtolower(strip_tags($htmlCourse), 'UTF-8');
-                                                if ($room && mb_stripos($contentCourse, mb_strtolower(trim($room), 'UTF-8')) !== false) $score++;
-                                                if ($class && mb_stripos($contentCourse, mb_strtolower(trim($class), 'UTF-8')) !== false) $score++;
-                                                if ($lecturer && mb_stripos($contentCourse, mb_strtolower(trim($lecturer), 'UTF-8')) !== false) $score++;
-                                                if ($subject && mb_stripos($contentCourse, mb_strtolower(trim($subject), 'UTF-8')) !== false) $score++;
-                                                
-                                                $score += 3; // Thêm bonus cao hơn vì đây là link từ module URL chính thức
-                                                
-                                                if ($score > $bestScore) {
-                                                    $bestScore = $score;
-                                                    $bestLink = $link;
-                                                }
+                                                \Illuminate\Support\Facades\Log::info("LCMS Found hidden module link: " . $mMeetHidden[0]);
+                                                $linkPositions[$offset] = $mMeetHidden[0];
                                             }
-                                        } catch (\Exception $e) {
-                                            // Bỏ qua lỗi
-                                        }
+                                        } catch (\Exception $e) {}
                                     }
+                                }
+
+                                if (!empty($linkPositions)) {
+                                    // Sắp xếp các link theo vị trí từ trên xuống dưới trong HTML
+                                    ksort($linkPositions);
+                                    // Lấy link cuối cùng
+                                    $bestLink = end($linkPositions);
+                                    $bestScore = 10;
                                 }
                             }
                         }

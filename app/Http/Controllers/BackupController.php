@@ -514,8 +514,19 @@ class BackupController extends Controller
                 continue;
             }
 
-            $rows = DB::table($table)->get();
-            File::put("{$dir}/{$table}.json", json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $filePath = "{$dir}/{$table}.json";
+            $fileHandle = fopen($filePath, 'w');
+            fwrite($fileHandle, "[\n");
+            $first = true;
+            foreach (DB::table($table)->cursor() as $row) {
+                if (!$first) {
+                    fwrite($fileHandle, ",\n");
+                }
+                fwrite($fileHandle, json_encode($row, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                $first = false;
+            }
+            fwrite($fileHandle, "\n]");
+            fclose($fileHandle);
         }
 
         $tempZip = storage_path('app/backups/'.uniqid('tmp_', true).'.zip');
@@ -608,3 +619,4 @@ class BackupController extends Controller
         return DB::getSchemaBuilder()->hasTable($table);
     }
 }
+

@@ -1,4 +1,4 @@
-// Per-module column definitions — mirrors old Next.js app
+﻿// Per-module column definitions — mirrors old Next.js app
 import { evidencePanelMethods, evidencePanelState } from './evidence-input.js';
 import { columnKeyIconPaths as columnIconPaths, headerIconClassForKey } from './nttu-icons.js';
 import { t, getLanguage } from './language.js';
@@ -1662,7 +1662,8 @@ export function monitoringSchedulesPage(config) {
                         class: this.form.class || '',
                         lecturer: this.form.lecturer_name || this.form.lecturer || '',
                         period: this.form.period || '',
-                        subject: this.form.module_name || ''
+                        subject: this.form.module_name || '',
+                        department: this.form.department || ''
                     })
                 });
                 
@@ -1702,3 +1703,4 @@ export function monitoringSchedulesPage(config) {
 }
 
 window.monitoringSchedulesPage = monitoringSchedulesPage;
+

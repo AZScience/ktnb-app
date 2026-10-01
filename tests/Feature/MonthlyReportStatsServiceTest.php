@@ -71,8 +71,8 @@ class MonthlyReportStatsServiceTest extends TestCase
         $this->assertSame(1, $data['metrics'][8]); // Chuyển phòng
         $this->assertSame(1, $data['metrics'][9]); // Dạy thay
         $this->assertSame(0, $data['metrics'][10]); // Báo nghỉ bị loại do chưa ghi nhận / khác campus
-        $this->assertStringContainsString('Khoa CNTT - Đổi sang A102', $data['redTexts'][0]);
-        $this->assertSame('Khoa QTKD', $data['redTexts'][1]);
+        $this->assertStringContainsString('Khoa CNTT) 05/07/2026: Đổi sang A102', $data['redTexts'][0]);
+        $this->assertStringContainsString('Khoa QTKD', $data['redTexts'][1]);
 
         $filtered = app(MonthlyReportStatsService::class)->filterSchedulesForReport(
             DailySchedule::query()->whereNotNull('incident')->where('incident', '!=', '')->get(),
@@ -330,3 +330,8 @@ class MonthlyReportStatsServiceTest extends TestCase
         ], $overrides));
     }
 }
+
+
+
+
+

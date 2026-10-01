@@ -90,6 +90,7 @@ export function registerProjectFiles(Alpine) {
         canDelete: config.canDelete !== false,
         canExport: config.canExport !== false,
         currentPath: '',
+        overwriteUpload: false,
         breadcrumbs: [{ label: '', path: '' }],
         items: [],
         loading: false,
@@ -635,6 +636,7 @@ export function registerProjectFiles(Alpine) {
 
             const formData = new FormData();
             formData.append('path', this.currentPath || '');
+            if (this.overwriteUpload) formData.append('overwrite', '1');
             entries.forEach(({ file, path }) => {
                 formData.append('files[]', file);
                 formData.append('paths[]', path);

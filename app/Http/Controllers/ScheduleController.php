@@ -274,18 +274,18 @@ class ScheduleController extends Controller
         ]);
 
         $date = $request->get('date', date('d/m/Y'));
-        $count = $this->excel->import($request->file('file'), $date);
+        $result = $this->excel->import($request->file('file'), $date); $count = $result["imported"]; $skipped = $result["skipped"]; $msg = "Đã import {$count} tiết học mới." . ($skipped > 0 ? " (Bỏ qua {$skipped} tiết trùng)" : "");
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Đã import {$count} tiết học.",
+                'message' => $msg,
                 'count' => $count,
             ]);
         }
 
         return redirect()->route('schedules.index')
-            ->with('success', "Đã import {$count} tiết học.");
+            ->with('success', $msg);
     }
 
     public function filterPresets(Request $request): JsonResponse

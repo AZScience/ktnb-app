@@ -196,7 +196,7 @@ class ScheduleExcelService
         ]);
     }
 
-    public function import(UploadedFile $file, ?string $defaultDate = null): int
+    public function import(UploadedFile $file, ?string $defaultDate = null): array
     {
         $rawRows = $this->readRawImportRows($file);
         $merged = $this->mergeImportRows($rawRows);
@@ -218,7 +218,7 @@ class ScheduleExcelService
 
         $newItems = $this->filterNewImportItems($merged);
 
-        return count($this->createImportItems($newItems));
+        $imported = count($this->createImportItems($newItems)); $skipped = count($merged) - count($newItems); return ["imported" => $imported, "skipped" => $skipped];
     }
 
     public function export(Collection $items, string $filename): StreamedResponse
@@ -837,7 +837,7 @@ class ScheduleExcelService
     /** @param  list<array<string, string>>  $rawRows
      * @return list<array<string, mixed>>
      */
-    private function mergeImportRows(array $rawRows): array
+        private function mergeImportRows(array $rawRows): array
     {
         $globalMergedMap = [];
 
@@ -846,11 +846,18 @@ class ScheduleExcelService
             $status = (string) ($item['status'] ?? 'Phòng học');
             $lecturer = (string) ($item['lecturer'] ?? '');
 
-            $baseKey = $this->normalizeImportKey(implode('', [
-                $item['date'], $item['building'], $item['room'], $item['period'], $item['type'],
-                $item['department'], $item['class'], (string) ($item['student_count'] ?? ''), $item['content'],
-            ]));
-            $key = $status === 'Phòng thi' ? $baseKey : $baseKey.$this->normalizeImportKey($lecturer);
+            if ($status === 'Phòng thi') {
+                $key = $this->normalizeImportKey(implode('', [
+                    $item['date'], $item['building'], $item['room'], $item['period'], $item['type'],
+                    $item['department'], $item['content'],
+                ]));
+            } else {
+                $baseKey = $this->normalizeImportKey(implode('', [
+                    $item['date'], $item['building'], $item['room'], $item['period'], $item['type'],
+                    $item['department'], $item['class'], (string) ($item['student_count'] ?? ''), $item['content'],
+                ]));
+                $key = $baseKey.$this->normalizeImportKey($lecturer);
+            }
 
             if (isset($globalMergedMap[$key])) {
                 $existing = &$globalMergedMap[$key];
@@ -859,6 +866,18 @@ class ScheduleExcelService
                 }
 
                 if ($status === 'Phòng thi') {
+                    $newClass = trim((string) ($item['class'] ?? ''));
+                    if ($newClass) {
+                        $existingClasses = array_map('trim', explode(',', $existing['class'] ?? ''));
+                        if (! in_array($newClass, $existingClasses, true)) {
+                            $existing['class'] = trim(($existing['class'] ?? '') . ', ' . $newClass, ', ');
+                        }
+                    }
+                    
+                    if (isset($item['student_count']) && is_numeric($item['student_count'])) {
+                        $existing['student_count'] = ((int) ($existing['student_count'] ?? 0)) + ((int) $item['student_count']);
+                    }
+
                     $nextLec = $lecturer;
                     if ($nextLec && ! in_array($nextLec, [$existing['proctor1'], $existing['proctor2'], $existing['proctor3']], true)) {
                         if (empty($existing['proctor1'])) {
@@ -874,14 +893,12 @@ class ScheduleExcelService
                     $existing['lecturer'] = trim(($existing['lecturer'] ?? '').', '.$lecturer, ', ');
                 }
             } elseif ($status === 'Phòng thi') {
-                $firstLec = $lecturer;
-                $globalMergedMap[$key] = [
-                    ...$item,
-                    'proctor1' => $firstLec ?: ($item['proctor1'] ?? ''),
+                $globalMergedMap[$key] = array_merge($item, [
+                    'proctor1' => $lecturer ?: ($item['proctor1'] ?? ''),
                     'proctor2' => $item['proctor2'] ?? '',
                     'proctor3' => $item['proctor3'] ?? '',
                     'lecturer' => '',
-                ];
+                ]);
             } else {
                 $globalMergedMap[$key] = $item;
             }

@@ -34,7 +34,7 @@
     storage-key="petitions"
     modal-wide
     form-mode="petition"
-    server-paginated
+    
     form-layout="petition"
     advanced-filter-mode="assets"
     :advanced-filter-options="$assetAdvancedFilterOptions"
