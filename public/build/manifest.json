@@ -1,0 +1,282 @@
+{
+  "_chart-B_QsBYZz.js": {
+    "file": "assets/chart-B_QsBYZz.js",
+    "name": "chart"
+  },
+  "_ckeditor-compose-BoVrCdcF.css": {
+    "file": "assets/ckeditor-compose-BoVrCdcF.css",
+    "src": "_ckeditor-compose-BoVrCdcF.css"
+  },
+  "_ckeditor-compose-CvOj3PFM.js": {
+    "file": "assets/ckeditor-compose-CvOj3PFM.js",
+    "name": "ckeditor-compose",
+    "css": [
+      "assets/ckeditor-compose-BoVrCdcF.css"
+    ]
+  },
+  "_nttu-incident-colors-CIx5-XD8.js": {
+    "file": "assets/nttu-incident-colors-CIx5-XD8.js",
+    "name": "nttu-incident-colors"
+  },
+  "_nttu-table-messages-BUtStq4P.js": {
+    "file": "assets/nttu-table-messages-BUtStq4P.js",
+    "name": "nttu-table-messages"
+  },
+  "_xlsx-DKn3HQA3.js": {
+    "file": "assets/xlsx-DKn3HQA3.js",
+    "name": "xlsx",
+    "imports": [
+      "_ckeditor-compose-CvOj3PFM.js"
+    ]
+  },
+  "node_modules/html5-qrcode/esm/index.js": {
+    "file": "assets/esm-B1Ss9HrO.js",
+    "name": "esm",
+    "src": "node_modules/html5-qrcode/esm/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/catalog-table.js"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-B-Pau7Oj.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/activity-log-settings.js": {
+    "file": "assets/activity-log-settings-CrgM6KdO.js",
+    "name": "activity-log-settings",
+    "src": "resources/js/activity-log-settings.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_chart-B_QsBYZz.js"
+    ],
+    "dynamicImports": [
+      "_xlsx-DKn3HQA3.js"
+    ]
+  },
+  "resources/js/ai-assistant.js": {
+    "file": "assets/ai-assistant-XMzbthYS.js",
+    "name": "ai-assistant",
+    "src": "resources/js/ai-assistant.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BCcsKDgs.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/catalog-table.js",
+      "resources/js/interactive-report.js",
+      "resources/js/daily-report.js",
+      "resources/js/dashboard.js",
+      "resources/js/system-overview-charts.js",
+      "resources/js/daily-schedule-settings.js",
+      "resources/js/checkin-monitor.js",
+      "resources/js/permission-settings.js",
+      "resources/js/activity-log-settings.js",
+      "resources/js/backup-settings.js",
+      "resources/js/project-files.js",
+      "resources/js/document-lookup.js",
+      "resources/js/messaging.js",
+      "resources/js/discussion-board.js",
+      "resources/js/lecturer-portal.js",
+      "resources/js/feedback-form.js",
+      "resources/js/evidence-manager.js",
+      "resources/js/settings-page.js",
+      "resources/js/profile-page.js",
+      "resources/js/login.js",
+      "resources/js/ai-assistant.js"
+    ]
+  },
+  "resources/js/backup-settings.js": {
+    "file": "assets/backup-settings-Dje2wOwG.js",
+    "name": "backup-settings",
+    "src": "resources/js/backup-settings.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/catalog-table.js": {
+    "file": "assets/catalog-table-shmWEWqd.js",
+    "name": "catalog-table",
+    "src": "resources/js/catalog-table.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_ckeditor-compose-CvOj3PFM.js",
+      "resources/js/app.js",
+      "_xlsx-DKn3HQA3.js",
+      "_nttu-table-messages-BUtStq4P.js"
+    ],
+    "dynamicImports": [
+      "resources/js/catalog-table.js",
+      "_ckeditor-compose-CvOj3PFM.js"
+    ]
+  },
+  "resources/js/checkin-monitor.js": {
+    "file": "assets/checkin-monitor-DeHixrN0.js",
+    "name": "checkin-monitor",
+    "src": "resources/js/checkin-monitor.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_nttu-incident-colors-CIx5-XD8.js"
+    ]
+  },
+  "resources/js/daily-report.js": {
+    "file": "assets/daily-report-CV1NABsG.js",
+    "name": "daily-report",
+    "src": "resources/js/daily-report.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_nttu-incident-colors-CIx5-XD8.js",
+      "_nttu-table-messages-BUtStq4P.js"
+    ]
+  },
+  "resources/js/daily-schedule-settings.js": {
+    "file": "assets/daily-schedule-settings-BkpHHtSA.js",
+    "name": "daily-schedule-settings",
+    "src": "resources/js/daily-schedule-settings.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/dashboard.js": {
+    "file": "assets/dashboard-Cjlraya2.js",
+    "name": "dashboard",
+    "src": "resources/js/dashboard.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/discussion-board.js": {
+    "file": "assets/discussion-board-CJN9DJz0.js",
+    "name": "discussion-board",
+    "src": "resources/js/discussion-board.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_ckeditor-compose-CvOj3PFM.js"
+    ]
+  },
+  "resources/js/document-lookup.js": {
+    "file": "assets/document-lookup-BBRaCd6P.js",
+    "name": "document-lookup",
+    "src": "resources/js/document-lookup.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/evidence-manager.js": {
+    "file": "assets/evidence-manager-DkietQQz.js",
+    "name": "evidence-manager",
+    "src": "resources/js/evidence-manager.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/feedback-form.js": {
+    "file": "assets/feedback-form-BIQ1biQI.js",
+    "name": "feedback-form",
+    "src": "resources/js/feedback-form.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/interactive-report.js": {
+    "file": "assets/interactive-report-C1tLQhHN.js",
+    "name": "interactive-report",
+    "src": "resources/js/interactive-report.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_nttu-incident-colors-CIx5-XD8.js",
+      "_nttu-table-messages-BUtStq4P.js"
+    ],
+    "dynamicImports": [
+      "_xlsx-DKn3HQA3.js"
+    ]
+  },
+  "resources/js/lecturer-portal.js": {
+    "file": "assets/lecturer-portal-BWPZmWEJ.js",
+    "name": "lecturer-portal",
+    "src": "resources/js/lecturer-portal.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/login.js": {
+    "file": "assets/login-KjuWJ0nV.js",
+    "name": "login",
+    "src": "resources/js/login.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/messaging.js": {
+    "file": "assets/messaging-CkDzaFpL.js",
+    "name": "messaging",
+    "src": "resources/js/messaging.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_ckeditor-compose-CvOj3PFM.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/permission-settings.js": {
+    "file": "assets/permission-settings-Bwxo-Be_.js",
+    "name": "permission-settings",
+    "src": "resources/js/permission-settings.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/profile-page.js": {
+    "file": "assets/profile-page-D0WeY7xs.js",
+    "name": "profile-page",
+    "src": "resources/js/profile-page.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/project-files.js": {
+    "file": "assets/project-files-CeUwhNL4.js",
+    "name": "project-files",
+    "src": "resources/js/project-files.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/settings-page.js": {
+    "file": "assets/settings-page-BntVO_IL.js",
+    "name": "settings-page",
+    "src": "resources/js/settings-page.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/system-overview-charts.js": {
+    "file": "assets/system-overview-charts-DxTk4y2P.js",
+    "name": "system-overview-charts",
+    "src": "resources/js/system-overview-charts.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chart-B_QsBYZz.js"
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+var e=`Không có dữ liệu phù hợp.`,t=`Chưa có dữ liệu.`,n=`Đang tải dữ liệu...`,r=`Không có dữ liệu để xuất.`,i=`Không có bản ghi khớp với bộ lọc hiện tại. Hãy điều chỉnh hoặc xóa bộ lọc.`,a=`Vui lòng đợi trong giây lát.`;export{i as a,n as i,t as n,a as o,r,e as t};

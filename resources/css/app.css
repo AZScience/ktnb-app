@@ -534,6 +534,7 @@
     .nttu-table tbody tr.row-selected td .nttu-cell-chip,
     .nttu-table tbody tr.row-selected:hover td .nttu-cell-chip {
         @apply bg-white text-slate-800 border-slate-400;
+        color: #1e293b !important;
     }
     .nttu-sidebar-link {
         @apply flex items-center gap-3 rounded-md px-3 py-2 text-gray-700 hover:bg-slate-100;
