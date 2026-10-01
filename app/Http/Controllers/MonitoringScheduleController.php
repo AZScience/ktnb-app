@@ -585,77 +585,42 @@ class MonitoringScheduleController extends Controller
         $bestScore = 0;
         $newestTime = 0;
 
-        // --- NGUỒN 1: TÌM TRONG EMAIL (IMAP) ---
+        // --- NGUỒN 1: TÌM TRONG EMAIL (Google Apps Script) ---
         if ($source === 'email' || $source === 'both') {
-            $username = \App\Models\SystemParameter::where('key', 'smtpUser')->value('value');
-            $password = \App\Models\SystemParameter::where('key', 'smtpPass')->value('value');
-            
-            if ($username && $password) {
-                try {
-                    $hostname = '{imap.gmail.com:993/imap/ssl}INBOX';
-                    $inbox = @imap_open($hostname, $username, $password, OP_READONLY);
-                    if ($inbox) {
-                        $date = date('d-M-Y', strtotime('-14 days'));
-                        $emails = imap_search($inbox, 'SINCE "' . $date . '" TEXT "meet.google.com"');
-                        
-                        if ($emails) {
-                            rsort($emails); 
-                            $emails = array_slice($emails, 0, 50);
-
-                            foreach ($emails as $email_number) {
-                                $overview = imap_fetch_overview($inbox, $email_number, 0);
-                                
-                                $message = imap_fetchbody($inbox, $email_number, 1);
-                                if (empty(trim($message))) {
-                                    $message = imap_fetchbody($inbox, $email_number, 2);
-                                }
-                                
-                                $struct = imap_fetchstructure($inbox, $email_number);
-                                $encoding = $struct->parts[0]->encoding ?? ($struct->encoding ?? 0);
-                                
-                                if ($encoding == 3) {
-                                    $message = base64_decode($message);
-                                } elseif ($encoding == 4) {
-                                    $message = quoted_printable_decode($message);
-                                }
-                                
-                                $mailSubject = $overview[0]->subject ?? '';
-                                $decodedSubject = '';
-                                $subjElements = imap_mime_header_decode($mailSubject);
-                                foreach ($subjElements as $element) {
-                                    $decodedSubject .= $element->text;
-                                }
-                                
-                                $message = strip_tags($message);
-                                $content = mb_strtolower($decodedSubject . ' ' . $message, 'UTF-8');
-                                
-                                if (preg_match('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $content, $matches)) {
-                                    $link = $matches[0];
-                                    
-                                    $score = 0;
-                                    if ($room && mb_stripos($content, mb_strtolower(trim($room), 'UTF-8')) !== false) $score++;
-                                    if ($class && mb_stripos($content, mb_strtolower(trim($class), 'UTF-8')) !== false) $score++;
-                                    if ($lecturer && mb_stripos($content, mb_strtolower(trim($lecturer), 'UTF-8')) !== false) $score++;
-                                    if ($subject && mb_stripos($content, mb_strtolower(trim($subject), 'UTF-8')) !== false) $score++;
-                                    if ($period && mb_stripos($content, mb_strtolower(trim((string)$period), 'UTF-8')) !== false) $score++;
-                                    
-                                    if ($score > 0) {
-                                        $time = strtotime($overview[0]->date);
-                                        if ($score > $bestScore || ($score == $bestScore && $time > $newestTime)) {
-                                            $bestScore = $score;
-                                            $bestLink = $link;
-                                            $newestTime = $time;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        imap_close($inbox);
+            $gasUrl = \App\Models\SystemParameter::where('key', 'gasEmailUrl')->value('value')
+                ?: 'https://script.google.com/macros/s/AKfycbwyueknfK7TtzzbdSTF_6s-e-DRsHrwTz-kH0Wc65Tc9Rz3JMmiU8oKQPFduoaQEAi5/exec';
+            try {
+                $ch = curl_init($gasUrl);
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST           => true,
+                    CURLOPT_POSTFIELDS     => json_encode([
+                        'room'     => $room,
+                        'class'    => $class,
+                        'lecturer' => $lecturer,
+                        'period'   => $period,
+                        'subject'  => $subject,
+                    ]),
+                    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_TIMEOUT        => 15,
+                    CURLOPT_SSL_VERIFYPEER => false,
+                ]);
+                $response = curl_exec($ch);
+                curl_close($ch);
+                if ($response) {
+                    $gasData = json_decode($response, true);
+                    if (!empty($gasData['link'])) {
+                        $bestLink  = $gasData['link'];
+                        $bestScore = 1;
+                    } elseif (!empty($gasData['error']) && $source === 'email') {
+                        return response()->json(['error' => $gasData['error']], 404);
                     }
-                } catch (\Exception $e) {
                 }
-            } else if ($source === 'email') {
-                return response()->json(['error' => 'Chưa cấu hình tài khoản Email trong hệ thống.'], 400);
+            } catch (\Exception $e) {
+                if ($source === 'email') {
+                    return response()->json(['error' => 'Không thể kết nối đến dịch vụ email.'], 500);
+                }
             }
         }
 
@@ -770,24 +735,13 @@ class MonitoringScheduleController extends Controller
                                     $htmlCourse = $htmlSearch;
                                 }
                                 
-                                // 1. Tìm MỌI link Google Meet lộ rõ trong HTML (kể cả trong văn bản thuần)
+                                // 1. Tìm MỌI link Google Meet lộ rõ trong HTML → lấy link CUỐI CÙNG (dưới cùng)
                                 if (preg_match_all('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlCourse, $mLinks)) {
-                                    foreach ($mLinks[0] as $link) {
-                                        \Illuminate\Support\Facades\Log::info("LCMS Found explicit link: " . $link);
-                                        $score = 0;
-                                        $contentCourse = mb_strtolower(strip_tags($htmlCourse), 'UTF-8');
-                                        if ($room && mb_stripos($contentCourse, mb_strtolower(trim($room), 'UTF-8')) !== false) $score++;
-                                        if ($class && mb_stripos($contentCourse, mb_strtolower(trim($class), 'UTF-8')) !== false) $score++;
-                                        if ($lecturer && mb_stripos($contentCourse, mb_strtolower(trim($lecturer), 'UTF-8')) !== false) $score++;
-                                        if ($subject && mb_stripos($contentCourse, mb_strtolower(trim($subject), 'UTF-8')) !== false) $score++;
-                                        
-                                        $score += 2; // Bonus points for LCMS match
-                                        
-                                        if ($score > $bestScore) {
-                                            $bestScore = $score;
-                                            $bestLink = $link;
-                                        }
-                                    }
+                                    \Illuminate\Support\Facades\Log::info("LCMS Found " . count($mLinks[0]) . " meet link(s)");
+                                    // Lấy link cuối cùng xuất hiện trong trang
+                                    $lastLink = end($mLinks[0]);
+                                    $bestLink  = $lastLink;
+                                    $bestScore = 10; // Ưu tiên cao hơn email
                                 }
 
                                 // 2. Tìm link Meet bị ẩn trong resource dạng URL của Moodle (VD: <a href="...mod/url/view.php?id=123">...</a>)
