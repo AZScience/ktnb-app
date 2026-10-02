@@ -674,16 +674,13 @@ class MonitoringScheduleController extends Controller
                             $searchQueries[] = trim("$subjectCode $class");
                         }
                         
-                        // Fallbacks
+                        // Fallbacks (Các bộ lọc nới lỏng an toàn)
                         if ($class && $lecturer) {
                             $searchQueries[] = trim("$class $lecturer");
                         }
-                        if ($subjectCode) {
-                            $searchQueries[] = trim($subjectCode);
-                        }
-                        if ($class) {
-                            $searchQueries[] = trim($class);
-                        }
+                        
+                        // BỎ các bộ lọc quá rộng (chỉ tìm theo Mã môn hoặc chỉ tìm theo Lớp)
+                        // vì nó sẽ tìm ra môn của khóa trước hoặc môn khác của lớp đó, dẫn đến lấy nhầm link!
                         
                         $searchQueries = array_values(array_filter(array_unique($searchQueries)));
                         
