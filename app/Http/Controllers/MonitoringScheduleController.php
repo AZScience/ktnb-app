@@ -576,10 +576,10 @@ class MonitoringScheduleController extends Controller
         $source = $request->input('source', 'email'); // 'email' or 'lcms'
         
         $room = $request->input('room');
-        $class = $request->input('class');
-        $lecturer = $request->input('lecturer');
+        $class = trim((string)$request->input('class'));
+        $lecturer = trim((string)$request->input('lecturer'));
         $period = $request->input('period');
-        $subject = $request->input('subject');
+        $subject = trim((string)$request->input('subject'));
 
         $bestLink = null;
         $bestScore = 0;
@@ -653,7 +653,7 @@ class MonitoringScheduleController extends Controller
                         ]);
                         
                         // 4 Cấp độ ưu tiên tìm kiếm trên LCMS
-                        $department = $request->input('department');
+                        $department = trim((string)$request->input('department'));
                         $subjectCode = '';
                         if ($subject) {
                             if (preg_match('/^([A-Z0-9]+)\\s*-/', $subject, $m)) {
