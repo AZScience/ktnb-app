@@ -690,88 +690,98 @@ class MonitoringScheduleController extends Controller
                         foreach ($searchQueries as $searchTerm) {
                             if (!$searchTerm) continue;
                             
-                            \Illuminate\Support\Facades\Log::info("LCMS Search: " . $searchTerm);
-                            $searchQuery = urlencode($searchTerm);
-                            $searchUrl = rtrim($lcmsUrl, '/') . '/course/search.php?areaids=core_course-course&q=' . $searchQuery;
-                            
-                            $resSearch = $client->get($searchUrl, [
-                                'allow_redirects' => ['track_redirects' => true]
-                            ]);
-                            $htmlSearch = (string)$resSearch->getBody();
-                            
-                            $redirectHistory = $resSearch->getHeader('X-Guzzle-Redirect-History');
-                            $currentUrl = empty($redirectHistory) ? $searchUrl : end($redirectHistory);
-                            
-                            $courseUrlsForTerm = [];
-                            if (strpos($currentUrl, 'course/view.php') !== false) {
-                                $courseUrlsForTerm[] = $currentUrl;
-                            } else {
-                                if (preg_match_all('/href="([^"]+course\/view\.php\?id=\d+)[^"]*"/i', $htmlSearch, $mCourses)) {
-                                    $courseUrlsForTerm = array_unique($mCourses[1]);
+                            try {
+                                \Illuminate\Support\Facades\Log::info("LCMS Search: " . $searchTerm);
+                                $searchQuery = urlencode($searchTerm);
+                                $searchUrl = rtrim($lcmsUrl, '/') . '/course/search.php?areaids=core_course-course&q=' . $searchQuery;
+                                
+                                $resSearch = $client->get($searchUrl, [
+                                    'allow_redirects' => ['track_redirects' => true],
+                                    'timeout' => 15, // Đặt timeout cho mỗi truy vấn để tránh treo toàn bộ
+                                    'http_errors' => false // Không ném exception nếu Moodle lỗi 50x
+                                ]);
+                                
+                                if ($resSearch->getStatusCode() >= 400) {
+                                    continue;
                                 }
-                            }
-                            
-                            if (!empty($courseUrlsForTerm)) {
-                                foreach (array_slice($courseUrlsForTerm, 0, 10) as $courseUrl) {
-                                    $courseUrl = str_replace('&amp;', '&', $courseUrl);
-                                    
-                                    if ($courseUrl !== $currentUrl) {
-                                        $resCourse = $client->get($courseUrl);
-                                        $htmlCourse = (string)$resCourse->getBody();
-                                    } else {
-                                        $htmlCourse = $htmlSearch;
+                                
+                                $htmlSearch = (string)$resSearch->getBody();
+                                
+                                $redirectHistory = $resSearch->getHeader('X-Guzzle-Redirect-History');
+                                $currentUrl = empty($redirectHistory) ? $searchUrl : end($redirectHistory);
+                                
+                                $courseUrlsForTerm = [];
+                                if (strpos($currentUrl, 'course/view.php') !== false) {
+                                    $courseUrlsForTerm[] = $currentUrl;
+                                } else {
+                                    if (preg_match_all('/href="([^"]+course\/view\.php\?id=\d+)[^"]*"/i', $htmlSearch, $mCourses)) {
+                                        $courseUrlsForTerm = array_unique($mCourses[1]);
                                     }
-                                    
-                                    // KIỂM TRA ĐIỀU KIỆN TIÊN QUYẾT: Khóa học phải dành cho lớp này!
-                                    if ($class) {
-                                        $classCompact = preg_replace('/[\s\-]/', '', strtolower($class));
-                                        $courseText = preg_replace('/[\s\-]/', '', strtolower(strip_tags($htmlCourse)));
-                                        if (strpos($courseText, $classCompact) === false) {
-                                            \Illuminate\Support\Facades\Log::info("LCMS Skip course (Class not match): " . $courseUrl);
-                                            continue;
+                                }
+                                
+                                if (!empty($courseUrlsForTerm)) {
+                                    foreach (array_slice($courseUrlsForTerm, 0, 10) as $courseUrl) {
+                                        $courseUrl = str_replace('&amp;', '&', $courseUrl);
+                                        
+                                        if ($courseUrl !== $currentUrl) {
+                                            $resCourse = $client->get($courseUrl, ['timeout' => 10, 'http_errors' => false]);
+                                            $htmlCourse = (string)$resCourse->getBody();
+                                        } else {
+                                            $htmlCourse = $htmlSearch;
                                         }
-                                    }
-                                    
-                                    $linkPositions = [];
-    
-                                    // Link trực tiếp
-                                    if (preg_match_all('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlCourse, $mLinks, PREG_OFFSET_CAPTURE)) {
-                                        foreach ($mLinks[0] as $match) {
-                                            $linkPositions[$match[1]] = $match[0];
+                                        
+                                        // KIỂM TRA ĐIỀU KIỆN TIÊN QUYẾT: Khóa học phải dành cho lớp này!
+                                        if ($class) {
+                                            $classCompact = preg_replace('/[\s\-]/', '', strtolower($class));
+                                            $courseText = preg_replace('/[\s\-]/', '', strtolower(strip_tags($htmlCourse)));
+                                            if (strpos($courseText, $classCompact) === false) {
+                                                continue;
+                                            }
                                         }
-                                    }
-    
-                                    // Link ẩn qua mod/url/view.php
-                                    if (preg_match_all('/href="([^"]*mod\/url\/view\.php\?id=\d+)"/i', $htmlCourse, $mUrlMods, PREG_OFFSET_CAPTURE)) {
-                                        $checkedUrls = [];
-                                        foreach ($mUrlMods[1] as $match) {
-                                            $urlMod = $match[0];
-                                            $offset = $match[1];
-                                            
-                                            if (in_array($urlMod, $checkedUrls)) continue;
-                                            if (count($checkedUrls) >= 5) break; 
-                                            $checkedUrls[] = $urlMod;
-                                            
-                                            $urlMod = str_replace('&amp;', '&', $urlMod);
-                                            try {
-                                                $resUrl = $client->get($urlMod);
-                                                $htmlUrl = (string)$resUrl->getBody();
+                                        
+                                        $linkPositions = [];
+        
+                                        // Link trực tiếp
+                                        if (preg_match_all('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlCourse, $mLinks, PREG_OFFSET_CAPTURE)) {
+                                            foreach ($mLinks[0] as $match) {
+                                                $linkPositions[$match[1]] = $match[0];
+                                            }
+                                        }
+        
+                                        // Link ẩn qua mod/url/view.php
+                                        if (preg_match_all('/href="([^"]*mod\/url\/view\.php\?id=\d+)"/i', $htmlCourse, $mUrlMods, PREG_OFFSET_CAPTURE)) {
+                                            $checkedUrls = [];
+                                            foreach ($mUrlMods[1] as $match) {
+                                                $urlMod = $match[0];
+                                                $offset = $match[1];
                                                 
-                                                if (preg_match('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlUrl, $mMeetHidden)) {
-                                                    \Illuminate\Support\Facades\Log::info("LCMS Found hidden module link: " . $mMeetHidden[0]);
-                                                    $linkPositions[$offset] = $mMeetHidden[0];
-                                                }
-                                            } catch (\Exception $e) {}
+                                                if (in_array($urlMod, $checkedUrls)) continue;
+                                                if (count($checkedUrls) >= 5) break; 
+                                                $checkedUrls[] = $urlMod;
+                                                
+                                                $urlMod = str_replace('&amp;', '&', $urlMod);
+                                                try {
+                                                    $resUrl = $client->get($urlMod, ['timeout' => 10]);
+                                                    $htmlUrl = (string)$resUrl->getBody();
+                                                    
+                                                    if (preg_match('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlUrl, $mMeetHidden)) {
+                                                        $linkPositions[$offset] = $mMeetHidden[0];
+                                                    }
+                                                } catch (\Exception $e) {}
+                                            }
+                                        }
+        
+                                        if (!empty($linkPositions)) {
+                                            ksort($linkPositions);
+                                            $bestLink = end($linkPositions);
+                                            $bestScore = 10;
+                                            break 2; // Thoát khỏi 2 vòng lặp foreach
                                         }
                                     }
-    
-                                    if (!empty($linkPositions)) {
-                                        ksort($linkPositions);
-                                        $bestLink = end($linkPositions);
-                                        $bestScore = 10;
-                                        break 2; // Tìm thấy link rồi thì dừng TOÀN BỘ quá trình tìm kiếm!
-                                    }
                                 }
+                            } catch (\Exception $e) {
+                                \Illuminate\Support\Facades\Log::warning("LCMS Search Query Failed: " . $e->getMessage());
+                                continue;
                             }
                         }
                     }
