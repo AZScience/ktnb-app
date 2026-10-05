@@ -674,13 +674,13 @@ class MonitoringScheduleController extends Controller
                             $searchQueries[] = trim("$subjectCode $class");
                         }
                         
-                        // Fallbacks (Các bộ lọc nới lỏng an toàn)
+                        // Fallbacks (Các bộ lọc nới lỏng)
                         if ($class && $lecturer) {
                             $searchQueries[] = trim("$class $lecturer");
                         }
-                        
-                        // BỎ các bộ lọc quá rộng (chỉ tìm theo Mã môn hoặc chỉ tìm theo Lớp)
-                        // vì nó sẽ tìm ra môn của khóa trước hoặc môn khác của lớp đó, dẫn đến lấy nhầm link!
+                        if ($subjectCode) {
+                            $searchQueries[] = trim($subjectCode); // Khôi phục tìm bằng Mã môn để gánh team cho search ngu của Moodle
+                        }
                         
                         $searchQueries = array_values(array_filter(array_unique($searchQueries)));
                         
@@ -730,6 +730,17 @@ class MonitoringScheduleController extends Controller
                                     $htmlCourse = (string)$resCourse->getBody();
                                 } else {
                                     $htmlCourse = $htmlSearch;
+                                }
+                                
+                                // KIỂM TRA ĐIỀU KIỆN TIÊN QUYẾT: Khóa học phải dành cho lớp này!
+                                // Bỏ qua nếu tìm bằng mã môn nhưng ra khóa học của lớp khác
+                                if ($class) {
+                                    $classCompact = preg_replace('/[\s\-]/', '', strtolower($class));
+                                    $courseText = preg_replace('/[\s\-]/', '', strtolower(strip_tags($htmlCourse)));
+                                    if (strpos($courseText, $classCompact) === false) {
+                                        \Illuminate\Support\Facades\Log::info("LCMS Skip course (Class not match): " . $courseUrl);
+                                        continue;
+                                    }
                                 }
                                 
                                 // 1. Tìm MỌI link Google Meet lộ rõ và link ẩn trong mod/url/view.php
