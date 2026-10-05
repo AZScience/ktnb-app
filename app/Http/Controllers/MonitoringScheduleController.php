@@ -684,6 +684,11 @@ class MonitoringScheduleController extends Controller
                         
                         $searchQueries = array_values(array_filter(array_unique($searchQueries)));
                         
+                        $logFile = public_path('lcms_debug_log.txt');
+                        file_put_contents($logFile, "=== BẮT ĐẦU TÌM KIẾM LCMS (" . date('Y-m-d H:i:s') . ") ===\n");
+                        file_put_contents($logFile, "Đã parse: SubCode='$subjectCode', Class='$class', Lec='$lecturer'\n", FILE_APPEND);
+                        file_put_contents($logFile, "Tổng cộng có " . count($searchQueries) . " lệnh tìm kiếm: " . implode(" | ", $searchQueries) . "\n\n", FILE_APPEND);
+
                         $bestLink = null;
                         $bestScore = 0;
                         
@@ -691,7 +696,7 @@ class MonitoringScheduleController extends Controller
                             if (!$searchTerm) continue;
                             
                             try {
-                                \Illuminate\Support\Facades\Log::info("LCMS Search: " . $searchTerm);
+                                file_put_contents($logFile, "-> Lệnh tìm: '$searchTerm'\n", FILE_APPEND);
                                 $searchQuery = urlencode($searchTerm);
                                 $searchUrl = rtrim($lcmsUrl, '/') . '/course/search.php?areaids=core_course-course&q=' . $searchQuery;
                                 
@@ -701,7 +706,10 @@ class MonitoringScheduleController extends Controller
                                     'http_errors' => false // Không ném exception nếu Moodle lỗi 50x
                                 ]);
                                 
+                                file_put_contents($logFile, "   HTTP Status: " . $resSearch->getStatusCode() . "\n", FILE_APPEND);
+                                
                                 if ($resSearch->getStatusCode() >= 400) {
+                                    file_put_contents($logFile, "   Bỏ qua do lỗi HTTP!\n", FILE_APPEND);
                                     continue;
                                 }
                                 
@@ -713,15 +721,20 @@ class MonitoringScheduleController extends Controller
                                 $courseUrlsForTerm = [];
                                 if (strpos($currentUrl, 'course/view.php') !== false) {
                                     $courseUrlsForTerm[] = $currentUrl;
+                                    file_put_contents($logFile, "   Redirect thẳng vào khóa học!\n", FILE_APPEND);
                                 } else {
                                     if (preg_match_all('/href="([^"]+course\/view\.php\?id=\d+)[^"]*"/i', $htmlSearch, $mCourses)) {
                                         $courseUrlsForTerm = array_unique($mCourses[1]);
+                                        file_put_contents($logFile, "   Tìm thấy " . count($courseUrlsForTerm) . " khóa học.\n", FILE_APPEND);
+                                    } else {
+                                        file_put_contents($logFile, "   Không thấy khóa học nào.\n", FILE_APPEND);
                                     }
                                 }
                                 
                                 if (!empty($courseUrlsForTerm)) {
                                     foreach (array_slice($courseUrlsForTerm, 0, 10) as $courseUrl) {
                                         $courseUrl = str_replace('&amp;', '&', $courseUrl);
+                                        file_put_contents($logFile, "   => Check khóa: $courseUrl\n", FILE_APPEND);
                                         
                                         if ($courseUrl !== $currentUrl) {
                                             $resCourse = $client->get($courseUrl, ['timeout' => 10, 'http_errors' => false]);
@@ -735,9 +748,11 @@ class MonitoringScheduleController extends Controller
                                             $classCompact = preg_replace('/[\s\-]/', '', strtolower($class));
                                             $courseText = preg_replace('/[\s\-]/', '', strtolower(strip_tags($htmlCourse)));
                                             if (strpos($courseText, $classCompact) === false) {
+                                                file_put_contents($logFile, "      => BỎ QUA vì không khớp class '$class'\n", FILE_APPEND);
                                                 continue;
                                             }
                                         }
+                                        file_put_contents($logFile, "      => CHẤP NHẬN CLASS!\n", FILE_APPEND);
                                         
                                         $linkPositions = [];
         
@@ -745,6 +760,7 @@ class MonitoringScheduleController extends Controller
                                         if (preg_match_all('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlCourse, $mLinks, PREG_OFFSET_CAPTURE)) {
                                             foreach ($mLinks[0] as $match) {
                                                 $linkPositions[$match[1]] = $match[0];
+                                                file_put_contents($logFile, "         - Link trực tiếp: " . $match[0] . "\n", FILE_APPEND);
                                             }
                                         }
         
@@ -766,6 +782,7 @@ class MonitoringScheduleController extends Controller
                                                     
                                                     if (preg_match('/https:\/\/meet\.google\.com\/[a-z0-9\-]+/i', $htmlUrl, $mMeetHidden)) {
                                                         $linkPositions[$offset] = $mMeetHidden[0];
+                                                        file_put_contents($logFile, "         - Link ẩn: " . $mMeetHidden[0] . "\n", FILE_APPEND);
                                                     }
                                                 } catch (\Exception $e) {}
                                             }
@@ -775,11 +792,15 @@ class MonitoringScheduleController extends Controller
                                             ksort($linkPositions);
                                             $bestLink = end($linkPositions);
                                             $bestScore = 10;
+                                            file_put_contents($logFile, "      => CHỐT LINK: $bestLink\n", FILE_APPEND);
                                             break 2; // Thoát khỏi 2 vòng lặp foreach
+                                        } else {
+                                            file_put_contents($logFile, "      => KHÔNG TÌM THẤY LINK NÀO!\n", FILE_APPEND);
                                         }
                                     }
                                 }
                             } catch (\Exception $e) {
+                                file_put_contents($logFile, "   => NGOẠI LỆ: " . $e->getMessage() . "\n", FILE_APPEND);
                                 \Illuminate\Support\Facades\Log::warning("LCMS Search Query Failed: " . $e->getMessage());
                                 continue;
                             }
