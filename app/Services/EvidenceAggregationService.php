@@ -27,7 +27,7 @@ class EvidenceAggregationService
         DailySchedule::query()
             ->whereNotNull('evidence')
             ->where('evidence', '!=', '')
-            ->orderByDesc('date')
+            ->orderByDesc('updated_at')
             ->limit(300)
             ->get()
             ->each(function (DailySchedule $row) use (&$items) {
@@ -93,7 +93,7 @@ class EvidenceAggregationService
         ServiceRequest::query()
             ->whereNotNull('attachments')
             ->where('attachments', '!=', '')
-            ->orderByDesc('request_date')
+            ->orderByDesc('updated_at')
             ->limit(80)
             ->get()
             ->each(function (ServiceRequest $row) use (&$items) {
@@ -119,7 +119,7 @@ class EvidenceAggregationService
         Petition::query()
             ->whereNotNull('note')
             ->where('note', 'like', '%:::http%')
-            ->orderByDesc('reception_date')
+            ->orderByDesc('updated_at')
             ->limit(80)
             ->get()
             ->each(function (Petition $row) use (&$items) {
@@ -152,7 +152,7 @@ class EvidenceAggregationService
                     $inner->whereNotNull('gratitude_evidence')->where('gratitude_evidence', '!=', '');
                 });
             })
-            ->orderByDesc('reception_date')
+            ->orderByDesc('updated_at')
             ->limit(80)
             ->get()
             ->each(function (AssetReception $row) use (&$items) {
@@ -206,7 +206,7 @@ class EvidenceAggregationService
             });
 
         StudentViolation::query()
-            ->orderByDesc('violation_date')
+            ->orderByDesc('updated_at')
             ->limit(80)
             ->get()
             ->each(function (StudentViolation $row) use (&$items) {
@@ -243,7 +243,7 @@ class EvidenceAggregationService
         DocumentRecord::query()
             ->whereNotNull('original_file')
             ->where('original_file', '!=', '')
-            ->orderByDesc('received_date')
+            ->orderByDesc('updated_at')
             ->limit(80)
             ->get()
             ->each(function (DocumentRecord $row) use (&$items) {
