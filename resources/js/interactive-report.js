@@ -164,13 +164,13 @@ function periodOverlaps(periodStr, session, customStart, customEnd) {
     let end = 20;
     if (session === 'ca1') {
         start = 1;
-        end = 5;
+        end = 6;
     } else if (session === 'ca2') {
-        start = 6;
-        end = 10;
+        start = 7;
+        end = 12;
     } else if (session === 'ca3') {
-        start = 11;
-        end = 16;
+        start = 13;
+        end = 17;
     } else if (session === 'custom') {
         start = Number(customStart) || 1;
         end = Number(customEnd) || 20;

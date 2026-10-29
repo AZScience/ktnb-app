@@ -265,9 +265,9 @@
                             <select x-model="advanced.periodSession" @change="currentPage = 1"
                                 class="report-filter-period-select w-full rounded-md border-gray-300 bg-white shadow-sm h-8 text-xs">
                                 <option value="all">Tất cả ca</option>
-                                <option value="ca1">Ca 1 (Tiết 1 - 5)</option>
-                                <option value="ca2">Ca 2 (Tiết 6 - 10)</option>
-                                <option value="ca3">Ca 3 (Tiết 11 - 16)</option>
+                                <option value="ca1">Ca 1 (Tiết 1 - 6)</option>
+                                <option value="ca2">Ca 2 (Tiết 7 - 12)</option>
+                                <option value="ca3">Ca 3 (Tiết 13 - 17)</option>
                                 <option value="custom">Tùy chọn...</option>
                             </select>
                             <div x-show="advanced.periodSession === 'custom'" x-cloak class="flex items-center gap-1.5">

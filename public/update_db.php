@@ -51,3 +51,18 @@ if (Schema::hasTable('incident_records')) {
 } else {
     echo "<p style='color:red;'>❌ Không tìm thấy bảng incident_records!</p>";
 }
+
+// 3. Đồng bộ chuẩn hóa ngày tháng date_iso cho bảng lịch học daily_schedules
+if (Schema::hasTable('daily_schedules') && Schema::hasColumn('daily_schedules', 'date_iso')) {
+    try {
+        $updated = \Illuminate\Support\Facades\DB::update("
+            UPDATE daily_schedules 
+            SET date_iso = STR_TO_DATE(date, '%d/%m/%Y') 
+            WHERE (date_iso IS NULL OR date_iso = '') 
+              AND date REGEXP '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$'
+        ");
+        echo "<p style='color:green;'>📅 Đã đồng bộ chuẩn hóa ngày cho {$updated} dòng lịch học.</p>";
+    } catch (\Throwable $e) {
+        echo "<p style='color:orange;'>Đồng bộ ngày: " . htmlspecialchars($e->getMessage()) . "</p>";
+    }
+}

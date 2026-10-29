@@ -950,8 +950,12 @@ class ScheduleExcelService
             isset($item['room']) ? (string) $item['room'] : null,
         );
 
+        $dateStr = trim((string) ($item['date'] ?? ''));
+        $dateIso = \App\Support\DateStringNormalizer::toIso($dateStr);
+
         return [
-            'date' => trim((string) ($item['date'] ?? '')),
+            'date' => $dateStr,
+            'date_iso' => $dateIso,
             'building' => $pair['building'],
             'room' => $pair['room'],
             'period' => $this->nullableString($item['period'] ?? null),

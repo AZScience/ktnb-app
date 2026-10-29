@@ -57,7 +57,7 @@ class ReportQueryService
         $today = date('Y-m-d');
 
         return match ($variant) {
-            'comprehensive' => [date('Y-m-d', strtotime('-6 days')), $today],
+            'comprehensive' => [date('Y-m-d', strtotime('-30 days')), $today],
             default => [$today, $today],
         };
     }
@@ -88,16 +88,29 @@ class ReportQueryService
             ->get();
     }
 
-    public function schedulesWithIncidents(?string $from, ?string $to): Collection
+    public function schedulesWithIncidents(?string $from = null, ?string $to = null): Collection
     {
-        $from = $this->normalizeDate($from);
-        $to = $this->normalizeDate($to ?? $from);
-
-        return DailySchedule::query()
+        $query = DailySchedule::query()
             ->forListTable()
-            ->whereNotNull('incident')
-            ->where('incident', '!=', '')
-            ->where(fn (Builder $q) => $this->whereDisplayDateBetween($q, 'date', $from, $to))
+            ->where(function (Builder $q) {
+                $q->where(function (Builder $sub) {
+                    $sub->whereNotNull('incident')
+                        ->whereRaw("TRIM(incident) != ''")
+                        ->whereRaw("TRIM(incident) != '---'");
+                })->orWhere(function (Builder $sub) {
+                    $sub->whereNotNull('incident_detail')
+                        ->whereRaw("TRIM(incident_detail) != ''")
+                        ->whereRaw("TRIM(incident_detail) != '---'");
+                });
+            });
+
+        if (! empty($from) && ! empty($to)) {
+            $fromNorm = $this->normalizeDate($from);
+            $toNorm = $this->normalizeDate($to);
+            $query->where(fn (Builder $q) => $this->whereDisplayDateBetween($q, 'date', $fromNorm, $toNorm));
+        }
+
+        return $query
             ->tap(fn (Builder $q) => $this->orderByDisplayDate($q, 'date', 'desc'))
             ->orderBy('period')
             ->get();
@@ -254,7 +267,14 @@ class ReportQueryService
             $this->isoColumnCache[$cacheKey] = $table !== '' && Schema::hasColumn($table, $isoColumn);
         }
 
-        return $grammar->wrap($this->isoColumnCache[$cacheKey] ? $isoColumn : $column);
+        $wrappedCol = $grammar->wrap($column);
+        if ($this->isoColumnCache[$cacheKey]) {
+            $wrappedIso = $grammar->wrap($isoColumn);
+
+            return "COALESCE(NULLIF({$wrappedIso}, ''), {$wrappedCol})";
+        }
+
+        return $wrappedCol;
     }
 
     private function normalizeIsoDate(?string $date): string

@@ -64,7 +64,7 @@ class ReportPresenterService
                 'studentCount' => $this->dash((string) $item->student_count),
                 'lecturer' => $lecturer,
                 'content' => $this->dash($item->content),
-                'incident' => $this->dash($item->incident),
+                'incident' => $this->dash($item->incident ?: $item->incident_detail),
                 'incidentDetail' => $this->dash($item->incident_detail),
                 '_building' => $this->dash($item->building),
                 '_periodNum' => $this->parsePeriodStart($item->period),
