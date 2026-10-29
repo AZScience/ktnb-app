@@ -1,4 +1,4 @@
-import{a as e,i as t,n,r}from"./app-271J7ZYm.js";var i=`
+import{a as e,i as t,n,r}from"./app-C2lZBDZZ.js";var i=`
   <path fill="#fff" stroke="#cbd5e1" stroke-width=".75" d="M7 3h12.5l5.5 5.5V27a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
   <path fill="#e2e8f0" d="M19.5 3v6h6"/>
 `;function a(e,t=`h-7 w-7`){return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="${t}" aria-hidden="true">${e}</svg>`}function o(e,t,n){return a(`

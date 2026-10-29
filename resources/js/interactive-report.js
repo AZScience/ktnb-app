@@ -372,6 +372,15 @@ export function registerInteractiveReport(Alpine) {
                 if (this.config.dataUrl) {
                     this.fetchReportRows();
                 }
+                const selectEls = document.querySelectorAll('.report-filter-period-select');
+                selectEls.forEach((sel) => {
+                    const o1 = sel.querySelector('option[value="ca1"]');
+                    if (o1) o1.textContent = 'Ca 1 (Tiết 1 - 6)';
+                    const o2 = sel.querySelector('option[value="ca2"]');
+                    if (o2) o2.textContent = 'Ca 2 (Tiết 7 - 12)';
+                    const o3 = sel.querySelector('option[value="ca3"]');
+                    if (o3) o3.textContent = 'Ca 3 (Tiết 13 - 17)';
+                });
             });
         },
 
