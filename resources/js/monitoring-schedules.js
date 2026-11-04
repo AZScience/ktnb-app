@@ -230,6 +230,27 @@ async function compressIncidentPhoto(file, maxSize = 1600, quality = 0.85) {
     });
 }
 
+function isPhysicalRoomSchedule(item) {
+    if (!item) return false;
+    const b = String(item.building || '').toLowerCase().trim();
+    const r = String(item.room || item.room_label || '').toLowerCase().trim();
+
+    const onlineKeywords = ['trực tuyến', 'tructuyen', 'online', 'zoom', 'google meet', 'meet', 'ms teams', 'teams'];
+    if (onlineKeywords.some((kw) => b.includes(kw) || r.includes(kw))) {
+        return false;
+    }
+
+    const outsideKeywords = ['ngoài', 'ngoai', 'thực hành ngoài', 'thuc hanh ngoai'];
+    if (outsideKeywords.some((kw) => b.includes(kw) || r.includes(kw))) {
+        return false;
+    }
+    if (b === 'thn') {
+        return false;
+    }
+
+    return true;
+}
+
 export function monitoringSchedulesPage(config) {
     const storageKey = `nttu_monitoring_${config.module}_colvis`;
     const pageKey = `nttu_monitoring_${config.module}_page`;
@@ -447,15 +468,60 @@ export function monitoringSchedulesPage(config) {
                     if (this.includeExams) url += '&include_exams=1';
                     if (this.includeHomeroom) url += '&include_homeroom=1';
                 }
-                const res = await fetch(url, {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
+                const fetchHeaders = {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                };
+                const fetchPromises = [
+                    fetch(url, { headers: fetchHeaders }).then((r) => r.ok ? r.json() : null)
+                ];
+
+                if (this.module === 'in-person') {
+                    if (this.includeHomeroom) {
+                        const homeroomUrl = this.dataUrl.replace('/in-person/data', '/homeroom/data');
+                        fetchPromises.push(
+                            fetch(`${homeroomUrl}?date=${encodeURIComponent(d)}`, { headers: fetchHeaders })
+                                .then((r) => r.ok ? r.json() : null)
+                                .catch(() => null)
+                        );
+                    }
+                    if (this.includeExams) {
+                        const examsUrl = this.dataUrl.replace('/in-person/data', '/exams/data');
+                        fetchPromises.push(
+                            fetch(`${examsUrl}?date=${encodeURIComponent(d)}`, { headers: fetchHeaders })
+                                .then((r) => r.ok ? r.json() : null)
+                                .catch(() => null)
+                        );
+                    }
+                }
+
+                const results = await Promise.all(fetchPromises);
+                const payload = results[0];
+                if (!payload) throw new Error('Không tải được lịch');
+
+                let combinedItems = [...(payload.items || [])];
+                const seenIds = new Set(combinedItems.map((item) => String(item.id)));
+
+                for (let i = 1; i < results.length; i++) {
+                    const extraPayload = results[i];
+                    if (!extraPayload || !Array.isArray(extraPayload.items)) continue;
+                    extraPayload.items.forEach((item) => {
+                        const idStr = String(item.id);
+                        if (!seenIds.has(idStr) && isPhysicalRoomSchedule(item)) {
+                            seenIds.add(idStr);
+                            combinedItems.push(item);
+                        }
+                    });
+                }
+
+                combinedItems.sort((a, b) => {
+                    const pa = Number(a.period || a.shift || 0);
+                    const pb = Number(b.period || b.shift || 0);
+                    if (pa !== pb) return pa - pb;
+                    return String(a.room || '').localeCompare(String(b.room || ''));
                 });
-                if (!res.ok) throw new Error('Không tải được lịch');
-                const payload = await res.json();
-                this.items = applyLocalNotesToItems(this.module, payload.items || []);
+
+                this.items = applyLocalNotesToItems(this.module, combinedItems);
                 this.date = payload.date || d;
                 this.dateNotice = payload.dateNotice || '';
                 this.advancedFilters = normalizeAdvancedFilters(
@@ -1217,15 +1283,28 @@ export function monitoringSchedulesPage(config) {
         toggleIncludeFilter() {
             localStorage.setItem('nttu_in_person_include_exams', this.includeExams ? '1' : '0');
             localStorage.setItem('nttu_in_person_include_homeroom', this.includeHomeroom ? '1' : '0');
+
+            document.querySelectorAll('.chk-exams').forEach((el) => { el.checked = !!this.includeExams; });
+            document.querySelectorAll('.chk-homeroom').forEach((el) => { el.checked = !!this.includeHomeroom; });
+
             this.fetchScheduleData(this.date);
         },
 
         ensureIncludeFilterCheckboxes() {
             if (this.module !== 'in-person') return;
+            const existing = document.getElementById('in-person-include-filters');
+            if (existing) {
+                const ce = existing.querySelector('.chk-exams');
+                const ch = existing.querySelector('.chk-homeroom');
+                if (ce) ce.checked = !!this.includeExams;
+                if (ch) ch.checked = !!this.includeHomeroom;
+                return;
+            }
+
             const container = this.$root?.querySelector?.('h2')
                 || document.querySelector('.nttu-card h2')
                 || document.querySelector('h2');
-            if (!container || container.querySelector('#in-person-include-filters') || document.getElementById('in-person-include-filters')) return;
+            if (!container) return;
 
             const div = document.createElement('div');
             div.id = 'in-person-include-filters';
