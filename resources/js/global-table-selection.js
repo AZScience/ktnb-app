@@ -350,16 +350,29 @@ export function scanAndEnhanceAllTables() {
         }
     });
 
-    // Check in-person schedule page checkboxes
+    // Check in-person and online schedule page checkboxes
     const rootMonitoring = document.querySelector('[x-data*="monitoringSchedulesPage"]');
     if (rootMonitoring && window.Alpine) {
         try {
             const data = window.Alpine.$data(rootMonitoring);
-            if (data && data.module === 'in-person' && typeof data.ensureIncludeFilterCheckboxes === 'function') {
+            if (data && (data.module === 'in-person' || data.module === 'online') && typeof data.ensureIncludeFilterCheckboxes === 'function') {
                 data.ensureIncludeFilterCheckboxes();
             }
         } catch (e) {}
     }
+
+    // Ensure camera selection UI is present whenever evidence camera panel is rendered
+    document.querySelectorAll('.aspect-video').forEach((aspectVideo) => {
+        try {
+            const panel = aspectVideo.closest('[x-data]');
+            if (panel && window.Alpine) {
+                const pData = window.Alpine.$data(panel);
+                if (pData && typeof pData.ensureCameraSelectorUI === 'function') {
+                    pData.ensureCameraSelectorUI();
+                }
+            }
+        } catch (e) {}
+    });
 }
 
 export function registerGlobalTableSelection(Alpine) {

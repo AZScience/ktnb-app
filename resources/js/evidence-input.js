@@ -54,8 +54,8 @@ export function evidencePanelState(uploadUrl = '') {
         evidenceItems: [],
         evidenceStream: null,
         evidenceDevices: [],
-        evidenceDeviceId: '',
-        evidenceFacingMode: 'environment',
+        evidenceDeviceId: localStorage.getItem('nttu_evidence_device_id') || '',
+        evidenceFacingMode: localStorage.getItem('nttu_evidence_facing_mode') || 'environment',
         evidenceIsRecording: false,
         evidenceRecordingTime: 0,
         evidenceIsUploading: false,
@@ -139,10 +139,19 @@ export function evidencePanelMethods() {
                 const currentIndex = this.evidenceDevices.findIndex((d) => d.deviceId === this.evidenceDeviceId);
                 const nextIndex = (currentIndex + 1) % this.evidenceDevices.length;
                 this.evidenceDeviceId = this.evidenceDevices[nextIndex].deviceId;
+                try {
+                    localStorage.setItem('nttu_evidence_device_id', this.evidenceDeviceId);
+                } catch (_) {}
                 this.evidenceStartMedia('camera', this.evidenceDeviceId);
             } else {
                 this.evidenceFacingMode = (this.evidenceFacingMode === 'user') ? 'environment' : 'user';
+                try {
+                    localStorage.setItem('nttu_evidence_facing_mode', this.evidenceFacingMode);
+                } catch (_) {}
                 this.evidenceDeviceId = '';
+                try {
+                    localStorage.removeItem('nttu_evidence_device_id');
+                } catch (_) {}
                 this.evidenceStartMedia('camera');
             }
             this.$nextTick(() => this.ensureCameraSelectorUI());
@@ -151,25 +160,29 @@ export function evidencePanelMethods() {
         evidenceDeviceLabel(dev, index, total) {
             const raw = (dev?.label || '').toLowerCase();
             if (raw.includes('front') || raw.includes('user') || raw.includes('trước') || raw.includes('selfie')) {
-                return '📷 Camera trước';
+                return '📷 Camera trước (Selfie)';
             }
             if (raw.includes('back') || raw.includes('rear') || raw.includes('sau') || raw.includes('environment')) {
-                return '📷 Camera sau';
+                return '📷 Camera sau (Chính)';
             }
-            if (index === 0 && total > 1) return '📷 Camera sau (1)';
-            if (index === 1 && total > 1) return '📷 Camera trước (2)';
-            return dev?.label || `📷 Camera ${index + 1}`;
+            if (index === 0 && total > 1) return dev?.label ? `📷 ${dev.label}` : '📷 Camera sau (1)';
+            if (index === 1 && total > 1) return dev?.label ? `📷 ${dev.label}` : '📷 Camera trước (2)';
+            return dev?.label ? `📷 ${dev.label}` : `📷 Camera ${index + 1}`;
         },
 
         async evidenceRefreshDevices() {
             try {
-                const devs = (await navigator.mediaDevices?.enumerateDevices?.()) || [];
+                if (!navigator.mediaDevices?.enumerateDevices) return;
+                const devs = await navigator.mediaDevices.enumerateDevices();
                 const videoDevs = devs.filter((d) => d.kind === 'videoinput');
                 this.evidenceDevices = videoDevs;
                 const currentTrack = this.evidenceStream?.getVideoTracks?.()?.[0];
                 const activeId = currentTrack?.getSettings?.()?.deviceId;
                 if (activeId) {
                     this.evidenceDeviceId = activeId;
+                    try {
+                        localStorage.setItem('nttu_evidence_device_id', activeId);
+                    } catch (_) {}
                 } else if (videoDevs.length && !this.evidenceDeviceId) {
                     this.evidenceDeviceId = videoDevs[0].deviceId;
                 }
@@ -189,21 +202,26 @@ export function evidencePanelMethods() {
                 this.evidenceStream.getTracks().forEach((t) => t.stop());
                 this.evidenceStream = null;
             }
-            const video = this.$refs.evidenceVideo;
+            const video = this.$refs.evidenceVideo || document.querySelector('.aspect-video video');
             if (video) video.srcObject = null;
         },
 
         async evidenceStartMedia(forceSource, forceDeviceId) {
             this.evidenceStopStream();
             const source = forceSource || this.evidenceSourceType;
-            const deviceId = forceDeviceId || this.evidenceDeviceId;
+            const deviceId = forceDeviceId !== undefined ? forceDeviceId : this.evidenceDeviceId;
+            if (deviceId) {
+                try {
+                    localStorage.setItem('nttu_evidence_device_id', deviceId);
+                } catch (_) {}
+            }
             try {
                 let stream;
                 if (source === 'screen') {
                     stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
                 } else {
                     const videoConstraints = deviceId
-                        ? { deviceId: { exact: deviceId } }
+                        ? { deviceId: { ideal: deviceId } }
                         : { facingMode: { ideal: this.evidenceFacingMode || 'environment' } };
                     try {
                         stream = await navigator.mediaDevices.getUserMedia({
@@ -211,14 +229,18 @@ export function evidencePanelMethods() {
                             audio: this.evidenceMediaMode === 'video',
                         });
                     } catch (e1) {
-                        stream = await navigator.mediaDevices.getUserMedia({
-                            video: true,
-                            audio: this.evidenceMediaMode === 'video',
-                        });
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia({
+                                video: true,
+                                audio: this.evidenceMediaMode === 'video',
+                            });
+                        } catch (e2) {
+                            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        }
                     }
                 }
                 this.evidenceStream = stream;
-                const video = this.$refs.evidenceVideo;
+                const video = this.$refs.evidenceVideo || document.querySelector('.aspect-video video');
                 if (video) video.srcObject = stream;
 
                 await this.evidenceRefreshDevices();
@@ -226,102 +248,136 @@ export function evidencePanelMethods() {
                     this.ensureCameraSelectorUI();
                 });
             } catch (err) {
+                console.error('[Evidence] Error starting media:', err);
                 this.showToast?.('Không thể truy cập camera hoặc màn hình.', 'error');
             }
         },
 
         ensureCameraSelectorUI() {
-            if (this.evidenceSourceType !== 'camera') return;
-            const container = (this.$refs.evidenceVideo && this.$refs.evidenceVideo.closest('.space-y-4')) || document.querySelector('.aspect-video')?.closest('.space-y-4');
-            if (!container) return;
+            const aspectVideos = document.querySelectorAll('.aspect-video');
+            aspectVideos.forEach((aspectVideo) => {
+                const container = aspectVideo.closest('.space-y-4') || aspectVideo.parentElement?.parentElement;
+                if (!container) return;
 
-            // 1. In left column, inject camera select box above capture buttons
-            const leftCol = container.querySelector('.space-y-3');
-            if (leftCol && !leftCol.querySelector('.evidence-camera-select-box')) {
-                const box = document.createElement('div');
-                box.className = 'evidence-camera-select-box rounded-md border bg-slate-50/80 p-3 space-y-2';
-                box.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-bold uppercase text-gray-700 flex items-center gap-1.5">
-                            <svg class="h-4 w-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            Chọn Camera:
-                        </label>
-                        <button type="button" class="btn-toggle-cam text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 border border-blue-200 shadow-sm transition-colors">
-                            <svg class="h-3.5 w-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                            Trước / Sau
-                        </button>
-                    </div>
-                    <select class="sel-cam-device w-full rounded border-gray-300 bg-white text-xs py-1.5 px-2 shadow-sm font-medium text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></select>
-                `;
-                const btnContainer = leftCol.querySelector('.flex.gap-2, button[type="button"]');
-                if (btnContainer) {
-                    btnContainer.before(box);
-                } else {
-                    leftCol.appendChild(box);
-                }
-            }
+                // 1. Find left column where camera controls live
+                const leftCol = aspectVideo.previousElementSibling || container.querySelector('.space-y-3');
+                if (leftCol) {
+                    let box = leftCol.querySelector('.evidence-camera-select-box');
+                    if (!box) {
+                        box = document.createElement('div');
+                        box.className = 'evidence-camera-select-box rounded-md border bg-slate-50/80 p-3 space-y-2';
+                        box.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold uppercase text-gray-700 flex items-center gap-1.5">
+                                    <svg class="h-4 w-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    Chọn Camera:
+                                </label>
+                                <button type="button" class="btn-toggle-cam text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 border border-blue-200 shadow-sm transition-colors" title="Đổi camera">
+                                    <svg class="h-3.5 w-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    <span>Trước / Sau</span>
+                                </button>
+                            </div>
+                            <select class="sel-cam-device w-full rounded border-gray-300 bg-white text-xs py-1.5 px-2 shadow-sm font-medium text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></select>
+                        `;
 
-            const selectEl = leftCol?.querySelector('.sel-cam-device');
-            if (selectEl) {
-                selectEl.innerHTML = '';
-                if (this.evidenceDevices && this.evidenceDevices.length > 0) {
-                    this.evidenceDevices.forEach((dev, idx) => {
-                        const opt = document.createElement('option');
-                        opt.value = dev.deviceId;
-                        opt.textContent = this.evidenceDeviceLabel(dev, idx, this.evidenceDevices.length);
-                        selectEl.appendChild(opt);
-                    });
-                } else {
-                    const optUser = document.createElement('option');
-                    optUser.value = 'user';
-                    optUser.textContent = '📷 Camera trước (Selfie)';
-                    selectEl.appendChild(optUser);
-                    const optEnv = document.createElement('option');
-                    optEnv.value = 'environment';
-                    optEnv.textContent = '📷 Camera sau (Môi trường)';
-                    selectEl.appendChild(optEnv);
-                }
-                if (this.evidenceDeviceId) {
-                    selectEl.value = this.evidenceDeviceId;
-                } else if (this.evidenceFacingMode) {
-                    selectEl.value = this.evidenceFacingMode;
-                }
-                selectEl.onchange = (e) => {
-                    const val = e.target.value;
-                    if (val === 'user' || val === 'environment') {
-                        this.evidenceFacingMode = val;
-                        this.evidenceDeviceId = '';
-                        this.evidenceStartMedia('camera');
-                    } else {
-                        this.evidenceDeviceId = val;
-                        this.evidenceStartMedia('camera', val);
+                        // Insert after "Lấy minh chứng bằng" box or before action buttons
+                        const sourceBox = Array.from(leftCol.children).find((el) => el.textContent.includes('Lấy minh chứng bằng'));
+                        if (sourceBox) {
+                            sourceBox.after(box);
+                        } else {
+                            const btnContainer = leftCol.querySelector('.flex.gap-2, button[type="button"]');
+                            if (btnContainer) {
+                                btnContainer.before(box);
+                            } else {
+                                leftCol.appendChild(box);
+                            }
+                        }
                     }
-                };
-                const toggleBtn = leftCol?.querySelector('.btn-toggle-cam');
-                if (toggleBtn) {
-                    toggleBtn.onclick = () => {
-                        this.evidenceToggleCameraFacing();
-                        this.ensureCameraSelectorUI();
-                    };
-                }
-            }
 
-            // 2. On video stream container on the right, ensure floating toggle button overlay
-            const videoContainer = container.querySelector('.aspect-video');
-            if (videoContainer && !videoContainer.querySelector('.evidence-floating-cam-btn')) {
-                const overlay = document.createElement('button');
-                overlay.type = 'button';
-                overlay.className = 'evidence-floating-cam-btn absolute right-3 top-3 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 backdrop-blur-md shadow-md border border-white/20 transition-all';
-                overlay.innerHTML = `
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                    <span>Trước/Sau</span>
-                `;
-                overlay.onclick = () => {
-                    this.evidenceToggleCameraFacing();
-                    this.ensureCameraSelectorUI();
-                };
-                videoContainer.appendChild(overlay);
-            }
+                    // Visibility toggling based on source type
+                    box.style.display = (this.evidenceSourceType === 'camera') ? '' : 'none';
+
+                    // Populate / sync select dropdown
+                    const selectEl = box.querySelector('.sel-cam-device');
+                    if (selectEl) {
+                        const devs = this.evidenceDevices || [];
+                        const shouldUpdateOptions = selectEl.options.length !== (devs.length || 2) || selectEl.dataset.devCount !== String(devs.length);
+                        if (shouldUpdateOptions) {
+                            selectEl.innerHTML = '';
+                            if (devs.length > 0) {
+                                devs.forEach((dev, idx) => {
+                                    const opt = document.createElement('option');
+                                    opt.value = dev.deviceId;
+                                    opt.textContent = this.evidenceDeviceLabel(dev, idx, devs.length);
+                                    selectEl.appendChild(opt);
+                                });
+                            } else {
+                                const optEnv = document.createElement('option');
+                                optEnv.value = 'environment';
+                                optEnv.textContent = '📷 Camera sau (Chính)';
+                                selectEl.appendChild(optEnv);
+
+                                const optUser = document.createElement('option');
+                                optUser.value = 'user';
+                                optUser.textContent = '📷 Camera trước (Selfie)';
+                                selectEl.appendChild(optUser);
+                            }
+                            selectEl.dataset.devCount = String(devs.length);
+                        }
+
+                        if (this.evidenceDeviceId) {
+                            selectEl.value = this.evidenceDeviceId;
+                        } else if (this.evidenceFacingMode) {
+                            selectEl.value = this.evidenceFacingMode;
+                        }
+
+                        selectEl.onchange = (e) => {
+                            const val = e.target.value;
+                            if (val === 'user' || val === 'environment') {
+                                this.evidenceFacingMode = val;
+                                try {
+                                    localStorage.setItem('nttu_evidence_facing_mode', val);
+                                    localStorage.removeItem('nttu_evidence_device_id');
+                                } catch (_) {}
+                                this.evidenceDeviceId = '';
+                                this.evidenceStartMedia('camera');
+                            } else {
+                                this.evidenceDeviceId = val;
+                                try {
+                                    localStorage.setItem('nttu_evidence_device_id', val);
+                                } catch (_) {}
+                                this.evidenceStartMedia('camera', val);
+                            }
+                        };
+                    }
+
+                    const toggleBtn = box.querySelector('.btn-toggle-cam');
+                    if (toggleBtn) {
+                        toggleBtn.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.evidenceToggleCameraFacing();
+                        };
+                    }
+                }
+
+                // 2. On video stream container on the right, ensure floating toggle button overlay
+                if (!aspectVideo.querySelector('.evidence-floating-cam-btn')) {
+                    const overlay = document.createElement('button');
+                    overlay.type = 'button';
+                    overlay.className = 'evidence-floating-cam-btn absolute right-3 top-3 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 backdrop-blur-md shadow-md border border-white/20 transition-all cursor-pointer';
+                    overlay.innerHTML = `
+                        <svg class="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span>Trước / Sau</span>
+                    `;
+                    overlay.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.evidenceToggleCameraFacing();
+                    };
+                    aspectVideo.appendChild(overlay);
+                }
+            });
         },
 
         async evidenceUploadBlob(blob, fileName) {

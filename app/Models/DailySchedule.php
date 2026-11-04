@@ -178,10 +178,21 @@ class DailySchedule extends Model
     {
         return match ($module) {
             'online' => $query
-                ->whereRaw('LOWER(COALESCE(building, "")) LIKE ?', ['%trực tuyến%'])
-                ->whereNotIn('status', ['Phòng thi', 'Thi cuối kỳ'])
-                ->whereRaw('UPPER(COALESCE(content, "")) NOT LIKE ?', ['%SHCN%'])
-                ->whereRaw('UPPER(COALESCE(content, "")) NOT LIKE ?', ['%SINH HOẠT%']),
+                ->where(function (Builder $q) {
+                    $q->whereRaw('LOWER(COALESCE(building, "")) LIKE ?', ['%trực tuyến%'])
+                        ->orWhereRaw('LOWER(COALESCE(room, "")) LIKE ?', ['%trực tuyến%'])
+                        ->orWhereRaw('LOWER(COALESCE(building, "")) LIKE ?', ['%online%'])
+                        ->orWhereRaw('LOWER(COALESCE(room, "")) LIKE ?', ['%online%']);
+                })
+                ->when(! $includeExams, fn (Builder $q) => $q->whereNotIn('status', ['Phòng thi', 'Thi cuối kỳ']))
+                ->when(! $includeHomeroom, function (Builder $q) {
+                    $q->where(function (Builder $sub) {
+                        foreach (['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'] as $kw) {
+                            $sub->whereRaw('LOWER(COALESCE(content, "")) NOT LIKE ?', ["%{$kw}%"])
+                                ->whereRaw('LOWER(COALESCE(status, "")) NOT LIKE ?', ["%{$kw}%"]);
+                        }
+                    });
+                }),
             'exams' => $query->whereIn('status', ['Phòng thi', 'Thi cuối kỳ']),
             'external-practice' => $query->where(function (Builder $q) {
                 $q->whereRaw('LOWER(COALESCE(building, "")) LIKE ?', ['%ngoài%'])

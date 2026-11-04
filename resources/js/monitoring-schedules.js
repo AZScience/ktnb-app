@@ -251,6 +251,15 @@ function isPhysicalRoomSchedule(item) {
     return true;
 }
 
+function isOnlineSchedule(item) {
+    if (!item) return false;
+    const b = String(item.building || '').toLowerCase().trim();
+    const r = String(item.room || item.room_label || '').toLowerCase().trim();
+
+    const onlineKeywords = ['trực tuyến', 'tructuyen', 'online', 'zoom', 'google meet', 'meet', 'ms teams', 'teams'];
+    return onlineKeywords.some((kw) => b.includes(kw) || r.includes(kw));
+}
+
 export function monitoringSchedulesPage(config) {
     const storageKey = `nttu_monitoring_${config.module}_colvis`;
     const pageKey = `nttu_monitoring_${config.module}_page`;
@@ -366,8 +375,10 @@ export function monitoringSchedulesPage(config) {
         selectedRowIds: savedSelected,
         selectionFilter: 'all',
         selectionPopover: false,
-        includeExams: localStorage.getItem('nttu_in_person_include_exams') === '1',
-        includeHomeroom: localStorage.getItem('nttu_in_person_include_homeroom') === '1',
+        includeExams: localStorage.getItem(`nttu_${config.module}_include_exams`) === '1'
+            || (config.module === 'in-person' && localStorage.getItem('nttu_in_person_include_exams') === '1'),
+        includeHomeroom: localStorage.getItem(`nttu_${config.module}_include_homeroom`) === '1'
+            || (config.module === 'in-person' && localStorage.getItem('nttu_in_person_include_homeroom') === '1'),
         filterPresets: savedPresets,
         presetNaming: false,
         presetName: '',
@@ -476,9 +487,10 @@ export function monitoringSchedulesPage(config) {
                     fetch(url, { headers: fetchHeaders }).then((r) => r.ok ? r.json() : null)
                 ];
 
-                if (this.module === 'in-person') {
+                const isApplicable = this.module === 'in-person' || this.module === 'online';
+                if (isApplicable) {
                     if (this.includeHomeroom) {
-                        const homeroomUrl = this.dataUrl.replace('/in-person/data', '/homeroom/data');
+                        const homeroomUrl = this.dataUrl.replace(`/${this.module}/data`, '/homeroom/data');
                         fetchPromises.push(
                             fetch(`${homeroomUrl}?date=${encodeURIComponent(d)}`, { headers: fetchHeaders })
                                 .then((r) => r.ok ? r.json() : null)
@@ -486,7 +498,7 @@ export function monitoringSchedulesPage(config) {
                         );
                     }
                     if (this.includeExams) {
-                        const examsUrl = this.dataUrl.replace('/in-person/data', '/exams/data');
+                        const examsUrl = this.dataUrl.replace(`/${this.module}/data`, '/exams/data');
                         fetchPromises.push(
                             fetch(`${examsUrl}?date=${encodeURIComponent(d)}`, { headers: fetchHeaders })
                                 .then((r) => r.ok ? r.json() : null)
@@ -501,13 +513,14 @@ export function monitoringSchedulesPage(config) {
 
                 let combinedItems = [...(payload.items || [])];
                 const seenIds = new Set(combinedItems.map((item) => String(item.id)));
+                const targetFilter = this.module === 'online' ? isOnlineSchedule : isPhysicalRoomSchedule;
 
                 for (let i = 1; i < results.length; i++) {
                     const extraPayload = results[i];
                     if (!extraPayload || !Array.isArray(extraPayload.items)) continue;
                     extraPayload.items.forEach((item) => {
                         const idStr = String(item.id);
-                        if (!seenIds.has(idStr) && isPhysicalRoomSchedule(item)) {
+                        if (!seenIds.has(idStr) && targetFilter(item)) {
                             seenIds.add(idStr);
                             combinedItems.push(item);
                         }
@@ -744,7 +757,7 @@ export function monitoringSchedulesPage(config) {
                 }
             }
 
-            if (this.module === 'in-person') {
+            if (this.module === 'in-person' || this.module === 'online') {
                 if (this.includeExams) params.set('include_exams', '1');
                 if (this.includeHomeroom) params.set('include_homeroom', '1');
             }
@@ -1281,18 +1294,19 @@ export function monitoringSchedulesPage(config) {
         },
 
         toggleIncludeFilter() {
-            localStorage.setItem('nttu_in_person_include_exams', this.includeExams ? '1' : '0');
-            localStorage.setItem('nttu_in_person_include_homeroom', this.includeHomeroom ? '1' : '0');
+            localStorage.setItem(`nttu_${this.module}_include_exams`, this.includeExams ? '1' : '0');
+            localStorage.setItem(`nttu_${this.module}_include_homeroom`, this.includeHomeroom ? '1' : '0');
 
-            document.querySelectorAll('.chk-exams').forEach((el) => { el.checked = !!this.includeExams; });
-            document.querySelectorAll('.chk-homeroom').forEach((el) => { el.checked = !!this.includeHomeroom; });
+            document.querySelectorAll(`.${this.module}-chk-exams, .chk-exams`).forEach((el) => { el.checked = !!this.includeExams; });
+            document.querySelectorAll(`.${this.module}-chk-homeroom, .chk-homeroom`).forEach((el) => { el.checked = !!this.includeHomeroom; });
 
             this.fetchScheduleData(this.date);
         },
 
         ensureIncludeFilterCheckboxes() {
-            if (this.module !== 'in-person') return;
-            const existing = document.getElementById('in-person-include-filters');
+            if (this.module !== 'in-person' && this.module !== 'online') return;
+            const containerId = `${this.module}-include-filters`;
+            const existing = document.getElementById(containerId);
             if (existing) {
                 const ce = existing.querySelector('.chk-exams');
                 const ch = existing.querySelector('.chk-homeroom');
@@ -1306,17 +1320,18 @@ export function monitoringSchedulesPage(config) {
                 || document.querySelector('h2');
             if (!container) return;
 
+            const examLabel = this.module === 'online' ? 'Lớp thi' : 'Phòng thi';
             const div = document.createElement('div');
-            div.id = 'in-person-include-filters';
+            div.id = containerId;
             div.className = 'inline-flex items-center gap-2.5 ml-3 text-xs font-normal text-gray-700 select-none bg-blue-50/80 px-2.5 py-1 rounded-md border border-blue-200';
             div.innerHTML = `
                 <span class="text-gray-500 font-medium text-[11px]">Bao gồm:</span>
                 <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-blue-700">
-                    <input type="checkbox" class="chk-exams rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
-                    <span class="font-medium text-gray-800">Phòng thi</span>
+                    <input type="checkbox" class="${this.module}-chk-exams chk-exams rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                    <span class="font-medium text-gray-800">${examLabel}</span>
                 </label>
                 <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-blue-700">
-                    <input type="checkbox" class="chk-homeroom rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                    <input type="checkbox" class="${this.module}-chk-homeroom chk-homeroom rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
                     <span class="font-medium text-gray-800">Sinh hoạt</span>
                 </label>
             `;
