@@ -278,16 +278,22 @@
                     </template>
                     <template x-if="!presetNaming">
                         <button type="button" class="inline-flex items-center gap-1.5 text-[10px] font-bold text-[var(--nttu-primary)] hover:bg-cyan-50 px-2 py-1.5 rounded" :disabled="savingPresets" @click="presetNaming = true; presetName = ''">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                             Lưu hiện tại
                         </button>
                     </template>
                 </div>
             </div>
-            <button type="button" class="absolute right-4 top-3 rounded-sm text-gray-400 hover:text-gray-600" @click="closeAdvancedFilter()">×</button>
+            <button type="button" class="absolute right-4 top-3 rounded-sm text-gray-400 hover:text-gray-600" @click="closeAdvancedFilter()" aria-label="Đóng">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
             <div class="overflow-y-auto p-6 max-h-[70vh]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div class="space-y-2">
-                        <label class="font-medium flex items-center gap-2 text-gray-700">Từ ngày</label>
+                        <label class="font-medium flex items-center gap-2 text-gray-700">
+                            <svg class="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            Từ ngày
+                        </label>
                         <input type="date"
                             :value="toIsoDate(advancedFilters.fromDate || advancedFilters.date)"
                             @change="onAdvancedFromDateChange($event.target.value)"
@@ -295,7 +301,10 @@
                             class="nttu-form-control">
                     </div>
                     <div class="space-y-2">
-                        <label class="font-medium flex items-center gap-2 text-gray-700">Đến ngày</label>
+                        <label class="font-medium flex items-center gap-2 text-gray-700">
+                            <svg class="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            Đến ngày
+                        </label>
                         <input type="date"
                             :value="toIsoDate(advancedFilters.toDate || advancedFilters.fromDate || advancedFilters.date)"
                             @change="onAdvancedToDateChange($event.target.value)"
@@ -303,7 +312,10 @@
                             class="nttu-form-control">
                     </div>
                     <div class="space-y-2">
-                        <label class="font-medium flex items-center gap-2 text-gray-700">Ca học</label>
+                        <label class="font-medium flex items-center gap-2 text-gray-700">
+                            <svg class="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Ca học
+                        </label>
                         <select :value="advancedFilters.periodSession" @change="onPeriodSessionChange($event.target.value)" class="nttu-form-control">
                             <option value="all">Tất cả</option>
                             <option value="morning">Ca sáng (1-6)</option>
@@ -323,21 +335,32 @@
                         </div>
                     </div>
                     @foreach ([
-                        ['buildings', 'Dãy nhà (Chọn nhiều)'],
-                        ['departments', 'Khoa / Đơn vị (Chọn nhiều)'],
-                        ['rooms', 'Phòng (Chọn nhiều)'],
-                        ['lecturers', 'Giảng viên / CBCT (Chọn nhiều)'],
-                    ] as [$field, $label])
+                        ['buildings', 'Dãy nhà (Chọn nhiều)', 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
+                        ['departments', 'Khoa / Đơn vị (Chọn nhiều)', 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z'],
+                        ['rooms', 'Phòng (Chọn nhiều)', 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01'],
+                        ['lecturers', 'Giảng viên / CBCT (Chọn nhiều)', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'],
+                    ] as [$field, $label, $iconPath])
                     <div class="space-y-2">
-                        <label class="font-medium text-gray-700">{{ $label }}</label>
+                        <label class="font-medium flex items-center gap-2 text-gray-700">
+                            <svg class="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPath }}"/></svg>
+                            {{ $label }}
+                        </label>
                         <x-nttu-multi-select :field="$field" placeholder="Chọn..." search-placeholder="Tìm kiếm..." />
                     </div>
                     @endforeach
                 </div>
             </div>
             <div class="border-t px-4 py-3 flex justify-end gap-2 bg-slate-50">
-                <button type="button" @click="resetAdvanced()" class="rounded-md border px-4 py-2 text-sm text-gray-600 hover:bg-white">Xóa bộ lọc</button>
-                <button type="button" @click="applyAdvanced()" class="rounded-md bg-[var(--nttu-table-head)] px-4 py-2 text-sm text-white">Áp dụng</button>
+                <button type="button" @click="resetAdvanced()"
+                    class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors shadow-sm">
+                    <svg class="h-4 w-4 text-gray-500 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Xóa bộ lọc
+                </button>
+                <button type="button" @click="applyAdvanced()"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-[var(--nttu-table-head)] hover:bg-blue-700 px-4 py-2 text-sm font-medium text-white transition-colors shadow-sm">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Áp dụng
+                </button>
             </div>
         </div>
     </div>

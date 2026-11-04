@@ -785,10 +785,37 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             async resetAdvanced() {
-                this.advancedFilters = normalizeAdvancedFilters({ date: '' }, this.todayDate);
+                const today = this.todayDate || toDisplayDate(new Date().toISOString().slice(0, 10));
+                this.advancedFilters = {
+                    date: today,
+                    fromDate: today,
+                    toDate: today,
+                    buildings: [],
+                    departments: [],
+                    rooms: [],
+                    lecturers: [],
+                    periodSession: 'all',
+                    periodStart: '',
+                    periodEnd: '',
+                };
                 localStorage.removeItem(advKey);
                 this.currentPage = 1;
                 localStorage.setItem(pageKey, '1');
+
+                this.$nextTick(() => {
+                    const modal = this.$root.querySelector('div[x-show="advancedOpen"]');
+                    if (modal) {
+                        const dateInputs = modal.querySelectorAll('input[type="date"]');
+                        if (dateInputs.length >= 1) {
+                            dateInputs[0].value = toIsoDate(today);
+                        }
+                        if (dateInputs.length >= 2) {
+                            dateInputs[1].value = toIsoDate(today);
+                        }
+                    }
+                });
+                await this.fetchData();
+                this.showToast('Đã xóa bộ lọc về ngày mặc định');
             },
 
             valuesFromItems(field) {
