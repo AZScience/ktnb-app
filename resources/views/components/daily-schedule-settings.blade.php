@@ -89,7 +89,67 @@
                 x-bind:data-col-resize="'daily_schedule_settings'">
                 <thead>
                     <tr class="bg-[#1877F2]">
-                        <th class="nttu-th-index text-white font-bold text-xs">#</th>
+                        <th class="nttu-th-index text-white font-bold text-xs relative p-0" :class="selectionFilter !== 'all' && '!bg-blue-900'">
+                            <div class="relative flex items-center justify-center h-full">
+                                <button type="button" @click.stop="selectionPopover = !selectionPopover"
+                                    class="btn-selection-filter flex items-center justify-center gap-1 w-full h-full py-2 px-1 hover:bg-black/20 text-white transition-colors"
+                                    title="Lọc theo dòng đã chọn">
+                                    <span class="font-bold">#</span>
+                                    <svg class="h-3 w-3 shrink-0" :class="selectionFilter !== 'all' ? 'text-yellow-300 font-bold' : 'opacity-80'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                                    </svg>
+                                    <span x-show="selectionFilter !== 'all'" x-cloak class="text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900" x-text="selectionFilter === 'selected' ? `(${selectedRowIds.length})` : '(Chưa)'"></span>
+                                </button>
+                                <div x-cloak x-float.start="selectionPopover" data-float-close="selectionPopover = false"
+                                     class="selection-filter-popover nttu-floating-panel w-56 rounded-md border bg-white p-1 text-gray-800 shadow-xl text-left font-normal text-xs z-50">
+                                    <div class="px-2 py-1.5 font-bold text-gray-700 border-b flex items-center justify-between">
+                                        <span>Lọc dòng:</span>
+                                        <span class="text-[10px] font-normal text-gray-500" x-text="`Đã chọn: ${selectedRowIds.length}`"></span>
+                                    </div>
+                                    <div class="py-1 space-y-0.5">
+                                        <button type="button" @click="setSelectionFilter('all')"
+                                            class="flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100"
+                                            :class="selectionFilter === 'all' && 'font-bold text-blue-600 bg-blue-50'">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                                                Tất cả dòng
+                                            </span>
+                                            <span x-show="selectionFilter === 'all'">✓</span>
+                                        </button>
+                                        <button type="button" @click="setSelectionFilter('selected')"
+                                            class="flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100"
+                                            :class="selectionFilter === 'selected' && 'font-bold text-blue-600 bg-blue-50'">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Chỉ dòng đã chọn
+                                            </span>
+                                            <span x-text="`(${selectedRowIds.length})`" class="text-xs text-gray-500"></span>
+                                        </button>
+                                        <button type="button" @click="setSelectionFilter('unselected')"
+                                            class="flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100"
+                                            :class="selectionFilter === 'unselected' && 'font-bold text-blue-600 bg-blue-50'">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                                Chỉ dòng chưa chọn
+                                            </span>
+                                            <span x-show="selectionFilter === 'unselected'">✓</span>
+                                        </button>
+                                    </div>
+                                    <div class="border-t pt-1 mt-1 space-y-0.5">
+                                        <button type="button" @click="toggleSelectAllCurrentPage(); selectionPopover = false"
+                                            class="flex w-full items-center gap-2 px-2 py-1 rounded text-gray-600 hover:bg-gray-100">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Chọn/Bỏ chọn trang này</span>
+                                        </button>
+                                        <button type="button" x-show="selectedRowIds.length > 0" @click="selectedRowIds = []; selectionPopover = false; setSelectionFilter('all')"
+                                            class="flex w-full items-center gap-2 px-2 py-1 rounded text-red-600 hover:bg-red-50">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            <span>Bỏ chọn tất cả</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th>
                         <template x-for="key in visibleColumnKeys" :key="key">
                             <th class="p-0 h-auto border-r border-blue-300 relative" :data-col="key" :data-col-label="columnLabel(key)">
                                 <button type="button" @click="headerPopover = headerPopover === key ? null : key"

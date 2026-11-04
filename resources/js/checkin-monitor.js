@@ -96,6 +96,7 @@ export function registerCheckinMonitor(Alpine) {
         statusFilter: '',
         columnFilters: {},
         selectedIds: [],
+        selectionFilter: 'all',
         rowsPerPage: 10,
         currentPage: 1,
         reviewOpen: false,
@@ -321,6 +322,11 @@ export function registerCheckinMonitor(Alpine) {
 
         get filteredItems() {
             let rows = [...this.items];
+            if (this.selectionFilter === 'selected') {
+                rows = rows.filter((item) => this.selectedIds.includes(item.id));
+            } else if (this.selectionFilter === 'unselected') {
+                rows = rows.filter((item) => !this.selectedIds.includes(item.id));
+            }
             const q = this.searchTerm.trim().toLowerCase();
             if (q) {
                 rows = rows.filter((item) =>

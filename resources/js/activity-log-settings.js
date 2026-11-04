@@ -86,6 +86,7 @@ export function registerActivityLogSettings(Alpine) {
             action: 'ALL',
         }),
         selectedIds: loadJson('nttu_accesslog_selected_v1', []),
+        selectionFilter: 'all',
 
         headerPopover: null,
         settingsOpen: false,
@@ -367,7 +368,13 @@ export function registerActivityLogSettings(Alpine) {
         },
 
         get filteredItems() {
-            return this.logs.filter((item) => {
+            let list = this.logs;
+            if (this.selectionFilter === 'selected') {
+                list = list.filter((item) => this.selectedIds.includes(item.id));
+            } else if (this.selectionFilter === 'unselected') {
+                list = list.filter((item) => !this.selectedIds.includes(item.id));
+            }
+            return list.filter((item) => {
                 const matchesColumns = Object.entries(this.filters).every(([key, value]) => {
                     if (!value) return true;
                     return String(item[key] ?? '').toLowerCase().includes(String(value).toLowerCase());
