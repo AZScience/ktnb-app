@@ -251,52 +251,8 @@ export function registerDailyScheduleSettings(Alpine) {
                 window.addEventListener('nttu-language-changed', (event) => {
                     this.currentLang = event.detail?.language || getLanguage();
                 });
-                this.ensureDateRangeBar();
                 void this.loadFilterPresets();
                 await this.fetchData();
-            },
-
-            ensureDateRangeBar() {
-                this.$nextTick(() => {
-                    if (this.$root.querySelector('.quick-date-range-bar')) return;
-                    const cardHeader = this.$root.querySelector('.nttu-card > div:first-child');
-                    if (!cardHeader) return;
-
-                    const bar = document.createElement('div');
-                    bar.className = 'quick-date-range-bar px-4 py-2.5 bg-blue-50/70 border-b flex flex-wrap items-center justify-between gap-3 text-sm';
-                    bar.innerHTML = `
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="inline-flex items-center gap-1.5 font-semibold text-blue-900">
-                                <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                Khoảng thời gian:
-                            </span>
-                            <div class="flex items-center gap-1.5 bg-white border border-blue-200 rounded-lg px-2.5 py-1 shadow-sm">
-                                <label class="text-xs font-medium text-gray-600">Từ ngày:</label>
-                                <input type="date" id="qFromDate" class="h-8 rounded border-gray-300 text-xs px-2 bg-white" value="${this.toIsoDate(this.advancedFilters.fromDate || this.advancedFilters.date)}">
-                                <label class="text-xs font-medium text-gray-600 ml-1">Đến ngày:</label>
-                                <input type="date" id="qToDate" class="h-8 rounded border-gray-300 text-xs px-2 bg-white" value="${this.toIsoDate(this.advancedFilters.toDate || this.advancedFilters.fromDate || this.advancedFilters.date)}">
-                                <button type="button" id="qBtnApply" class="h-8 px-3 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1">
-                                    Lọc dữ liệu
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    cardHeader.after(bar);
-
-                    const fromInp = bar.querySelector('#qFromDate');
-                    const toInp = bar.querySelector('#qToDate');
-                    const btn = bar.querySelector('#qBtnApply');
-
-                    if (fromInp) {
-                        fromInp.addEventListener('change', (e) => this.onAdvancedFromDateChange(e.target.value));
-                    }
-                    if (toInp) {
-                        toInp.addEventListener('change', (e) => this.onAdvancedToDateChange(e.target.value));
-                    }
-                    if (btn) {
-                        btn.addEventListener('click', () => this.applyQuickDate());
-                    }
-                });
             },
 
             buildDataUrl() {
