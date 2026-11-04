@@ -26,10 +26,16 @@ class ScheduleRoomChecklistExportService
         }
 
         $items = $this->buildExportItems($request, $query);
-        $displayDate = $this->normalizeScheduleDate($request->get('date')) ?: ($items->first()?->date ?? date('d/m/Y'));
+        $from = $request->get('from');
+        $to = $request->get('to');
+        if ($from && $to && $from !== $to) {
+            $displayDate = $this->normalizeScheduleDate($from).' – '.$this->normalizeScheduleDate($to);
+        } else {
+            $displayDate = $this->normalizeScheduleDate($request->get('date') ?: $from) ?: ($items->first()?->date ?? date('d/m/Y'));
+        }
         $buildingLabel = $this->exportBuildingLabel($request, $items);
         $session = (string) $request->get('period_session', 'all');
-        $safeDate = str_replace('/', '-', $displayDate);
+        $safeDate = str_replace(['/', ' '], ['-', ''], $displayDate);
         $filename ??= 'LichHoc_'.$safeDate.'_'.date('H-i').'.xlsx';
 
         return $this->excel->exportRoomChecklist($items, [
@@ -56,6 +62,15 @@ class ScheduleRoomChecklistExportService
         if ($ids) {
             $idList = is_array($ids) ? $ids : array_filter(explode(',', (string) $ids));
             $query->whereIn('id', $idList);
+        } elseif ($from = $request->get('from')) {
+            $to = $request->get('to') ?: $from;
+            $fromNorm = $this->normalizeScheduleDate($from);
+            $toNorm = $this->normalizeScheduleDate($to);
+            if ($fromNorm === $toNorm) {
+                $query->where('date', $fromNorm);
+            } else {
+                app(\App\Services\ReportQueryService::class)->whereDisplayDateBetween($query, 'date', $fromNorm, $toNorm);
+            }
         } elseif ($date = $request->get('date')) {
             $query->where('date', $this->normalizeScheduleDate($date));
         } else {

@@ -53,7 +53,27 @@ class ScheduleController extends Controller
         $query = DailySchedule::query()->forListTable();
 
         if ($request) {
-            if ($date = $request->get('date')) {
+            $from = $request->get('from') ?: $request->get('from_date');
+            $to = $request->get('to') ?: $request->get('to_date');
+            $date = $request->get('date');
+
+            if ($from && $to) {
+                $fromNorm = $this->normalizeScheduleDate($from);
+                $toNorm = $this->normalizeScheduleDate($to);
+                if ($fromNorm === $toNorm) {
+                    $query->where('date', $fromNorm);
+                } else {
+                    $fromIso = $this->reportQueries->isoFromDisplayDate($fromNorm);
+                    $toIso = $this->reportQueries->isoFromDisplayDate($toNorm);
+                    if ($fromIso && $toIso && $fromIso > $toIso) {
+                        [$fromNorm, $toNorm] = [$toNorm, $fromNorm];
+                    }
+                    $this->reportQueries->whereDisplayDateBetween($query, 'date', $fromNorm, $toNorm);
+                }
+            } elseif ($from) {
+                $fromNorm = $this->normalizeScheduleDate($from);
+                $query->where('date', $fromNorm);
+            } elseif ($date) {
                 $query->where('date', $this->normalizeScheduleDate($date));
             } elseif ($request->boolean('all')) {
                 $this->reportQueries->orderByDisplayDate($query, 'date', 'desc');
@@ -144,28 +164,67 @@ class ScheduleController extends Controller
 
     public function destroyByDate(Request $request): JsonResponse
     {
-        $date = $this->normalizeScheduleDate($request->validate([
-            'date' => 'required|string|max:20',
-        ])['date']);
+        $validated = $request->validate([
+            'date' => 'nullable|string|max:20',
+            'from' => 'nullable|string|max:20',
+            'to' => 'nullable|string|max:20',
+        ]);
 
-        $count = DailySchedule::where('date', $date)->delete();
+        $from = $validated['from'] ?? null;
+        $to = $validated['to'] ?? null;
+        $date = $validated['date'] ?? null;
+
+        if ($from && $to) {
+            $fromNorm = $this->normalizeScheduleDate($from);
+            $toNorm = $this->normalizeScheduleDate($to);
+            if ($fromNorm === $toNorm) {
+                $count = DailySchedule::where('date', $fromNorm)->delete();
+                $message = "Đã xóa {$count} bản ghi ngày {$fromNorm}.";
+            } else {
+                $fromIso = $this->reportQueries->isoFromDisplayDate($fromNorm);
+                $toIso = $this->reportQueries->isoFromDisplayDate($toNorm);
+                if ($fromIso && $toIso && $fromIso > $toIso) {
+                    [$fromNorm, $toNorm] = [$toNorm, $fromNorm];
+                }
+                $query = DailySchedule::query();
+                $this->reportQueries->whereDisplayDateBetween($query, 'date', $fromNorm, $toNorm);
+                $count = $query->delete();
+                $message = "Đã xóa {$count} bản ghi từ ngày {$fromNorm} đến {$toNorm}.";
+            }
+        } else {
+            $targetDate = $this->normalizeScheduleDate($date ?: $from);
+            if (! $targetDate) {
+                return response()->json(['success' => false, 'message' => 'Vui lòng chọn ngày cần xóa.'], 422);
+            }
+            $count = DailySchedule::where('date', $targetDate)->delete();
+            $message = "Đã xóa {$count} bản ghi ngày {$targetDate}.";
+        }
 
         return response()->json([
             'success' => true,
-            'message' => "Đã xóa {$count} bản ghi ngày {$date}.",
+            'message' => $message,
             'count' => $count,
         ]);
     }
 
     public function export(Request $request): StreamedResponse
     {
-        $displayDate = $this->normalizeScheduleDate($request->get('date')) ?: date('d/m/Y');
-        $safeDate = str_replace('/', '-', $displayDate);
+        $from = $request->get('from');
+        $to = $request->get('to');
+        if ($from && $to && $from !== $to) {
+            $safeFrom = str_replace('/', '-', $this->normalizeScheduleDate($from));
+            $safeTo = str_replace('/', '-', $this->normalizeScheduleDate($to));
+            $filename = 'LichHoc_'.$safeFrom.'_den_'.$safeTo.'_'.date('H-i').'.xlsx';
+        } else {
+            $displayDate = $this->normalizeScheduleDate($request->get('date') ?: $from) ?: date('d/m/Y');
+            $safeDate = str_replace('/', '-', $displayDate);
+            $filename = 'LichHoc_'.$safeDate.'_'.date('H-i').'.xlsx';
+        }
 
         return $this->roomChecklistExport->download(
             $request,
             null,
-            'LichHoc_'.$safeDate.'_'.date('H-i').'.xlsx',
+            $filename,
         );
     }
 

@@ -47,11 +47,11 @@
                     title="Bật/tắt thao tác xóa nhanh">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
-                <template x-if="showDeleteAction && advancedFilters.date && canDelete">
+                <template x-if="showDeleteAction && (advancedFilters.fromDate || advancedFilters.date) && canDelete">
                     <button type="button" @click="confirmDeleteByDate()"
                         class="inline-flex items-center gap-2 rounded-md border border-red-100 bg-red-50 px-2 py-1 text-sm text-red-600 hover:bg-red-100">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <span x-text="'Xóa toàn bộ lịch ngày ' + (advancedFilters.date.includes('/') ? advancedFilters.date : advancedFilters.date)"></span>
+                        <span x-text="'Xóa toàn bộ lịch: ' + dateRangeLabel"></span>
                     </button>
                 </template>
                 <template x-if="visibleSelectedCount > 0 && canDelete">
@@ -63,6 +63,22 @@
                 </template>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                <div class="hidden sm:flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 border rounded-lg px-2 py-1">
+                    <span class="text-gray-500 font-medium">Từ:</span>
+                    <input type="date"
+                        :value="toIsoDate(advancedFilters.fromDate || advancedFilters.date)"
+                        @change="onAdvancedFromDateChange($event.target.value)"
+                        class="h-7 rounded border-gray-300 text-xs px-1.5 bg-white">
+                    <span class="text-gray-500 font-medium">Đến:</span>
+                    <input type="date"
+                        :value="toIsoDate(advancedFilters.toDate || advancedFilters.fromDate || advancedFilters.date)"
+                        @change="onAdvancedToDateChange($event.target.value)"
+                        class="h-7 rounded border-gray-300 text-xs px-1.5 bg-white">
+                    <button type="button" @click="applyQuickDate()"
+                        class="h-7 px-2.5 rounded bg-[var(--nttu-primary)] text-white text-xs font-semibold hover:opacity-90 transition-opacity">
+                        Lọc
+                    </button>
+                </div>
                 <button type="button" @click="openAdvancedFilter()" class="rounded-md p-2 text-orange-500 hover:bg-orange-50" title="Bộ lọc nâng cao">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 8h12M9 12h6M11 16h2"/></svg>
                 </button>
@@ -285,10 +301,17 @@
             <div class="overflow-y-auto p-6 max-h-[70vh]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div class="space-y-2">
-                        <label class="font-medium flex items-center gap-2 text-gray-700">Ngày lọc</label>
+                        <label class="font-medium flex items-center gap-2 text-gray-700">Từ ngày</label>
                         <input type="date"
-                            :value="advancedFilters.date?.includes('/') ? advancedFilters.date.split('/').reverse().join('-') : (advancedFilters.date || '')"
-                            @change="onAdvancedDateChange($event.target.value)"
+                            :value="toIsoDate(advancedFilters.fromDate || advancedFilters.date)"
+                            @change="onAdvancedFromDateChange($event.target.value)"
+                            class="nttu-form-control">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-medium flex items-center gap-2 text-gray-700">Đến ngày</label>
+                        <input type="date"
+                            :value="toIsoDate(advancedFilters.toDate || advancedFilters.fromDate || advancedFilters.date)"
+                            @change="onAdvancedToDateChange($event.target.value)"
                             class="nttu-form-control">
                     </div>
                     <div class="space-y-2">
@@ -591,8 +614,8 @@
     <div x-show="deleteByDateOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="deleteByDateOpen = false"></div>
         <div class="relative rounded-lg bg-white p-6 shadow-xl max-w-md w-full">
-            <h3 class="text-lg font-semibold text-gray-900">Xóa theo ngày</h3>
-            <p class="mt-2 text-sm text-gray-600" x-text="'Xóa toàn bộ lịch ngày ' + (deleteDate || '') + '?'"></p>
+            <h3 class="text-lg font-semibold text-gray-900">Xóa dữ liệu theo ngày</h3>
+            <p class="mt-2 text-sm text-gray-600" x-text="'Bạn có chắc muốn xóa toàn bộ lịch ' + (deleteDate === deleteToDate || !deleteToDate ? 'ngày ' + deleteDate : 'từ ngày ' + deleteDate + ' đến ' + deleteToDate) + '?'"></p>
             <div class="mt-4 flex justify-end gap-2">
                 <x-nttu-button type="button" action="cancel" @click="deleteByDateOpen = false">Hủy</x-nttu-button>
                 <x-nttu-button type="button" action="delete" x-bind:disabled="saving" @click="deleteByDate()">Xóa</x-nttu-button>

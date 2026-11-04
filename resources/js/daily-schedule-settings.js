@@ -43,12 +43,59 @@ const DEFAULT_VISIBILITY = {
     note: false,
 };
 
+function toDisplayDate(val) {
+    if (!val) return '';
+    const s = String(val).trim();
+    if (s.includes('-')) {
+        const parts = s.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return s;
+}
+
+function toIsoDate(val) {
+    if (!val) return '';
+    const s = String(val).trim();
+    if (s.includes('/')) {
+        const parts = s.split('/');
+        if (parts.length === 3) {
+            const d = parts[0].padStart(2, '0');
+            const m = parts[1].padStart(2, '0');
+            const y = parts[2];
+            return `${y}-${m}-${d}`;
+        }
+    }
+    return s;
+}
+
+function dateToNumber(dStr) {
+    if (!dStr) return 0;
+    const s = String(dStr).trim();
+    if (s.includes('/')) {
+        const [d, m, y] = s.split('/');
+        return parseInt(`${y}${m.padStart(2, '0')}${d.padStart(2, '0')}`, 10) || 0;
+    }
+    if (s.includes('-')) {
+        const [y, m, d] = s.split('-');
+        return parseInt(`${y}${m.padStart(2, '0')}${d.padStart(2, '0')}`, 10) || 0;
+    }
+    return 0;
+}
+
 function normalizeAdvancedFilters(raw, fallbackDate = '') {
     const f = raw || {};
-    const hasDate = Object.prototype.hasOwnProperty.call(f, 'date');
+    const fallback = toDisplayDate(fallbackDate) || '';
+    const rawDate = toDisplayDate(f.date);
+    const rawFrom = toDisplayDate(f.fromDate);
+    const rawTo = toDisplayDate(f.toDate);
+
+    const fromDate = rawFrom || rawDate || fallback;
+    const toDate = rawTo || rawDate || fallback;
 
     return {
-        date: hasDate ? (f.date || '') : (fallbackDate || ''),
+        date: fromDate,
+        fromDate,
+        toDate,
         buildings: Array.isArray(f.buildings) ? [...f.buildings] : [],
         departments: Array.isArray(f.departments) ? [...f.departments] : [],
         rooms: Array.isArray(f.rooms) ? [...f.rooms] : [],
@@ -156,6 +203,7 @@ export function registerDailyScheduleSettings(Alpine) {
             deleteByDateOpen: false,
             deleteTarget: null,
             deleteDate: '',
+            deleteToDate: '',
             showDeleteAction: false,
             currentLang: getLanguage(),
             columnFilters: savedColumnFilters,
@@ -213,16 +261,24 @@ export function registerDailyScheduleSettings(Alpine) {
                 }
 
                 const params = new URLSearchParams();
-                const date = this.advancedFilters.date;
-                if (date) {
-                    let normalized = date;
-                    if (date.includes('-')) {
-                        const [y, m, d] = date.split('-');
-                        normalized = `${d}/${m}/${y}`;
+                const f = this.advancedFilters;
+                const from = toDisplayDate(f.fromDate || f.date);
+                const to = toDisplayDate(f.toDate || f.fromDate || f.date);
+
+                if (from && to) {
+                    params.set('from', from);
+                    params.set('to', to);
+                    if (from === to) {
+                        params.set('date', from);
                     }
-                    params.set('date', normalized);
+                } else if (from) {
+                    params.set('date', from);
+                    params.set('from', from);
                 } else {
-                    params.set('date', this.todayDate || new Date().toLocaleDateString('vi-VN'));
+                    const today = this.todayDate || new Date().toLocaleDateString('vi-VN');
+                    params.set('date', today);
+                    params.set('from', today);
+                    params.set('to', today);
                 }
 
                 return `${this.dataUrl}?${params.toString()}`;
@@ -267,6 +323,32 @@ export function registerDailyScheduleSettings(Alpine) {
                 return this.columnOrder.filter((k) => this.columns[k] && this.columnVisibility[k]);
             },
 
+            toIsoDate(d) {
+                return toIsoDate(d);
+            },
+
+            toDisplayDate(d) {
+                return toDisplayDate(d);
+            },
+
+            get dateRangeLabel() {
+                const f = this.advancedFilters;
+                const from = toDisplayDate(f.fromDate || f.date);
+                const to = toDisplayDate(f.toDate || f.fromDate || f.date);
+                if (from && to && from !== to) {
+                    return `${from} – ${to}`;
+                }
+                return from || to || this.todayDate || '';
+            },
+
+            async applyQuickDate() {
+                this.persistAdvancedFilters();
+                this.currentPage = 1;
+                localStorage.setItem(pageKey, '1');
+                await this.fetchData();
+                this.showToast(`Đã lọc lịch học: ${this.dateRangeLabel} (${this.filteredItems.length} bản ghi)`);
+            },
+
             get filteredItems() {
                 let result = this.items.filter((item) => this.matchesAdvanced(item) && this.matchesColumnFilters(item));
                 if (this.sortConfig) {
@@ -276,6 +358,11 @@ export function registerDailyScheduleSettings(Alpine) {
                         const bv = b[key] ?? '';
                         if (av === null || av === undefined || av === '') return 1;
                         if (bv === null || bv === undefined || bv === '') return -1;
+                        if (key === 'date') {
+                            const an = dateToNumber(av);
+                            const bn = dateToNumber(bv);
+                            return direction === 'asc' ? an - bn : bn - an;
+                        }
                         const cmp = String(av).localeCompare(String(bv), 'vi', { numeric: true });
                         return direction === 'asc' ? cmp : -cmp;
                     });
@@ -318,7 +405,7 @@ export function registerDailyScheduleSettings(Alpine) {
 
             get hasActiveAdvancedFilters() {
                 const f = this.advancedFilters;
-                return !!(f.date || f.buildings?.length || f.departments?.length || f.rooms?.length
+                return !!(f.fromDate || f.toDate || f.date || f.buildings?.length || f.departments?.length || f.rooms?.length
                     || f.lecturers?.length || (f.periodSession && f.periodSession !== 'all'));
             },
 
@@ -372,12 +459,16 @@ export function registerDailyScheduleSettings(Alpine) {
 
                 const params = new URLSearchParams();
                 const f = this.advancedFilters;
+                const from = toDisplayDate(f.fromDate || f.date);
+                const to = toDisplayDate(f.toDate || f.fromDate || f.date);
 
-                if (f.date) {
-                    params.set(
-                        'date',
-                        f.date.includes('/') ? f.date.split('/').reverse().join('-') : f.date,
-                    );
+                if (from && to) {
+                    params.set('from', from);
+                    params.set('to', to);
+                    params.set('date', from);
+                } else if (from) {
+                    params.set('date', from);
+                    params.set('from', from);
                 }
 
                 (f.buildings || []).forEach((building) => {
@@ -488,12 +579,22 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             onAdvancedDateChange(isoDate) {
-                let date = '';
-                if (isoDate) {
-                    const [y, m, day] = isoDate.split('-');
-                    date = `${day}/${m}/${y}`;
-                }
-                this.patchAdvancedFilters({ date });
+                const date = toDisplayDate(isoDate);
+                this.patchAdvancedFilters({ date, fromDate: date, toDate: date });
+                this.currentPage = 1;
+                localStorage.setItem(pageKey, '1');
+            },
+
+            onAdvancedFromDateChange(isoDate) {
+                const fromDate = toDisplayDate(isoDate);
+                this.patchAdvancedFilters({ fromDate, date: fromDate });
+                this.currentPage = 1;
+                localStorage.setItem(pageKey, '1');
+            },
+
+            onAdvancedToDateChange(isoDate) {
+                const toDate = toDisplayDate(isoDate);
+                this.patchAdvancedFilters({ toDate });
                 this.currentPage = 1;
                 localStorage.setItem(pageKey, '1');
             },
@@ -516,13 +617,18 @@ export function registerDailyScheduleSettings(Alpine) {
 
             matchesAdvanced(item) {
                 const f = this.advancedFilters;
-                if (f.date) {
-                    let filterDate = f.date;
-                    if (filterDate.includes('-')) {
-                        const [y, m, d] = filterDate.split('-');
-                        filterDate = `${d}/${m}/${y}`;
-                    }
-                    if (item.date !== filterDate) return false;
+                const fromNum = dateToNumber(f.fromDate || f.date);
+                const toNum = dateToNumber(f.toDate || f.fromDate || f.date);
+                const itemDateNum = dateToNumber(item.date);
+
+                if (fromNum && toNum) {
+                    const min = Math.min(fromNum, toNum);
+                    const max = Math.max(fromNum, toNum);
+                    if (itemDateNum && (itemDateNum < min || itemDateNum > max)) return false;
+                } else if (fromNum && itemDateNum && itemDateNum < fromNum) {
+                    return false;
+                } else if (toNum && itemDateNum && itemDateNum > toNum) {
+                    return false;
                 }
                 if (f.buildings?.length && !f.buildings.some((building) => this.buildingMatchesFilter(item, building))) return false;
                 if (f.departments?.length && !f.departments.includes(item.department)) return false;
@@ -742,7 +848,9 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             confirmDeleteByDate() {
-                this.deleteDate = this.advancedFilters.date || this.todayDate;
+                const f = this.advancedFilters;
+                this.deleteDate = toDisplayDate(f.fromDate || f.date || this.todayDate);
+                this.deleteToDate = toDisplayDate(f.toDate || f.fromDate || f.date || this.todayDate);
                 this.deleteByDateOpen = true;
             },
 
@@ -806,6 +914,8 @@ export function registerDailyScheduleSettings(Alpine) {
                 if (!this.deleteByDateUrl || !this.deleteDate) return;
                 this.saving = true;
                 try {
+                    const from = toDisplayDate(this.deleteDate);
+                    const to = toDisplayDate(this.deleteToDate || this.deleteDate);
                     const res = await fetch(this.deleteByDateUrl, {
                         method: 'DELETE',
                         headers: {
@@ -814,12 +924,11 @@ export function registerDailyScheduleSettings(Alpine) {
                             'X-CSRF-TOKEN': csrfToken(),
                             'X-Requested-With': 'XMLHttpRequest',
                         },
-                        body: JSON.stringify({ date: formatFilterDate(this.deleteDate) || this.deleteDate }),
+                        body: JSON.stringify({ from, to, date: from }),
                     });
                     const payload = await res.json();
                     if (!res.ok) throw new Error(payload.message || 'Không xóa được');
-                    const date = formatFilterDate(this.deleteDate) || this.deleteDate;
-                    this.items = this.items.filter((i) => i.date !== date);
+                    await this.fetchData();
                     this.selectedRowIds = [];
                     localStorage.setItem(selKey, '[]');
                     this.deleteByDateOpen = false;

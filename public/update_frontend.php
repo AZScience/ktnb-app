@@ -39,14 +39,26 @@ if ($content) {
                 $destPath = __DIR__ . '/../resources/views/components/interactive-report.blade.php';
                 @file_put_contents($destPath, $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/daily-schedule-settings.blade.php') === 0) {
+                $destPath = __DIR__ . '/../resources/views/components/daily-schedule-settings.blade.php';
+                @file_put_contents($destPath, $zip->getFromIndex($i));
+            }
 
-            // 3. Cập nhật các service báo cáo
+            // 3. Cập nhật các service và controller liên quan
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ReportQueryService.php') === 0) {
                 $destPath = __DIR__ . '/../app/Services/ReportQueryService.php';
                 @file_put_contents($destPath, $zip->getFromIndex($i));
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ReportPresenterService.php') === 0) {
                 $destPath = __DIR__ . '/../app/Services/ReportPresenterService.php';
+                @file_put_contents($destPath, $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/ScheduleController.php') === 0) {
+                $destPath = __DIR__ . '/../app/Http/Controllers/ScheduleController.php';
+                @file_put_contents($destPath, $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ScheduleRoomChecklistExportService.php') === 0) {
+                $destPath = __DIR__ . '/../app/Services/ScheduleRoomChecklistExportService.php';
                 @file_put_contents($destPath, $zip->getFromIndex($i));
             }
         }
