@@ -45,17 +45,22 @@ const DEFAULT_VISIBILITY = {
 
 function toDisplayDate(val) {
     if (!val) return '';
-    const s = String(val).trim();
+    const s = String(val).trim().split(' ')[0];
     if (s.includes('-')) {
         const parts = s.split('-');
-        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        if (parts.length === 3) {
+            const y = parts[0];
+            const m = parts[1].padStart(2, '0');
+            const d = parts[2].padStart(2, '0');
+            return `${d}/${m}/${y}`;
+        }
     }
     return s;
 }
 
 function toIsoDate(val) {
     if (!val) return '';
-    const s = String(val).trim();
+    const s = String(val).trim().split(' ')[0];
     if (s.includes('/')) {
         const parts = s.split('/');
         if (parts.length === 3) {
@@ -70,7 +75,7 @@ function toIsoDate(val) {
 
 function dateToNumber(dStr) {
     if (!dStr) return 0;
-    const s = String(dStr).trim();
+    const s = String(dStr).trim().split(' ')[0];
     if (s.includes('/')) {
         const [d, m, y] = s.split('/');
         return parseInt(`${y}${m.padStart(2, '0')}${d.padStart(2, '0')}`, 10) || 0;
@@ -270,6 +275,8 @@ export function registerDailyScheduleSettings(Alpine) {
                     params.set('to', to);
                     if (from === to) {
                         params.set('date', from);
+                    } else {
+                        params.set('all', '1');
                     }
                 } else if (from) {
                     params.set('date', from);
@@ -626,6 +633,31 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             async applyAdvanced() {
+                const modal = this.$root.querySelector('div[x-show="advancedOpen"]');
+                if (modal) {
+                    const dateInputs = modal.querySelectorAll('input[type="date"]');
+                    if (dateInputs.length >= 2) {
+                        const fromVal = dateInputs[0].value;
+                        const toVal = dateInputs[1].value;
+                        if (fromVal) {
+                            const fromDate = toDisplayDate(fromVal);
+                            this.advancedFilters.fromDate = fromDate;
+                            this.advancedFilters.date = fromDate;
+                        }
+                        if (toVal) {
+                            const toDate = toDisplayDate(toVal);
+                            this.advancedFilters.toDate = toDate;
+                        }
+                    } else if (dateInputs.length === 1) {
+                        const fromVal = dateInputs[0].value;
+                        if (fromVal) {
+                            const fromDate = toDisplayDate(fromVal);
+                            this.advancedFilters.fromDate = fromDate;
+                            this.advancedFilters.date = fromDate;
+                            this.advancedFilters.toDate = fromDate;
+                        }
+                    }
+                }
                 this.persistAdvancedFilters();
                 this.advancedOpen = false;
                 this.currentPage = 1;

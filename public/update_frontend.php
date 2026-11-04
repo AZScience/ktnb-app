@@ -65,7 +65,7 @@ if ($content) {
         $zip->close();
         @unlink($zipFile);
 
-        // 4. Xóa cache view của Laravel
+        // 4. Xóa cache của Laravel
         try {
             if (file_exists(__DIR__.'/../vendor/autoload.php')) {
                 require __DIR__.'/../vendor/autoload.php';
@@ -73,6 +73,8 @@ if ($content) {
                 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
                 $kernel->bootstrap();
                 \Illuminate\Support\Facades\Artisan::call('view:clear');
+                \Illuminate\Support\Facades\Artisan::call('cache:clear');
+                \Illuminate\Support\Facades\Artisan::call('route:clear');
             }
         } catch (\Throwable $e) {}
 

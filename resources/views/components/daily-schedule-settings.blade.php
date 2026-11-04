@@ -291,6 +291,7 @@
                         <input type="date"
                             :value="toIsoDate(advancedFilters.fromDate || advancedFilters.date)"
                             @change="onAdvancedFromDateChange($event.target.value)"
+                            @input="onAdvancedFromDateChange($event.target.value)"
                             class="nttu-form-control">
                     </div>
                     <div class="space-y-2">
@@ -298,6 +299,7 @@
                         <input type="date"
                             :value="toIsoDate(advancedFilters.toDate || advancedFilters.fromDate || advancedFilters.date)"
                             @change="onAdvancedToDateChange($event.target.value)"
+                            @input="onAdvancedToDateChange($event.target.value)"
                             class="nttu-form-control">
                     </div>
                     <div class="space-y-2">
