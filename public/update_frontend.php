@@ -75,6 +75,21 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/evidence-input-panel.blade.php') === 0) {
                 $writeFile(__DIR__ . '/../resources/views/components/evidence-input-panel.blade.php', $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/catalog-data-table.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/catalog-data-table.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/monitoring-schedule-table.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/monitoring-schedule-table.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/daily-report-viewer.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/daily-report-viewer.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/checkin-monitor.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/checkin-monitor.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/activity-log-settings.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/activity-log-settings.blade.php', $zip->getFromIndex($i));
+            }
 
             // 3. Cập nhật các service và controller liên quan
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ReportQueryService.php') === 0) {

@@ -6,6 +6,7 @@ import { registerNttuShell } from './shell.js';
 import { registerHeader } from './header.js';
 import { registerLanguage } from './language.js';
 import { registerNttuColumnResize } from './nttu-column-resize.js';
+import { registerGlobalTableSelection } from './global-table-selection.js';
 // Eager-load critical pages so hosting works even if dynamic chunks are missing.
 import './monitoring-schedules.js';
 import { registerSystemParameters } from './system-parameters.js';
@@ -20,6 +21,7 @@ registerNttuShell(Alpine);
 registerHeader(Alpine);
 registerLanguage(Alpine);
 registerSystemParameters(Alpine);
+registerGlobalTableSelection(Alpine);
 
 function hasXData(fragment) {
     return document.querySelector(`[x-data*="${fragment}"]`);

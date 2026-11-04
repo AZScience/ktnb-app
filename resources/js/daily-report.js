@@ -72,6 +72,8 @@ function defaultTableState(columns) {
         openPopover: null,
         colMenuOpen: false,
         selectedIds: [],
+        selectionFilter: 'all',
+        selectionPopover: false,
     };
 }
 
@@ -264,6 +266,14 @@ export function registerDailyReport(Alpine) {
             const state = this.stateFor(tabKey);
             const columns = this.tabDefinitions[tabKey]?.columns || [];
 
+            if (state.selectionFilter === 'selected') {
+                const ids = new Set(state.selectedIds || []);
+                items = items.filter((item) => ids.has(item.id));
+            } else if (state.selectionFilter === 'unselected') {
+                const ids = new Set(state.selectedIds || []);
+                items = items.filter((item) => !ids.has(item.id));
+            }
+
             if (state.sortConfig.length > 0) {
                 const { key, direction } = state.sortConfig[0];
                 const colDef = columns.find((col) => col.key === key);
@@ -405,6 +415,34 @@ export function registerDailyReport(Alpine) {
 
         isSelected(tabKey, id) {
             return this.stateFor(tabKey).selectedIds.includes(id);
+        },
+
+        setSelectionFilter(tabKey, mode) {
+            const state = this.stateFor(tabKey);
+            state.selectionFilter = mode;
+            state.selectionPopover = false;
+            state.currentPage = 1;
+            this.persistState(tabKey);
+        },
+
+        toggleSelectAllCurrentPage(tabKey) {
+            const state = this.stateFor(tabKey);
+            const pageIds = (this.currentItems(tabKey) || []).map((item) => item.id);
+            const currentSelected = state.selectedIds || [];
+            const allSelected = pageIds.length > 0 && pageIds.every((id) => currentSelected.includes(id));
+            if (allSelected) {
+                state.selectedIds = currentSelected.filter((id) => !pageIds.includes(id));
+            } else {
+                state.selectedIds = Array.from(new Set([...currentSelected, ...pageIds]));
+            }
+            this.persistState(tabKey);
+        },
+
+        clearSelection(tabKey) {
+            const state = this.stateFor(tabKey);
+            state.selectedIds = [];
+            state.selectionFilter = 'all';
+            this.persistState(tabKey);
         },
 
         cellTdClass(col) {

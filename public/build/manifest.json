@@ -30,7 +30,7 @@
     ]
   },
   "node_modules/html5-qrcode/esm/index.js": {
-    "file": "assets/esm-CO5oNVSa.js",
+    "file": "assets/esm-DX0sbhQP.js",
     "name": "esm",
     "src": "node_modules/html5-qrcode/esm/index.js",
     "isDynamicEntry": true,
@@ -39,7 +39,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-BZQup9oa.css",
+    "file": "assets/app-CGNPGx31.css",
     "name": "app",
     "names": [
       "app.css"
@@ -48,7 +48,7 @@
     "isEntry": true
   },
   "resources/js/activity-log-settings.js": {
-    "file": "assets/activity-log-settings-BM4SHZtj.js",
+    "file": "assets/activity-log-settings-Dib0N8Xh.js",
     "name": "activity-log-settings",
     "src": "resources/js/activity-log-settings.js",
     "isDynamicEntry": true,
@@ -67,7 +67,7 @@
     "isDynamicEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DfMVR0zp.js",
+    "file": "assets/app-zboO2xfl.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -96,7 +96,7 @@
     ]
   },
   "resources/js/backup-settings.js": {
-    "file": "assets/backup-settings-BhaVQk8U.js",
+    "file": "assets/backup-settings-CLVCIXub.js",
     "name": "backup-settings",
     "src": "resources/js/backup-settings.js",
     "isDynamicEntry": true,
@@ -105,7 +105,7 @@
     ]
   },
   "resources/js/catalog-table.js": {
-    "file": "assets/catalog-table-C_IFOXDu.js",
+    "file": "assets/catalog-table-DQ7XjTTH.js",
     "name": "catalog-table",
     "src": "resources/js/catalog-table.js",
     "isDynamicEntry": true,
@@ -121,7 +121,7 @@
     ]
   },
   "resources/js/checkin-monitor.js": {
-    "file": "assets/checkin-monitor-BUImhc8p.js",
+    "file": "assets/checkin-monitor-Da_GZcoz.js",
     "name": "checkin-monitor",
     "src": "resources/js/checkin-monitor.js",
     "isDynamicEntry": true,
@@ -131,7 +131,7 @@
     ]
   },
   "resources/js/daily-report.js": {
-    "file": "assets/daily-report-CKph9ap8.js",
+    "file": "assets/daily-report-DcBa3Ta0.js",
     "name": "daily-report",
     "src": "resources/js/daily-report.js",
     "isDynamicEntry": true,
@@ -142,7 +142,7 @@
     ]
   },
   "resources/js/daily-schedule-settings.js": {
-    "file": "assets/daily-schedule-settings-DkpEBA-V.js",
+    "file": "assets/daily-schedule-settings-DKZChCfh.js",
     "name": "daily-schedule-settings",
     "src": "resources/js/daily-schedule-settings.js",
     "isDynamicEntry": true,
@@ -151,7 +151,7 @@
     ]
   },
   "resources/js/dashboard.js": {
-    "file": "assets/dashboard-C8deAs9h.js",
+    "file": "assets/dashboard-CSbXES8E.js",
     "name": "dashboard",
     "src": "resources/js/dashboard.js",
     "isDynamicEntry": true,
@@ -169,7 +169,7 @@
     ]
   },
   "resources/js/document-lookup.js": {
-    "file": "assets/document-lookup-CUYAI-Aq.js",
+    "file": "assets/document-lookup-DvCzpkGj.js",
     "name": "document-lookup",
     "src": "resources/js/document-lookup.js",
     "isDynamicEntry": true,
@@ -178,7 +178,7 @@
     ]
   },
   "resources/js/evidence-manager.js": {
-    "file": "assets/evidence-manager-B_kfd9yJ.js",
+    "file": "assets/evidence-manager-Z2qXDxfU.js",
     "name": "evidence-manager",
     "src": "resources/js/evidence-manager.js",
     "isDynamicEntry": true,
@@ -193,7 +193,7 @@
     "isDynamicEntry": true
   },
   "resources/js/interactive-report.js": {
-    "file": "assets/interactive-report-CDAP6doG.js",
+    "file": "assets/interactive-report-DZEr6ptb.js",
     "name": "interactive-report",
     "src": "resources/js/interactive-report.js",
     "isDynamicEntry": true,
@@ -207,7 +207,7 @@
     ]
   },
   "resources/js/lecturer-portal.js": {
-    "file": "assets/lecturer-portal-CnJKxKbo.js",
+    "file": "assets/lecturer-portal-mlNZEY9s.js",
     "name": "lecturer-portal",
     "src": "resources/js/lecturer-portal.js",
     "isDynamicEntry": true,
@@ -216,7 +216,7 @@
     ]
   },
   "resources/js/login.js": {
-    "file": "assets/login-Dye3QZwz.js",
+    "file": "assets/login-DqDaNlu8.js",
     "name": "login",
     "src": "resources/js/login.js",
     "isDynamicEntry": true,
@@ -225,7 +225,7 @@
     ]
   },
   "resources/js/messaging.js": {
-    "file": "assets/messaging-CFNOB6Mt.js",
+    "file": "assets/messaging-DjWu9FiC.js",
     "name": "messaging",
     "src": "resources/js/messaging.js",
     "isDynamicEntry": true,
@@ -235,7 +235,7 @@
     ]
   },
   "resources/js/permission-settings.js": {
-    "file": "assets/permission-settings-CImpzcTp.js",
+    "file": "assets/permission-settings-io8UFzsx.js",
     "name": "permission-settings",
     "src": "resources/js/permission-settings.js",
     "isDynamicEntry": true,
@@ -244,7 +244,7 @@
     ]
   },
   "resources/js/profile-page.js": {
-    "file": "assets/profile-page-CBeHEANs.js",
+    "file": "assets/profile-page-B12fWN1j.js",
     "name": "profile-page",
     "src": "resources/js/profile-page.js",
     "isDynamicEntry": true,
@@ -253,7 +253,7 @@
     ]
   },
   "resources/js/project-files.js": {
-    "file": "assets/project-files-DiEZj5c7.js",
+    "file": "assets/project-files-pDlm5t3y.js",
     "name": "project-files",
     "src": "resources/js/project-files.js",
     "isDynamicEntry": true,
@@ -262,7 +262,7 @@
     ]
   },
   "resources/js/settings-page.js": {
-    "file": "assets/settings-page-Bm6lmzl0.js",
+    "file": "assets/settings-page-lKw0O_uN.js",
     "name": "settings-page",
     "src": "resources/js/settings-page.js",
     "isDynamicEntry": true,

@@ -558,7 +558,31 @@ export function registerInteractiveReport(Alpine) {
             this.selectionFilter = mode;
             this.selectionPopover = false;
             this.currentPage = 1;
+            this.updateSelectionHeaderBadge();
             this.persistUserPrefs();
+        },
+
+        updateSelectionHeaderBadge() {
+            const ths = this.$root?.querySelectorAll?.('th.catalog-th-index, th.nttu-th-index') || [];
+            ths.forEach((th) => {
+                const badge = th.querySelector('.selection-filter-badge');
+                if (badge) {
+                    if (this.selectionFilter === 'selected') {
+                        badge.textContent = `(${this.selectedRowIds.length})`;
+                        badge.classList.remove('hidden');
+                    } else if (this.selectionFilter === 'unselected') {
+                        badge.textContent = '(Chưa)';
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+                if (this.selectionFilter !== 'all') {
+                    th.classList.add('bg-blue-600', 'text-white');
+                } else {
+                    th.classList.remove('bg-blue-600', 'text-white');
+                }
+            });
         },
 
         toggleSelectAllCurrentPage() {
@@ -569,107 +593,111 @@ export function registerInteractiveReport(Alpine) {
             } else {
                 this.selectedRowIds = Array.from(new Set([...this.selectedRowIds, ...pageIds]));
             }
+            this.updateSelectionHeaderBadge();
         },
 
         ensureSelectionFilterHeader() {
-            const th = this.$root?.querySelector?.('th.catalog-th-index, th.nttu-th-index');
-            if (!th || th.querySelector('.btn-selection-filter')) return;
+            const ths = this.$root?.querySelectorAll?.('th.catalog-th-index, th.nttu-th-index') || [];
+            ths.forEach((th) => {
+                if (th.querySelector('.btn-selection-filter')) return;
 
-            th.classList.add('relative', 'p-0');
-            th.innerHTML = `
-                <div class="relative flex items-center justify-center h-full">
-                    <button type="button" class="btn-selection-filter flex items-center justify-center gap-1 w-full h-full py-2 px-1 hover:bg-black/10 transition-colors" title="Lọc theo dòng đã chọn">
-                        <span class="font-bold">#</span>
-                        <svg class="h-3 w-3 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                        </svg>
-                        <span class="selection-filter-badge hidden text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900"></span>
-                    </button>
-                    <div class="selection-filter-popover hidden absolute top-full left-0 z-50 w-56 rounded-md border bg-white p-1 text-gray-800 shadow-xl text-left font-normal text-xs">
-                        <div class="px-2 py-1.5 font-bold text-gray-700 border-b flex items-center justify-between">
-                            <span>Lọc dòng:</span>
-                            <span class="text-[10px] font-normal text-gray-500 sel-count"></span>
-                        </div>
-                        <div class="py-1 space-y-0.5">
-                            <button type="button" class="btn-sel-all flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100">
-                                <span class="flex items-center gap-2">
-                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                                    Tất cả dòng
-                                </span>
-                            </button>
-                            <button type="button" class="btn-sel-selected flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100">
-                                <span class="flex items-center gap-2">
-                                    <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    Chỉ dòng đã chọn
-                                </span>
-                                <span class="sel-num text-xs text-gray-500"></span>
-                            </button>
-                            <button type="button" class="btn-sel-unselected flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100">
-                                <span class="flex items-center gap-2">
-                                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-                                    Chỉ dòng chưa chọn
-                                </span>
-                            </button>
-                        </div>
-                        <div class="border-t pt-1 mt-1 space-y-0.5">
-                            <button type="button" class="btn-toggle-page flex w-full items-center gap-2 px-2 py-1 rounded text-gray-600 hover:bg-gray-100">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                <span>Chọn/Bỏ chọn trang này</span>
-                            </button>
-                            <button type="button" class="btn-clear-sel flex w-full items-center gap-2 px-2 py-1 rounded text-red-600 hover:bg-red-50">
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                <span>Bỏ chọn tất cả</span>
-                            </button>
+                th.classList.add('relative', 'p-0');
+                th.innerHTML = `
+                    <div class="relative flex items-center justify-center h-full">
+                        <button type="button" class="btn-selection-filter flex items-center justify-center gap-1 w-full h-full py-2 px-1 hover:bg-black/10 transition-colors" title="Lọc theo dòng đã chọn">
+                            <span class="font-bold">#</span>
+                            <svg class="h-3 w-3 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+                            <span class="selection-filter-badge hidden text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900"></span>
+                        </button>
+                        <div class="selection-filter-popover hidden absolute top-full left-0 z-50 w-56 rounded-md border bg-white p-1 text-gray-800 shadow-xl text-left font-normal text-xs">
+                            <div class="px-2 py-1.5 font-bold text-gray-700 border-b flex items-center justify-between">
+                                <span>Lọc dòng:</span>
+                                <span class="text-[10px] font-normal text-gray-500 sel-count"></span>
+                            </div>
+                            <div class="py-1 space-y-0.5">
+                                <button type="button" class="btn-sel-all flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                                        Tất cả dòng
+                                    </span>
+                                </button>
+                                <button type="button" class="btn-sel-selected flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        Chỉ dòng đã chọn
+                                    </span>
+                                    <span class="sel-num text-xs text-gray-500"></span>
+                                </button>
+                                <button type="button" class="btn-sel-unselected flex w-full items-center justify-between px-2 py-1.5 rounded hover:bg-gray-100">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                        Chỉ dòng chưa chọn
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="border-t pt-1 mt-1 space-y-0.5">
+                                <button type="button" class="btn-toggle-page flex w-full items-center gap-2 px-2 py-1 rounded text-gray-600 hover:bg-gray-100">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Chọn/Bỏ chọn trang này</span>
+                                </button>
+                                <button type="button" class="btn-clear-sel flex w-full items-center gap-2 px-2 py-1 rounded text-red-600 hover:bg-red-50">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    <span>Bỏ chọn tất cả</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
 
-            const btn = th.querySelector('.btn-selection-filter');
-            const popover = th.querySelector('.selection-filter-popover');
-            if (btn && popover) {
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    const isHidden = popover.classList.contains('hidden');
-                    document.querySelectorAll('.selection-filter-popover').forEach((p) => p.classList.add('hidden'));
-                    if (isHidden) {
-                        popover.querySelector('.sel-count').textContent = `Đã chọn: ${this.selectedRowIds.length}`;
-                        popover.querySelector('.sel-num').textContent = `(${this.selectedRowIds.length})`;
-                        popover.classList.remove('hidden');
-                    }
-                };
+                const btn = th.querySelector('.btn-selection-filter');
+                const popover = th.querySelector('.selection-filter-popover');
+                if (btn && popover) {
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        const isHidden = popover.classList.contains('hidden');
+                        document.querySelectorAll('.selection-filter-popover').forEach((p) => p.classList.add('hidden'));
+                        if (isHidden) {
+                            popover.querySelector('.sel-count').textContent = `Đã chọn: ${this.selectedRowIds.length}`;
+                            popover.querySelector('.sel-num').textContent = `(${this.selectedRowIds.length})`;
+                            popover.classList.remove('hidden');
+                        }
+                    };
 
-                popover.querySelector('.btn-sel-all').onclick = (e) => {
-                    e.stopPropagation();
-                    this.setSelectionFilter('all');
-                    popover.classList.add('hidden');
-                };
-                popover.querySelector('.btn-sel-selected').onclick = (e) => {
-                    e.stopPropagation();
-                    this.setSelectionFilter('selected');
-                    popover.classList.add('hidden');
-                };
-                popover.querySelector('.btn-sel-unselected').onclick = (e) => {
-                    e.stopPropagation();
-                    this.setSelectionFilter('unselected');
-                    popover.classList.add('hidden');
-                };
-                popover.querySelector('.btn-toggle-page').onclick = (e) => {
-                    e.stopPropagation();
-                    this.toggleSelectAllCurrentPage();
-                    popover.classList.add('hidden');
-                };
-                popover.querySelector('.btn-clear-sel').onclick = (e) => {
-                    e.stopPropagation();
-                    this.selectedRowIds = [];
-                    this.setSelectionFilter('all');
-                    popover.classList.add('hidden');
-                };
+                    popover.querySelector('.btn-sel-all').onclick = (e) => {
+                        e.stopPropagation();
+                        this.setSelectionFilter('all');
+                        popover.classList.add('hidden');
+                    };
+                    popover.querySelector('.btn-sel-selected').onclick = (e) => {
+                        e.stopPropagation();
+                        this.setSelectionFilter('selected');
+                        popover.classList.add('hidden');
+                    };
+                    popover.querySelector('.btn-sel-unselected').onclick = (e) => {
+                        e.stopPropagation();
+                        this.setSelectionFilter('unselected');
+                        popover.classList.add('hidden');
+                    };
+                    popover.querySelector('.btn-toggle-page').onclick = (e) => {
+                        e.stopPropagation();
+                        this.toggleSelectAllCurrentPage();
+                        popover.classList.add('hidden');
+                    };
+                    popover.querySelector('.btn-clear-sel').onclick = (e) => {
+                        e.stopPropagation();
+                        this.selectedRowIds = [];
+                        this.setSelectionFilter('all');
+                        popover.classList.add('hidden');
+                    };
 
-                document.addEventListener('click', (e) => {
-                    if (!th.contains(e.target)) popover.classList.add('hidden');
-                });
-            }
+                    document.addEventListener('click', (e) => {
+                        if (!th.contains(e.target)) popover.classList.add('hidden');
+                    });
+                }
+            });
+            this.updateSelectionHeaderBadge();
         },
 
         get currentSettingsTitle() {

@@ -1064,6 +1064,9 @@ export function catalogTablePage(config) {
 
         get totalPages() {
             if (this.serverPaginated) {
+                if (this.selectionFilter !== 'all') {
+                    return Math.max(1, Math.ceil(this.currentItems.length / this.normalizedRowsPerPage));
+                }
                 return Math.max(1, Number(this.serverMeta.last_page) || 1);
             }
 
@@ -1076,7 +1079,15 @@ export function catalogTablePage(config) {
 
         get currentItems() {
             if (this.serverPaginated) {
-                return this.items;
+                let list = this.items;
+                if (this.selectionFilter === 'selected') {
+                    const ids = new Set(this.selectedIds);
+                    list = list.filter((item) => ids.has(item.id));
+                } else if (this.selectionFilter === 'unselected') {
+                    const ids = new Set(this.selectedIds);
+                    list = list.filter((item) => !ids.has(item.id));
+                }
+                return list;
             }
 
             return paginateSlice(
