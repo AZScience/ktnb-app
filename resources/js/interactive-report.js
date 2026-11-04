@@ -164,13 +164,13 @@ function periodOverlaps(periodStr, session, customStart, customEnd) {
     let end = 20;
     if (session === 'ca1') {
         start = 1;
-        end = 6;
+        end = 5;
     } else if (session === 'ca2') {
-        start = 7;
-        end = 12;
+        start = 6;
+        end = 10;
     } else if (session === 'ca3') {
-        start = 13;
-        end = 17;
+        start = 11;
+        end = 16;
     } else if (session === 'custom') {
         start = Number(customStart) || 1;
         end = Number(customEnd) || 20;
@@ -387,11 +387,11 @@ export function registerInteractiveReport(Alpine) {
             const selectEls = document.querySelectorAll('.report-filter-period-select, select[x-model*="periodSession"]');
             selectEls.forEach((sel) => {
                 const o1 = sel.querySelector('option[value="ca1"]');
-                if (o1 && o1.textContent !== 'Ca 1 (Tiết 1 - 6)') o1.textContent = 'Ca 1 (Tiết 1 - 6)';
+                if (o1 && o1.textContent !== 'Ca 1 (Tiết 1 - 5)') o1.textContent = 'Ca 1 (Tiết 1 - 5)';
                 const o2 = sel.querySelector('option[value="ca2"]');
-                if (o2 && o2.textContent !== 'Ca 2 (Tiết 7 - 12)') o2.textContent = 'Ca 2 (Tiết 7 - 12)';
+                if (o2 && o2.textContent !== 'Ca 2 (Tiết 6 - 10)') o2.textContent = 'Ca 2 (Tiết 6 - 10)';
                 const o3 = sel.querySelector('option[value="ca3"]');
-                if (o3 && o3.textContent !== 'Ca 3 (Tiết 13 - 17)') o3.textContent = 'Ca 3 (Tiết 13 - 17)';
+                if (o3 && o3.textContent !== 'Ca 3 (Tiết 11 - 16)') o3.textContent = 'Ca 3 (Tiết 11 - 16)';
             });
         },
 

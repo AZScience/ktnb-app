@@ -259,8 +259,21 @@ export function registerDailyScheduleSettings(Alpine) {
                 this.$watch('advancedOpen', (v) => {
                     if (v) this.$nextTick(() => this.decorateFilterModal());
                 });
+                this.$nextTick(() => {
+                    this.decorateQuickDateBar();
+                });
                 void this.loadFilterPresets();
                 await this.fetchData();
+            },
+
+            decorateQuickDateBar() {
+                document.querySelectorAll('button').forEach((btn) => {
+                    const text = btn.textContent.trim().toLowerCase();
+                    if (text.includes('lọc dữ liệu') && !btn.querySelector('svg')) {
+                        btn.classList.add('inline-flex', 'items-center', 'gap-1');
+                        btn.insertAdjacentHTML('afterbegin', `<svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>`);
+                    }
+                });
             },
 
             buildDataUrl() {
@@ -564,7 +577,7 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             decorateFilterModal() {
-                const modal = this.$root.querySelector('div[x-show="advancedOpen"]');
+                const modal = document.querySelector('div[x-show="advancedOpen"]');
                 if (!modal) return;
 
                 // 1. Ensure "Đến ngày" input exists if server Blade only rendered 1 date input
@@ -627,15 +640,16 @@ export function registerDailyScheduleSettings(Alpine) {
 
                 // 3. Decorate ALL Buttons in modal with SVG icons if missing
                 modal.querySelectorAll('button').forEach((btn) => {
-                    const text = btn.textContent.trim();
+                    const text = btn.textContent.trim().toLowerCase();
+                    const clickAttr = btn.getAttribute('@click') || btn.getAttribute('x-on:click') || '';
                     if (!btn.querySelector('svg')) {
-                        if (text.includes('Xóa bộ lọc')) {
+                        if (text.includes('xóa bộ lọc') || text.includes('xóa') || clickAttr.includes('resetAdvanced')) {
                             btn.classList.add('inline-flex', 'items-center', 'gap-1.5');
                             btn.insertAdjacentHTML('afterbegin', `<svg class="h-4 w-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>`);
-                        } else if (text.includes('Áp dụng')) {
+                        } else if (text.includes('áp dụng') || clickAttr.includes('applyAdvanced')) {
                             btn.classList.add('inline-flex', 'items-center', 'gap-1.5');
                             btn.insertAdjacentHTML('afterbegin', `<svg class="h-4 w-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`);
-                        } else if (text.includes('Lưu hiện tại')) {
+                        } else if (text.includes('lưu hiện tại') || clickAttr.includes('saveFilterPreset')) {
                             btn.classList.add('inline-flex', 'items-center', 'gap-1.5');
                             btn.insertAdjacentHTML('afterbegin', `<svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>`);
                         }
@@ -643,15 +657,17 @@ export function registerDailyScheduleSettings(Alpine) {
                 });
 
                 // 4. Ensure Ca học select options
-                const periodSelect = modal.querySelector('select:has(option[value="morning"]), select[x-model*="periodSession"]');
-                if (periodSelect) {
-                    const mOpt = periodSelect.querySelector('option[value="morning"]');
-                    if (mOpt && !mOpt.textContent.includes('1-6')) mOpt.textContent = 'Ca sáng (1-6)';
-                    const aOpt = periodSelect.querySelector('option[value="afternoon"]');
-                    if (aOpt && !aOpt.textContent.includes('7-12')) aOpt.textContent = 'Ca chiều (7-12)';
-                    const eOpt = periodSelect.querySelector('option[value="evening"]');
-                    if (eOpt && !eOpt.textContent.includes('13-17')) eOpt.textContent = 'Ca tối (13-17)';
-                }
+                try {
+                    const selects = modal.querySelectorAll('select');
+                    selects.forEach((sel) => {
+                        const mOpt = sel.querySelector('option[value="morning"], option[value="ca1"]');
+                        if (mOpt) mOpt.textContent = 'Ca 1 (Tiết 1 - 5)';
+                        const aOpt = sel.querySelector('option[value="afternoon"], option[value="ca2"]');
+                        if (aOpt) aOpt.textContent = 'Ca 2 (Tiết 6 - 10)';
+                        const eOpt = sel.querySelector('option[value="evening"], option[value="ca3"]');
+                        if (eOpt) eOpt.textContent = 'Ca 3 (Tiết 11 - 16)';
+                    });
+                } catch (_) {}
             },
 
             closeAdvancedFilter() {
@@ -874,16 +890,20 @@ export function registerDailyScheduleSettings(Alpine) {
                 localStorage.setItem(pageKey, '1');
 
                 this.$nextTick(() => {
-                    const modal = this.$root.querySelector('div[x-show="advancedOpen"]');
+                    const modal = document.querySelector('div[x-show="advancedOpen"]');
                     if (modal) {
                         const dateInputs = modal.querySelectorAll('input[type="date"]');
-                        if (dateInputs.length >= 1) {
-                            dateInputs[0].value = toIsoDate(today);
-                        }
-                        if (dateInputs.length >= 2) {
-                            dateInputs[1].value = toIsoDate(today);
-                        }
+                        dateInputs.forEach((inp) => {
+                            inp.value = toIsoDate(today);
+                            inp.dispatchEvent(new Event('input', { bubbles: true }));
+                            inp.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
                     }
+                    document.querySelectorAll('.quick-date-range-bar input[type="date"]').forEach((inp) => {
+                        inp.value = toIsoDate(today);
+                        inp.dispatchEvent(new Event('input', { bubbles: true }));
+                        inp.dispatchEvent(new Event('change', { bubbles: true }));
+                    });
                 });
                 await this.fetchData();
                 this.showToast('Đã xóa bộ lọc về ngày mặc định');
