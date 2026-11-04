@@ -390,6 +390,8 @@ export function monitoringSchedulesPage(config) {
             this.$nextTick(() => {
                 this.ensureSelectionFilterHeader();
                 this.ensureIncludeFilterCheckboxes();
+                setTimeout(() => this.ensureIncludeFilterCheckboxes(), 300);
+                setTimeout(() => this.ensureIncludeFilterCheckboxes(), 800);
             });
             if (this.dataUrl) {
                 const initialDate = this.uiConfig.advancedDateReloads
@@ -1220,12 +1222,14 @@ export function monitoringSchedulesPage(config) {
 
         ensureIncludeFilterCheckboxes() {
             if (this.module !== 'in-person') return;
-            const container = this.$root?.querySelector?.('h2.text-base');
-            if (!container || container.querySelector('#in-person-include-filters')) return;
+            const container = this.$root?.querySelector?.('h2')
+                || document.querySelector('.nttu-card h2')
+                || document.querySelector('h2');
+            if (!container || container.querySelector('#in-person-include-filters') || document.getElementById('in-person-include-filters')) return;
 
             const div = document.createElement('div');
             div.id = 'in-person-include-filters';
-            div.className = 'inline-flex items-center gap-2.5 ml-3 text-xs font-normal text-gray-700 select-none bg-blue-50/70 px-2.5 py-1 rounded-md border border-blue-200';
+            div.className = 'inline-flex items-center gap-2.5 ml-3 text-xs font-normal text-gray-700 select-none bg-blue-50/80 px-2.5 py-1 rounded-md border border-blue-200';
             div.innerHTML = `
                 <span class="text-gray-500 font-medium text-[11px]">Bao gồm:</span>
                 <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-blue-700">
@@ -1239,8 +1243,8 @@ export function monitoringSchedulesPage(config) {
             `;
             const chkExams = div.querySelector('.chk-exams');
             const chkHomeroom = div.querySelector('.chk-homeroom');
-            chkExams.checked = this.includeExams;
-            chkHomeroom.checked = this.includeHomeroom;
+            chkExams.checked = !!this.includeExams;
+            chkHomeroom.checked = !!this.includeHomeroom;
 
             chkExams.onchange = () => {
                 this.includeExams = chkExams.checked;

@@ -349,6 +349,17 @@ export function scanAndEnhanceAllTables() {
             console.warn('[ktnb] Error enhancing table header:', e);
         }
     });
+
+    // Check in-person schedule page checkboxes
+    const rootMonitoring = document.querySelector('[x-data*="monitoringSchedulesPage"]');
+    if (rootMonitoring && window.Alpine) {
+        try {
+            const data = window.Alpine.$data(rootMonitoring);
+            if (data && data.module === 'in-person' && typeof data.ensureIncludeFilterCheckboxes === 'function') {
+                data.ensureIncludeFilterCheckboxes();
+            }
+        } catch (e) {}
+    }
 }
 
 export function registerGlobalTableSelection(Alpine) {
