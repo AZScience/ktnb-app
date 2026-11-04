@@ -63,22 +63,6 @@
                 </template>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <div class="hidden sm:flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 border rounded-lg px-2 py-1">
-                    <span class="text-gray-500 font-medium">Từ:</span>
-                    <input type="date"
-                        :value="toIsoDate(advancedFilters.fromDate || advancedFilters.date)"
-                        @change="onAdvancedFromDateChange($event.target.value)"
-                        class="h-7 rounded border-gray-300 text-xs px-1.5 bg-white">
-                    <span class="text-gray-500 font-medium">Đến:</span>
-                    <input type="date"
-                        :value="toIsoDate(advancedFilters.toDate || advancedFilters.fromDate || advancedFilters.date)"
-                        @change="onAdvancedToDateChange($event.target.value)"
-                        class="h-7 rounded border-gray-300 text-xs px-1.5 bg-white">
-                    <button type="button" @click="applyQuickDate()"
-                        class="h-7 px-2.5 rounded bg-[var(--nttu-primary)] text-white text-xs font-semibold hover:opacity-90 transition-opacity">
-                        Lọc
-                    </button>
-                </div>
                 <button type="button" @click="openAdvancedFilter()" class="rounded-md p-2 text-orange-500 hover:bg-orange-50" title="Bộ lọc nâng cao">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 8h12M9 12h6M11 16h2"/></svg>
                 </button>
@@ -95,6 +79,36 @@
                 <button type="button" x-show="canAdd" x-cloak @click="openAddModal()" class="rounded-md p-2 text-[var(--nttu-primary)] hover:bg-cyan-50" title="Thêm mới">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </button>
+            </div>
+        </div>
+
+        {{-- Thanh lọc khoảng thời gian nhanh --}}
+        <div class="quick-date-range-bar px-4 py-2.5 bg-blue-50/70 border-b flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 font-semibold text-blue-900">
+                    <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Khoảng thời gian:
+                </span>
+                <div class="flex items-center gap-1.5 bg-white border border-blue-200 rounded-lg px-2.5 py-1 shadow-sm">
+                    <label class="text-xs font-medium text-gray-600">Từ ngày:</label>
+                    <input type="date"
+                        :value="toIsoDate(advancedFilters.fromDate || advancedFilters.date)"
+                        @change="onAdvancedFromDateChange($event.target.value)"
+                        class="h-8 rounded border-gray-300 text-xs px-2 bg-white focus:ring-1 focus:ring-blue-500">
+                    <label class="text-xs font-medium text-gray-600 ml-1">Đến ngày:</label>
+                    <input type="date"
+                        :value="toIsoDate(advancedFilters.toDate || advancedFilters.fromDate || advancedFilters.date)"
+                        @change="onAdvancedToDateChange($event.target.value)"
+                        class="h-8 rounded border-gray-300 text-xs px-2 bg-white focus:ring-1 focus:ring-blue-500">
+                    <button type="button" @click="applyQuickDate()"
+                        class="h-8 px-3 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1 transition-colors">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        Lọc dữ liệu
+                    </button>
+                </div>
+            </div>
+            <div class="text-xs text-gray-600 font-medium" x-show="dateRangeLabel">
+                Đang hiển thị lịch: <span class="font-bold text-blue-700" x-text="dateRangeLabel"></span>
             </div>
         </div>
 
