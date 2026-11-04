@@ -174,7 +174,7 @@ class DailySchedule extends Model
         })->values();
     }
 
-    public function scopeForModule(Builder $query, string $module): Builder
+    public function scopeForModule(Builder $query, string $module, bool $includeExams = false, bool $includeHomeroom = false): Builder
     {
         return match ($module) {
             'online' => $query
@@ -197,14 +197,19 @@ class DailySchedule extends Model
                 }
             }),
             'in-person' => $query
-                ->whereNotIn('status', ['Phòng thi', 'Thi cuối kỳ'])
+                ->when(! $includeExams, fn (Builder $q) => $q->whereNotIn('status', ['Phòng thi', 'Thi cuối kỳ']))
                 ->whereRaw('LOWER(COALESCE(building, "")) NOT LIKE ?', ['%trực tuyến%'])
                 ->whereRaw('LOWER(COALESCE(building, "")) NOT LIKE ?', ['%ngoài%'])
-                ->where(function (Builder $q) {
-                    foreach (['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'] as $kw) {
-                        $q->whereRaw('LOWER(COALESCE(content, "")) NOT LIKE ?', ["%{$kw}%"])
-                            ->whereRaw('LOWER(COALESCE(status, "")) NOT LIKE ?', ["%{$kw}%"]);
-                    }
+                ->whereRaw('LOWER(COALESCE(room, "")) NOT LIKE ?', ['%ngoài%'])
+                ->whereRaw('LOWER(COALESCE(room, "")) NOT LIKE ?', ['%ngoai%'])
+                ->whereNotIn('building', ['THN', 'THỰC HÀNH NGOÀI'])
+                ->when(! $includeHomeroom, function (Builder $q) {
+                    $q->where(function (Builder $sub) {
+                        foreach (['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'] as $kw) {
+                            $sub->whereRaw('LOWER(COALESCE(content, "")) NOT LIKE ?', ["%{$kw}%"])
+                                ->whereRaw('LOWER(COALESCE(status, "")) NOT LIKE ?', ["%{$kw}%"]);
+                        }
+                    });
                 }),
             default => $query,
         };

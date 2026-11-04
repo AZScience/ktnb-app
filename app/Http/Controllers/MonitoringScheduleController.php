@@ -78,7 +78,7 @@ class MonitoringScheduleController extends Controller
         $items = DailySchedule::query()
             ->forListTable()
             ->where('date', $date)
-            ->forModule($module)
+            ->forModule($module, $request->boolean('include_exams'), $request->boolean('include_homeroom'))
             ->orderBy('period')
             ->get();
 
@@ -400,7 +400,7 @@ class MonitoringScheduleController extends Controller
 
         return $this->roomChecklistExport->download(
             $request,
-            fn ($query) => $query->where('date', $date)->forModule($module),
+            fn ($query) => $query->where('date', $date)->forModule($module, $request->boolean('include_exams'), $request->boolean('include_homeroom')),
             'LichHoc_'.$slug.'_'.$safeDate.'_'.date('H-i').'.xlsx',
         );
     }

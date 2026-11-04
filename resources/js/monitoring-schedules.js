@@ -345,6 +345,8 @@ export function monitoringSchedulesPage(config) {
         selectedRowIds: savedSelected,
         selectionFilter: 'all',
         selectionPopover: false,
+        includeExams: localStorage.getItem('nttu_in_person_include_exams') === '1',
+        includeHomeroom: localStorage.getItem('nttu_in_person_include_homeroom') === '1',
         filterPresets: savedPresets,
         presetNaming: false,
         presetName: '',
@@ -387,6 +389,7 @@ export function monitoringSchedulesPage(config) {
             void this.loadFilterPresets();
             this.$nextTick(() => {
                 this.ensureSelectionFilterHeader();
+                this.ensureIncludeFilterCheckboxes();
             });
             if (this.dataUrl) {
                 const initialDate = this.uiConfig.advancedDateReloads
@@ -437,7 +440,12 @@ export function monitoringSchedulesPage(config) {
             if (!this.dataUrl || !d) return;
             this.loading = true;
             try {
-                const res = await fetch(`${this.dataUrl}?date=${encodeURIComponent(d)}`, {
+                let url = `${this.dataUrl}?date=${encodeURIComponent(d)}`;
+                if (this.module === 'in-person') {
+                    if (this.includeExams) url += '&include_exams=1';
+                    if (this.includeHomeroom) url += '&include_homeroom=1';
+                }
+                const res = await fetch(url, {
                     headers: {
                         Accept: 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
@@ -666,6 +674,11 @@ export function monitoringSchedulesPage(config) {
                         params.set('period_end', String(f.periodEnd));
                     }
                 }
+            }
+
+            if (this.module === 'in-person') {
+                if (this.includeExams) params.set('include_exams', '1');
+                if (this.includeHomeroom) params.set('include_homeroom', '1');
             }
 
             const ids = this.filteredItems.map((item) => item.id);
@@ -1197,6 +1210,48 @@ export function monitoringSchedulesPage(config) {
                     if (!th.contains(e.target)) popover.classList.add('hidden');
                 });
             }
+        },
+
+        toggleIncludeFilter() {
+            localStorage.setItem('nttu_in_person_include_exams', this.includeExams ? '1' : '0');
+            localStorage.setItem('nttu_in_person_include_homeroom', this.includeHomeroom ? '1' : '0');
+            this.fetchScheduleData(this.date);
+        },
+
+        ensureIncludeFilterCheckboxes() {
+            if (this.module !== 'in-person') return;
+            const container = this.$root?.querySelector?.('h2.text-base');
+            if (!container || container.querySelector('#in-person-include-filters')) return;
+
+            const div = document.createElement('div');
+            div.id = 'in-person-include-filters';
+            div.className = 'inline-flex items-center gap-2.5 ml-3 text-xs font-normal text-gray-700 select-none bg-blue-50/70 px-2.5 py-1 rounded-md border border-blue-200';
+            div.innerHTML = `
+                <span class="text-gray-500 font-medium text-[11px]">Bao gồm:</span>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-blue-700">
+                    <input type="checkbox" class="chk-exams rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                    <span class="font-medium text-gray-800">Phòng thi</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-blue-700">
+                    <input type="checkbox" class="chk-homeroom rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                    <span class="font-medium text-gray-800">Sinh hoạt</span>
+                </label>
+            `;
+            const chkExams = div.querySelector('.chk-exams');
+            const chkHomeroom = div.querySelector('.chk-homeroom');
+            chkExams.checked = this.includeExams;
+            chkHomeroom.checked = this.includeHomeroom;
+
+            chkExams.onchange = () => {
+                this.includeExams = chkExams.checked;
+                this.toggleIncludeFilter();
+            };
+            chkHomeroom.onchange = () => {
+                this.includeHomeroom = chkHomeroom.checked;
+                this.toggleIncludeFilter();
+            };
+
+            container.appendChild(div);
         },
 
         async resetAdvanced() {

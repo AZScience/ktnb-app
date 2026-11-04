@@ -70,6 +70,19 @@
                 @endif
                 @endif
                 <span x-text="'{{ $cardTitle }}'"></span>
+                @if($module === 'in-person')
+                <div id="in-person-include-filters" class="inline-flex items-center gap-2.5 ml-3 text-xs font-normal text-gray-700 select-none bg-blue-50/70 px-2.5 py-1 rounded-md border border-blue-200">
+                    <span class="text-gray-500 font-medium text-[11px]">Bao gồm:</span>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-blue-700">
+                        <input type="checkbox" x-model="includeExams" @change="toggleIncludeFilter()" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                        <span class="font-medium text-gray-800">Phòng thi</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-blue-700">
+                        <input type="checkbox" x-model="includeHomeroom" @change="toggleIncludeFilter()" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
+                        <span class="font-medium text-gray-800">Sinh hoạt</span>
+                    </label>
+                </div>
+                @endif
             </h2>
             <div class="flex flex-wrap items-center gap-2">
                 @if($uiConfig['iconToolbar'])

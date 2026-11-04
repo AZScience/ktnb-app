@@ -107,6 +107,12 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ScheduleRoomChecklistExportService.php') === 0) {
                 $writeFile(__DIR__ . '/../app/Services/ScheduleRoomChecklistExportService.php', $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Models/DailySchedule.php') === 0) {
+                $writeFile(__DIR__ . '/../app/Models/DailySchedule.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/MonitoringScheduleController.php') === 0) {
+                $writeFile(__DIR__ . '/../app/Http/Controllers/MonitoringScheduleController.php', $zip->getFromIndex($i));
+            }
         }
         $zip->close();
         @unlink($zipFile);
