@@ -138,12 +138,20 @@
                     <span class="text-[10px] font-bold uppercase tracking-tighter">Camera Off</span>
                 </div>
 
-                <div x-show="stream && sourceType === 'camera' && devices.length > 0" class="absolute right-4 top-4 z-20 w-48">
-                    <select class="h-9 w-full rounded-md border border-white/20 bg-black/60 px-2 text-[10px] text-white backdrop-blur-md" :value="selectedDeviceId" @change="changeDevice($event)">
-                        <template x-for="device in devices" :key="device.deviceId">
-                            <option :value="device.deviceId" x-text="device.label || ('Camera ' + (devices.indexOf(device) + 1))"></option>
-                        </template>
-                    </select>
+                <div x-show="stream && sourceType === 'camera'" class="absolute right-4 top-4 z-20 flex items-center gap-1.5">
+                    <template x-if="devices.length > 0">
+                        <select class="h-8 max-w-[170px] rounded-md border border-white/20 bg-black/70 px-2 text-[10px] text-white backdrop-blur-md shadow-sm" :value="selectedDeviceId" @change="changeDevice($event)">
+                            <template x-for="(device, idx) in devices" :key="device.deviceId">
+                                <option :value="device.deviceId" x-text="deviceDisplayLabel(device, idx)"></option>
+                            </template>
+                        </select>
+                    </template>
+                    <button type="button" @click="toggleCamera()"
+                        class="inline-flex h-8 items-center gap-1 rounded-md border border-white/20 bg-black/70 px-2 text-[10px] font-medium text-white hover:bg-black/90 backdrop-blur-md transition shadow-sm"
+                        title="Đổi camera trước / sau">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span>Trước/Sau</span>
+                    </button>
                 </div>
             </div>
         </div>

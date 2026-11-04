@@ -1306,7 +1306,22 @@ export function monitoringSchedulesPage(config) {
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 this.incidentCameraDevices = devices
                     .filter((d) => d.kind === 'videoinput')
-                    .map((d, i) => ({ id: d.deviceId, label: d.label || `Camera ${i + 1}` }));
+                    .map((d, i) => {
+                        const raw = (d.label || '').toLowerCase();
+                        let label = d.label;
+                        if (raw.includes('front') || raw.includes('user') || raw.includes('trước') || raw.includes('selfie')) {
+                            label = '📷 Camera trước';
+                        } else if (raw.includes('back') || raw.includes('rear') || raw.includes('sau') || raw.includes('environment')) {
+                            label = '📷 Camera sau';
+                        } else if (i === 0 && devices.length > 1) {
+                            label = d.label || '📷 Camera sau (1)';
+                        } else if (i === 1 && devices.length > 1) {
+                            label = d.label || '📷 Camera trước (2)';
+                        } else {
+                            label = d.label || `📷 Camera ${i + 1}`;
+                        }
+                        return { id: d.deviceId, label };
+                    });
 
                 if (!this.incidentCameraDeviceId) {
                     const current = this.incidentCameraStream?.getVideoTracks?.()[0]?.getSettings?.()?.deviceId;

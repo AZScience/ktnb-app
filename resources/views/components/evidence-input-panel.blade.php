@@ -103,13 +103,21 @@
                 <div x-show="evidenceIsUploading" x-cloak class="absolute inset-0 z-20 flex items-center justify-center bg-black/55">
                     <span class="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm">Đang tải lên</span>
                 </div>
-                <div x-show="evidenceSourceType === 'camera' && evidenceDevices.length" x-cloak class="absolute right-3 top-3 z-10 w-44">
-                    <select x-model="evidenceDeviceId" @change="evidenceStream && evidenceStartMedia('camera', evidenceDeviceId)"
-                        class="h-9 w-full rounded border border-white/30 bg-black/60 px-2 text-xs text-white backdrop-blur-md">
-                        <template x-for="(device, idx) in evidenceDevices" :key="device.deviceId">
-                            <option :value="device.deviceId" x-text="device.label || ('Camera ' + (idx + 1))"></option>
-                        </template>
-                    </select>
+                <div x-show="evidenceSourceType === 'camera'" x-cloak class="absolute right-3 top-3 z-10 flex items-center gap-1.5">
+                    <template x-if="evidenceDevices.length > 0">
+                        <select x-model="evidenceDeviceId" @change="evidenceStream && evidenceStartMedia('camera', evidenceDeviceId)"
+                            class="h-8 max-w-[170px] rounded border border-white/30 bg-black/70 px-2 text-xs text-white backdrop-blur-md shadow-sm">
+                            <template x-for="(device, idx) in evidenceDevices" :key="device.deviceId">
+                                <option :value="device.deviceId" x-text="evidenceDeviceLabel(device, idx, evidenceDevices.length)"></option>
+                            </template>
+                        </select>
+                    </template>
+                    <button type="button" @click="evidenceToggleCameraFacing()"
+                        class="inline-flex h-8 items-center gap-1 rounded border border-white/30 bg-black/70 px-2.5 text-xs font-medium text-white hover:bg-black/90 backdrop-blur-md transition shadow-sm"
+                        title="Đổi camera trước / sau">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span>Trước/Sau</span>
+                    </button>
                 </div>
             </div>
         </div>

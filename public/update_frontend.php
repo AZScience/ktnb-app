@@ -57,6 +57,24 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/daily-schedule-settings.blade.php') === 0) {
                 $writeFile(__DIR__ . '/../resources/views/components/daily-schedule-settings.blade.php', $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/violation-form-modals.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/violation-form-modals.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/asset-reception-form.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/asset-reception-form.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/petition-form.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/petition-form.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/service-request-form.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/service-request-form.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/avatar-input.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/avatar-input.blade.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/evidence-input-panel.blade.php') === 0) {
+                $writeFile(__DIR__ . '/../resources/views/components/evidence-input-panel.blade.php', $zip->getFromIndex($i));
+            }
 
             // 3. Cập nhật các service và controller liên quan
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ReportQueryService.php') === 0) {

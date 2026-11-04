@@ -46,6 +46,7 @@ export function assetReceptionFormState() {
         arCameraStream: null,
         arCameras: [],
         arSelectedCameraId: "",
+        arFacingMode: "environment",
     };
 }
 
@@ -147,12 +148,40 @@ export function assetReceptionFormMethods() {
             await this.arStartCameraStream(this.arSelectedCameraId);
         },
 
+        async arToggleCamera() {
+            if (this.arCameras.length > 1) {
+                const currentIndex = this.arCameras.findIndex(c => c.deviceId === this.arSelectedCameraId);
+                const nextIndex = (currentIndex + 1) % this.arCameras.length;
+                this.arSelectedCameraId = this.arCameras[nextIndex].deviceId;
+                await this.arStartCameraStream(this.arSelectedCameraId);
+            } else {
+                this.arFacingMode = this.arFacingMode === 'user' ? 'environment' : 'user';
+                this.arSelectedCameraId = '';
+                await this.arStartCameraStream();
+            }
+        },
+
+        arCameraLabel(cam, index, total) {
+            const raw = (cam?.label || '').toLowerCase();
+            if (raw.includes('front') || raw.includes('user') || raw.includes('trước') || raw.includes('selfie')) {
+                return '📷 Camera trước';
+            }
+            if (raw.includes('back') || raw.includes('rear') || raw.includes('sau') || raw.includes('environment')) {
+                return '📷 Camera sau';
+            }
+            if (index === 0 && total > 1) return '📷 Camera sau (1)';
+            if (index === 1 && total > 1) return '📷 Camera trước (2)';
+            return cam?.label || `📷 Camera ${index + 1}`;
+        },
+
         async arStartCameraStream(deviceId) {
             if (this.arCameraStream) {
                 this.arCameraStream.getTracks().forEach(t => t.stop());
             }
             try {
-                const constraints = deviceId ? { video: { deviceId: { exact: deviceId } } } : { video: { facingMode: 'environment' } };
+                const constraints = deviceId
+                    ? { video: { deviceId: { exact: deviceId } } }
+                    : { video: { facingMode: { ideal: this.arFacingMode || 'environment' } } };
                 this.arCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
                 if (this.$refs.arVideo) {
                     this.$refs.arVideo.srcObject = this.arCameraStream;

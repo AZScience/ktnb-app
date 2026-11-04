@@ -185,6 +185,9 @@ export function violationFormState(config = {}) {
         violationPhotoCameraLabel: '',
         violationPhotoCameraField: '',
         violationPhotoStream: null,
+        violationPhotoFacingMode: 'environment',
+        violationPhotoDevices: [],
+        violationPhotoDeviceId: '',
         violationPhotoZoom: 1,
         violationPhotoFrameW: 0.6,
         violationPhotoFrameH: 0.45,
@@ -1026,22 +1029,86 @@ export function violationFormMethods() {
             this.violationPhotoFrameH = isPortrait ? 0.75 : 0.45;
             this.violationPhotoFrameX = 0.5;
             this.violationPhotoFrameY = 0.5;
+            this.violationPhotoFacingMode = isPortrait ? 'user' : 'environment';
+            this.violationPhotoDeviceId = '';
             this.violationPhotoCameraOpen = true;
             this.$nextTick(() => this.violationStartPhotoCamera());
         },
 
-        async violationStartPhotoCamera() {
+        async violationStartPhotoCamera(forcedDeviceId, forcedFacing) {
             this.violationStopPhotoCamera();
+            if (forcedDeviceId !== undefined) this.violationPhotoDeviceId = forcedDeviceId;
+            if (forcedFacing !== undefined) this.violationPhotoFacingMode = forcedFacing;
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-                });
+                let videoConstraints;
+                if (this.violationPhotoDeviceId) {
+                    videoConstraints = {
+                        deviceId: { exact: this.violationPhotoDeviceId },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                    };
+                } else {
+                    videoConstraints = {
+                        facingMode: { ideal: this.violationPhotoFacingMode || 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                    };
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
                 this.violationPhotoStream = stream;
                 const video = this.$refs.violationPhotoVideo;
                 if (video) video.srcObject = stream;
+
+                await this.violationRefreshPhotoDevices();
             } catch (_) {
                 this.showToast?.('Không thể truy cập camera.', 'error');
             }
+        },
+
+        async violationRefreshPhotoDevices() {
+            try {
+                const devs = await navigator.mediaDevices?.enumerateDevices?.() || [];
+                this.violationPhotoDevices = devs.filter((d) => d.kind === 'videoinput');
+                if (this.violationPhotoStream) {
+                    const currentId = this.violationPhotoStream.getVideoTracks()?.[0]?.getSettings?.()?.deviceId;
+                    if (currentId) this.violationPhotoDeviceId = currentId;
+                }
+            } catch (_) {
+                this.violationPhotoDevices = [];
+            }
+        },
+
+        async violationTogglePhotoCamera() {
+            if (this.violationPhotoDevices.length > 1) {
+                const currentIndex = this.violationPhotoDevices.findIndex((d) => d.deviceId === this.violationPhotoDeviceId);
+                const nextIndex = (currentIndex + 1) % this.violationPhotoDevices.length;
+                this.violationPhotoDeviceId = this.violationPhotoDevices[nextIndex].deviceId;
+                await this.violationStartPhotoCamera(this.violationPhotoDeviceId);
+            } else {
+                this.violationPhotoFacingMode = this.violationPhotoFacingMode === 'user' ? 'environment' : 'user';
+                this.violationPhotoDeviceId = '';
+                await this.violationStartPhotoCamera();
+            }
+        },
+
+        async violationSelectPhotoDevice(deviceId) {
+            this.violationPhotoDeviceId = deviceId;
+            await this.violationStartPhotoCamera(deviceId);
+        },
+
+        violationFormatCamLabel(cam, index, total) {
+            const raw = (cam?.label || '').toLowerCase();
+            if (raw.includes('front') || raw.includes('user') || raw.includes('trước') || raw.includes('selfie')) {
+                return '📷 Camera trước';
+            }
+            if (raw.includes('back') || raw.includes('rear') || raw.includes('sau') || raw.includes('environment')) {
+                return '📷 Camera sau';
+            }
+            if (index === 0 && total > 1) return '📷 Camera sau (1)';
+            if (index === 1 && total > 1) return '📷 Camera trước (2)';
+            return cam?.label || `📷 Camera ${index + 1}`;
         },
 
         violationStopPhotoCamera() {

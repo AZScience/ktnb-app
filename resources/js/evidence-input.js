@@ -55,6 +55,7 @@ export function evidencePanelState(uploadUrl = '') {
         evidenceStream: null,
         evidenceDevices: [],
         evidenceDeviceId: '',
+        evidenceFacingMode: 'environment',
         evidenceIsRecording: false,
         evidenceRecordingTime: 0,
         evidenceIsUploading: false,
@@ -124,11 +125,39 @@ export function evidencePanelMethods() {
         },
 
         evidenceIsFrontCamera() {
-            if (!this.evidenceDeviceId || !this.evidenceDevices.length) return true;
+            if (!this.evidenceDeviceId || !this.evidenceDevices.length) {
+                return (this.evidenceFacingMode || 'environment') === 'user';
+            }
             const device = this.evidenceDevices.find((d) => d.deviceId === this.evidenceDeviceId);
-            if (!device?.label) return true;
+            if (!device?.label) return (this.evidenceFacingMode || 'environment') === 'user';
             const label = device.label.toLowerCase();
             return label.includes('front') || label.includes('user') || label.includes('facing');
+        },
+
+        evidenceToggleCameraFacing() {
+            if (this.evidenceDevices.length > 1) {
+                const currentIndex = this.evidenceDevices.findIndex((d) => d.deviceId === this.evidenceDeviceId);
+                const nextIndex = (currentIndex + 1) % this.evidenceDevices.length;
+                this.evidenceDeviceId = this.evidenceDevices[nextIndex].deviceId;
+                this.evidenceStartMedia('camera', this.evidenceDeviceId);
+            } else {
+                this.evidenceFacingMode = (this.evidenceFacingMode === 'user') ? 'environment' : 'user';
+                this.evidenceDeviceId = '';
+                this.evidenceStartMedia('camera');
+            }
+        },
+
+        evidenceDeviceLabel(dev, index, total) {
+            const raw = (dev?.label || '').toLowerCase();
+            if (raw.includes('front') || raw.includes('user') || raw.includes('trước') || raw.includes('selfie')) {
+                return '📷 Camera trước';
+            }
+            if (raw.includes('back') || raw.includes('rear') || raw.includes('sau') || raw.includes('environment')) {
+                return '📷 Camera sau';
+            }
+            if (index === 0 && total > 1) return '📷 Camera sau (1)';
+            if (index === 1 && total > 1) return '📷 Camera trước (2)';
+            return dev?.label || `📷 Camera ${index + 1}`;
         },
 
         async evidenceListDevices() {
@@ -164,7 +193,9 @@ export function evidencePanelMethods() {
                     stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
                 } else {
                     stream = await navigator.mediaDevices.getUserMedia({
-                        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+                        video: deviceId
+                            ? { deviceId: { exact: deviceId } }
+                            : { facingMode: { ideal: this.evidenceFacingMode || 'environment' } },
                         audio: this.evidenceMediaMode === 'video',
                     });
                 }

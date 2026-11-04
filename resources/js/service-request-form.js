@@ -72,6 +72,7 @@ export function serviceRequestFormState() {
         srCameraStream: null,
         srCameras: [],
         srSelectedCameraId: "",
+        srFacingMode: "environment",
     };
 }
 
@@ -192,12 +193,40 @@ export function serviceRequestFormMethods() {
             await this.srStartCameraStream(this.srSelectedCameraId);
         },
 
+        async srToggleCamera() {
+            if (this.srCameras.length > 1) {
+                const currentIndex = this.srCameras.findIndex(c => c.deviceId === this.srSelectedCameraId);
+                const nextIndex = (currentIndex + 1) % this.srCameras.length;
+                this.srSelectedCameraId = this.srCameras[nextIndex].deviceId;
+                await this.srStartCameraStream(this.srSelectedCameraId);
+            } else {
+                this.srFacingMode = this.srFacingMode === 'user' ? 'environment' : 'user';
+                this.srSelectedCameraId = '';
+                await this.srStartCameraStream();
+            }
+        },
+
+        srCameraLabel(cam, index, total) {
+            const raw = (cam?.label || '').toLowerCase();
+            if (raw.includes('front') || raw.includes('user') || raw.includes('trước') || raw.includes('selfie')) {
+                return '📷 Camera trước';
+            }
+            if (raw.includes('back') || raw.includes('rear') || raw.includes('sau') || raw.includes('environment')) {
+                return '📷 Camera sau';
+            }
+            if (index === 0 && total > 1) return '📷 Camera sau (1)';
+            if (index === 1 && total > 1) return '📷 Camera trước (2)';
+            return cam?.label || `📷 Camera ${index + 1}`;
+        },
+
         async srStartCameraStream(deviceId) {
             if (this.srCameraStream) {
                 this.srCameraStream.getTracks().forEach(t => t.stop());
             }
             try {
-                const constraints = deviceId ? { video: { deviceId: { exact: deviceId } } } : { video: { facingMode: 'environment' } };
+                const constraints = deviceId
+                    ? { video: { deviceId: { exact: deviceId } } }
+                    : { video: { facingMode: { ideal: this.srFacingMode || 'environment' } } };
                 this.srCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
                 if (this.$refs.srVideo) {
                     this.$refs.srVideo.srcObject = this.srCameraStream;

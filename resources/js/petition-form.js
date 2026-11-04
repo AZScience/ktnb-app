@@ -5,6 +5,7 @@ export function petitionFormState() {
         ptCameraOpen: false,
         ptCameras: [],
         ptSelectedCameraId: "",
+        ptFacingMode: "environment",
         ptCameraStream: null,
     };
 }
@@ -99,12 +100,40 @@ export function petitionFormMethods() {
             await this.ptStartCameraStream(this.ptSelectedCameraId);
         },
 
+        async ptToggleCamera() {
+            if (this.ptCameras.length > 1) {
+                const currentIndex = this.ptCameras.findIndex(c => c.deviceId === this.ptSelectedCameraId);
+                const nextIndex = (currentIndex + 1) % this.ptCameras.length;
+                this.ptSelectedCameraId = this.ptCameras[nextIndex].deviceId;
+                await this.ptStartCameraStream(this.ptSelectedCameraId);
+            } else {
+                this.ptFacingMode = this.ptFacingMode === 'user' ? 'environment' : 'user';
+                this.ptSelectedCameraId = '';
+                await this.ptStartCameraStream();
+            }
+        },
+
+        ptCameraLabel(cam, index, total) {
+            const raw = (cam?.label || '').toLowerCase();
+            if (raw.includes('front') || raw.includes('user') || raw.includes('trước') || raw.includes('selfie')) {
+                return '📷 Camera trước';
+            }
+            if (raw.includes('back') || raw.includes('rear') || raw.includes('sau') || raw.includes('environment')) {
+                return '📷 Camera sau';
+            }
+            if (index === 0 && total > 1) return '📷 Camera sau (1)';
+            if (index === 1 && total > 1) return '📷 Camera trước (2)';
+            return cam?.label || `📷 Camera ${index + 1}`;
+        },
+
         async ptStartCameraStream(deviceId) {
             if (this.ptCameraStream) {
                 this.ptCameraStream.getTracks().forEach(t => t.stop());
             }
             try {
-                const constraints = deviceId ? { video: { deviceId: { exact: deviceId } } } : { video: { facingMode: 'environment' } };
+                const constraints = deviceId
+                    ? { video: { deviceId: { exact: deviceId } } }
+                    : { video: { facingMode: { ideal: this.ptFacingMode || 'environment' } } };
                 this.ptCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
                 if (this.$refs.ptVideo) {
                     this.$refs.ptVideo.srcObject = this.ptCameraStream;

@@ -76,11 +76,32 @@
     {{-- Photo capture modal --}}
     <div x-show="violationPhotoCameraOpen" x-cloak class="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4" @keydown.escape.window="violationClosePhotoCamera()" @click.self="violationClosePhotoCamera()">
         <div class="w-full max-w-md overflow-hidden rounded-xl bg-slate-900" @click.stop>
-            <div class="border-b border-white/10 px-4 py-3">
-                <h4 class="font-semibold text-white" x-text="violationPhotoCameraLabel"></h4>
-                <p class="mt-1 text-xs text-white/70" x-show="violationPhotoCameraField === 'document_photo'" x-cloak>
-                    Chụp ảnh giấy tờ rõ nét. Hệ thống sẽ tự đọc mã QR/barcode và điền thông tin sinh viên.
-                </p>
+            <div class="border-b border-white/10 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h4 class="font-semibold text-white" x-text="violationPhotoCameraLabel"></h4>
+                    <p class="mt-0.5 text-xs text-white/70" x-show="violationPhotoCameraField === 'document_photo'" x-cloak>
+                        Chụp ảnh giấy tờ rõ nét. Hệ thống sẽ tự đọc mã QR/barcode và điền thông tin sinh viên.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <template x-if="violationPhotoDevices.length > 1">
+                        <select :value="violationPhotoDeviceId" @change="violationSelectPhotoDevice($event.target.value)"
+                            class="h-8 rounded-md bg-slate-800 border-white/20 text-white text-xs max-w-[170px] px-2 shadow-sm">
+                            <template x-for="(dev, idx) in violationPhotoDevices" :key="dev.deviceId">
+                                <option :value="dev.deviceId" x-text="violationFormatCamLabel(dev, idx, violationPhotoDevices.length)"></option>
+                            </template>
+                        </select>
+                    </template>
+                    <button type="button" @click="violationTogglePhotoCamera()"
+                        class="inline-flex h-8 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/20 transition shadow-sm"
+                        title="Đổi camera trước / sau">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span>Trước/Sau</span>
+                    </button>
+                    <button type="button" @click="violationClosePhotoCamera()" class="text-white/70 hover:text-white p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
             </div>
             <div class="relative aspect-square w-full touch-none overflow-hidden md:aspect-video"
                  @pointermove="if (violationPhotoDragging) { const rect = $el.getBoundingClientRect(); const x = ($event.clientX - rect.left) / rect.width; const y = ($event.clientY - rect.top) / rect.height; violationPhotoFrameX = Math.min(Math.max(x, violationPhotoFrameW/2), 1 - violationPhotoFrameW/2); violationPhotoFrameY = Math.min(Math.max(y, violationPhotoFrameH/2), 1 - violationPhotoFrameH/2); }"

@@ -174,24 +174,50 @@ export function registerAvatarInput(Alpine) {
                 this.devices = devs.filter((device) => device.kind === 'videoinput');
 
                 if (this.devices.length > 0 && !this.selectedDeviceId) {
-                    const backCam = this.devices.find((device) => {
+                    const frontCam = this.devices.find((device) => {
                         const name = device.label.toLowerCase();
-                        return name.includes('back') || name.includes('rear');
+                        return name.includes('front') || name.includes('user') || name.includes('facing');
                     });
-                    this.selectedDeviceId = backCam ? backCam.deviceId : this.devices[0].deviceId;
+                    this.selectedDeviceId = frontCam ? frontCam.deviceId : this.devices[0].deviceId;
                 }
             } catch {
                 // Browser may block device listing until permission is granted.
             }
         },
 
+        toggleCamera() {
+            if (this.devices.length > 1) {
+                const currentIndex = this.devices.findIndex((d) => d.deviceId === this.selectedDeviceId);
+                const nextIndex = (currentIndex + 1) % this.devices.length;
+                this.selectedDeviceId = this.devices[nextIndex].deviceId;
+                this.startStream('camera', this.selectedDeviceId);
+            } else {
+                this.facingMode = this.facingMode === 'user' ? 'environment' : 'user';
+                this.selectedDeviceId = '';
+                this.startStream('camera');
+            }
+        },
+
+        deviceDisplayLabel(device, index) {
+            const raw = (device?.label || '').toLowerCase();
+            if (raw.includes('front') || raw.includes('user') || raw.includes('trước') || raw.includes('selfie')) {
+                return '📷 Camera trước';
+            }
+            if (raw.includes('back') || raw.includes('rear') || raw.includes('sau') || raw.includes('environment')) {
+                return '📷 Camera sau';
+            }
+            if (index === 0 && this.devices.length > 1) return '📷 Camera trước (1)';
+            if (index === 1 && this.devices.length > 1) return '📷 Camera sau (2)';
+            return device?.label || `📷 Camera ${index + 1}`;
+        },
+
         get isFrontCamera() {
             if (!this.selectedDeviceId || this.devices.length === 0) {
-                return true;
+                return (this.facingMode || 'user') === 'user';
             }
             const device = this.devices.find((item) => item.deviceId === this.selectedDeviceId);
             if (!device) {
-                return true;
+                return (this.facingMode || 'user') === 'user';
             }
             const name = device.label.toLowerCase();
             return name.includes('front') || name.includes('user') || name.includes('facing');
@@ -219,7 +245,9 @@ export function registerAvatarInput(Alpine) {
                     newStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 } else {
                     newStream = await navigator.mediaDevices.getUserMedia({
-                        video: activeDeviceId ? { deviceId: { exact: activeDeviceId } } : true,
+                        video: activeDeviceId
+                            ? { deviceId: { exact: activeDeviceId } }
+                            : { facingMode: { ideal: this.facingMode || 'user' } },
                     });
                 }
 

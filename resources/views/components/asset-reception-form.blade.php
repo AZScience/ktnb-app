@@ -161,15 +161,21 @@
     <div x-show="arCameraOpen" x-cloak class="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4" @keydown.escape.window="arCloseCamera()">
         <div class="w-full max-w-md bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10" @click.outside="arCloseCamera()">
             <div class="p-4 border-b border-white/10 flex justify-between items-center">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <h3 class="text-white font-semibold whitespace-nowrap">Camera</h3>
-                    <template x-if="arCameras.length > 1">
-                        <select x-model="arSelectedCameraId" @change="arSwitchCamera()" class="h-8 rounded-md bg-slate-800 border-white/20 text-white text-xs max-w-[200px]">
-                            <template x-for="cam in arCameras" :key="cam.deviceId">
-                                <option :value="cam.deviceId" x-text="cam.label || 'Camera ' + ($index + 1)"></option>
+                    <template x-if="arCameras && arCameras.length > 1">
+                        <select x-model="arSelectedCameraId" @change="arSwitchCamera()" class="h-8 rounded-md bg-slate-800 border-white/20 text-white text-xs max-w-[170px] px-2 shadow-sm">
+                            <template x-for="(cam, idx) in arCameras" :key="cam.deviceId">
+                                <option :value="cam.deviceId" x-text="arCameraLabel(cam, idx, arCameras.length)"></option>
                             </template>
                         </select>
                     </template>
+                    <button type="button" @click="arToggleCamera()"
+                        class="inline-flex h-8 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/20 transition shadow-sm"
+                        title="Đổi camera trước / sau">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span>Trước/Sau</span>
+                    </button>
                 </div>
                 <button type="button" @click="arCloseCamera()" class="text-white/70 hover:text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
