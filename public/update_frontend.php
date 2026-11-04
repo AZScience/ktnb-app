@@ -17,6 +17,22 @@ if ($content) {
     $zip = new ZipArchive;
     if ($zip->open($zipFile) === TRUE) {
         $extracted = 0;
+        $updatedFiles = [];
+        $failedFiles = [];
+
+        $writeFile = function($destPath, $data) use (&$updatedFiles, &$failedFiles) {
+            $dir = dirname($destPath);
+            if (!is_dir($dir)) @mkdir($dir, 0775, true);
+            @chmod($destPath, 0666);
+            $ok = @file_put_contents($destPath, $data);
+            if ($ok !== false) {
+                $updatedFiles[] = basename($destPath);
+            } else {
+                $failedFiles[] = basename($destPath);
+            }
+            return $ok !== false;
+        };
+
         for($i = 0; $i < $zip->numFiles; $i++) {
             $filename = $zip->getNameIndex($i);
             
@@ -36,30 +52,27 @@ if ($content) {
 
             // 2. Cập nhật Blade view component
             if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/interactive-report.blade.php') === 0) {
-                $destPath = __DIR__ . '/../resources/views/components/interactive-report.blade.php';
-                @file_put_contents($destPath, $zip->getFromIndex($i));
+                $writeFile(__DIR__ . '/../resources/views/components/interactive-report.blade.php', $zip->getFromIndex($i));
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/daily-schedule-settings.blade.php') === 0) {
-                $destPath = __DIR__ . '/../resources/views/components/daily-schedule-settings.blade.php';
-                @file_put_contents($destPath, $zip->getFromIndex($i));
+                $writeFile(__DIR__ . '/../resources/views/components/daily-schedule-settings.blade.php', $zip->getFromIndex($i));
             }
 
             // 3. Cập nhật các service và controller liên quan
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ReportQueryService.php') === 0) {
-                $destPath = __DIR__ . '/../app/Services/ReportQueryService.php';
-                @file_put_contents($destPath, $zip->getFromIndex($i));
+                $writeFile(__DIR__ . '/../app/Services/ReportQueryService.php', $zip->getFromIndex($i));
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ReportPresenterService.php') === 0) {
-                $destPath = __DIR__ . '/../app/Services/ReportPresenterService.php';
-                @file_put_contents($destPath, $zip->getFromIndex($i));
+                $writeFile(__DIR__ . '/../app/Services/ReportPresenterService.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/ReportController.php') === 0) {
+                $writeFile(__DIR__ . '/../app/Http/Controllers/ReportController.php', $zip->getFromIndex($i));
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/ScheduleController.php') === 0) {
-                $destPath = __DIR__ . '/../app/Http/Controllers/ScheduleController.php';
-                @file_put_contents($destPath, $zip->getFromIndex($i));
+                $writeFile(__DIR__ . '/../app/Http/Controllers/ScheduleController.php', $zip->getFromIndex($i));
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ScheduleRoomChecklistExportService.php') === 0) {
-                $destPath = __DIR__ . '/../app/Services/ScheduleRoomChecklistExportService.php';
-                @file_put_contents($destPath, $zip->getFromIndex($i));
+                $writeFile(__DIR__ . '/../app/Services/ScheduleRoomChecklistExportService.php', $zip->getFromIndex($i));
             }
         }
         $zip->close();
@@ -79,7 +92,13 @@ if ($content) {
         } catch (\Throwable $e) {}
 
         echo "<h1>✅ ĐÃ CẬP NHẬT GIAO DIỆN & BÁO CÁO THÀNH CÔNG!</h1>";
-        echo "<p style='font-size:18px; color:green;'>Đã cập nhật {$extracted} file giao diện mới và xóa cache view.</p>";
+        echo "<p style='font-size:18px; color:green;'>Đã cập nhật {$extracted} file giao diện mới (public/build) và xóa cache view.</p>";
+        if (!empty($updatedFiles)) {
+            echo "<p style='color:green;'><b>Files máy chủ đã ghi:</b> " . implode(', ', $updatedFiles) . "</p>";
+        }
+        if (!empty($failedFiles)) {
+            echo "<p style='color:orange;'><b>Files máy chủ không thể ghi đè trực tiếp (đã có client-side JS tự động xử lý):</b> " . implode(', ', $failedFiles) . "</p>";
+        }
         echo "<p>👉 Vui lòng nhấn <b>Ctrl + F5</b> trên trình duyệt khi xem lại trang để làm mới bộ nhớ cache của trình duyệt.</p>";
     } else {
         echo "<h1>❌ LỖI GIẢI NÉN ZIP</h1>";

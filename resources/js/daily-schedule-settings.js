@@ -256,6 +256,9 @@ export function registerDailyScheduleSettings(Alpine) {
                 window.addEventListener('nttu-language-changed', (event) => {
                     this.currentLang = event.detail?.language || getLanguage();
                 });
+                this.$watch('advancedOpen', (v) => {
+                    if (v) this.$nextTick(() => this.decorateFilterModal());
+                });
                 void this.loadFilterPresets();
                 await this.fetchData();
             },
@@ -556,31 +559,99 @@ export function registerDailyScheduleSettings(Alpine) {
                 this.multiSelectSearch = { buildings: '', departments: '', rooms: '', lecturers: '' };
                 this.advancedOpen = true;
                 this.$nextTick(() => {
-                    const modal = this.$root.querySelector('div[x-show="advancedOpen"]');
-                    if (!modal) return;
-                    const dateInputs = modal.querySelectorAll('input[type="date"]');
-                    if (dateInputs.length === 1) {
-                        const firstContainer = dateInputs[0].closest('.space-y-2');
-                        if (firstContainer) {
-                            const lbl = firstContainer.querySelector('label');
-                            if (lbl) lbl.textContent = 'Từ ngày';
-                            dateInputs[0].value = this.toIsoDate(this.advancedFilters.fromDate || this.advancedFilters.date);
-                            dateInputs[0].onchange = (e) => this.onAdvancedFromDateChange(e.target.value);
+                    this.decorateFilterModal();
+                });
+            },
 
-                            const toContainer = document.createElement('div');
-                            toContainer.className = 'space-y-2';
-                            toContainer.innerHTML = `
-                                <label class="font-medium flex items-center gap-2 text-gray-700">Đến ngày</label>
-                                <input type="date" class="nttu-form-control" value="${this.toIsoDate(this.advancedFilters.toDate || this.advancedFilters.fromDate || this.advancedFilters.date)}">
-                            `;
-                            firstContainer.after(toContainer);
-                            const toInp = toContainer.querySelector('input');
-                            if (toInp) {
-                                toInp.onchange = (e) => this.onAdvancedToDateChange(e.target.value);
-                            }
+            decorateFilterModal() {
+                const modal = this.$root.querySelector('div[x-show="advancedOpen"]');
+                if (!modal) return;
+
+                // 1. Ensure "Đến ngày" input exists if server Blade only rendered 1 date input
+                const dateInputs = modal.querySelectorAll('input[type="date"]');
+                if (dateInputs.length === 1) {
+                    const firstContainer = dateInputs[0].closest('.space-y-2');
+                    if (firstContainer) {
+                        const lbl = firstContainer.querySelector('label');
+                        if (lbl) {
+                            lbl.innerHTML = `<svg class="h-4 w-4 text-orange-500 mr-2 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Từ ngày`;
+                        }
+                        dateInputs[0].value = this.toIsoDate(this.advancedFilters.fromDate || this.advancedFilters.date);
+                        dateInputs[0].onchange = (e) => this.onAdvancedFromDateChange(e.target.value);
+                        dateInputs[0].oninput = (e) => this.onAdvancedFromDateChange(e.target.value);
+
+                        const toContainer = document.createElement('div');
+                        toContainer.className = 'space-y-2';
+                        toContainer.innerHTML = `
+                            <label class="font-medium flex items-center gap-2 text-gray-700">
+                                <svg class="h-4 w-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                Đến ngày
+                            </label>
+                            <input type="date" class="nttu-form-control" value="${this.toIsoDate(this.advancedFilters.toDate || this.advancedFilters.fromDate || this.advancedFilters.date)}">
+                        `;
+                        firstContainer.after(toContainer);
+                        const toInp = toContainer.querySelector('input');
+                        if (toInp) {
+                            toInp.onchange = (e) => this.onAdvancedToDateChange(e.target.value);
+                            toInp.oninput = (e) => this.onAdvancedToDateChange(e.target.value);
+                        }
+                    }
+                } else if (dateInputs.length >= 2) {
+                    dateInputs[0].value = this.toIsoDate(this.advancedFilters.fromDate || this.advancedFilters.date);
+                    dateInputs[1].value = this.toIsoDate(this.advancedFilters.toDate || this.advancedFilters.fromDate || this.advancedFilters.date);
+                }
+
+                // 2. Decorate ALL Labels in modal with SVG icons if missing
+                const labelIconMap = [
+                    { keywords: ['từ ngày', 'ngày lọc'], icon: '<svg class="h-4 w-4 text-orange-500 mr-2 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' },
+                    { keywords: ['đến ngày'], icon: '<svg class="h-4 w-4 text-orange-500 mr-2 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>' },
+                    { keywords: ['ca học', 'ca trực'], icon: '<svg class="h-4 w-4 text-orange-500 mr-2 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' },
+                    { keywords: ['dãy nhà'], icon: '<svg class="h-4 w-4 text-orange-500 mr-2 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' },
+                    { keywords: ['khoa', 'đơn vị'], icon: '<svg class="h-4 w-4 text-orange-500 mr-2 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>' },
+                    { keywords: ['phòng'], icon: '<svg class="h-4 w-4 text-orange-500 mr-2 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>' },
+                    { keywords: ['giảng viên', 'cbct'], icon: '<svg class="h-4 w-4 text-orange-500 mr-2 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>' },
+                    { keywords: ['từ tiết', 'đến tiết'], icon: '<svg class="h-3.5 w-3.5 text-orange-500 mr-1.5 inline-block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>' },
+                ];
+
+                modal.querySelectorAll('label').forEach((lbl) => {
+                    if (lbl.querySelector('svg')) return;
+                    const text = lbl.textContent.toLowerCase().trim();
+                    for (const item of labelIconMap) {
+                        if (item.keywords.some((k) => text.includes(k))) {
+                            lbl.classList.add('flex', 'items-center', 'gap-1');
+                            lbl.insertAdjacentHTML('afterbegin', item.icon);
+                            break;
                         }
                     }
                 });
+
+                // 3. Decorate ALL Buttons in modal with SVG icons if missing
+                modal.querySelectorAll('button').forEach((btn) => {
+                    const text = btn.textContent.trim();
+                    if (!btn.querySelector('svg')) {
+                        if (text.includes('Xóa bộ lọc')) {
+                            btn.classList.add('inline-flex', 'items-center', 'gap-1.5');
+                            btn.insertAdjacentHTML('afterbegin', `<svg class="h-4 w-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>`);
+                        } else if (text.includes('Áp dụng')) {
+                            btn.classList.add('inline-flex', 'items-center', 'gap-1.5');
+                            btn.insertAdjacentHTML('afterbegin', `<svg class="h-4 w-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`);
+                        } else if (text.includes('Lưu hiện tại')) {
+                            btn.classList.add('inline-flex', 'items-center', 'gap-1.5');
+                            btn.insertAdjacentHTML('afterbegin', `<svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>`);
+                        }
+                    }
+                });
+
+                // 4. Ensure Ca học select options
+                const periodSelect = modal.querySelector('select:has(option[value="morning"]), select[x-model*="periodSession"]');
+                if (periodSelect) {
+                    const mOpt = periodSelect.querySelector('option[value="morning"]');
+                    if (mOpt && !mOpt.textContent.includes('1-6')) mOpt.textContent = 'Ca sáng (1-6)';
+                    const aOpt = periodSelect.querySelector('option[value="afternoon"]');
+                    if (aOpt && !aOpt.textContent.includes('7-12')) aOpt.textContent = 'Ca chiều (7-12)';
+                    const eOpt = periodSelect.querySelector('option[value="evening"]');
+                    if (eOpt && !eOpt.textContent.includes('13-17')) eOpt.textContent = 'Ca tối (13-17)';
+                }
             },
 
             closeAdvancedFilter() {
