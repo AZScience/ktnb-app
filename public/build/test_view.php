@@ -1,23 +1,20 @@
 <?php
 header('Content-Type: text/plain; charset=utf-8');
-require __DIR__ . '/../../vendor/autoload.php';
-$app = require_once __DIR__ . '/../../bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
 
-$schedPath = resource_path('views/monitoring/schedules');
-echo "schedules path: $schedPath\n";
-echo "file_exists: " . (file_exists($schedPath) ? 'YES' : 'NO') . "\n";
-echo "is_file: " . (is_file($schedPath) ? 'YES' : 'NO') . "\n";
-echo "is_dir: " . (is_dir($schedPath) ? 'YES' : 'NO') . "\n";
-echo "is_link: " . (is_link($schedPath) ? 'YES' : 'NO') . "\n";
-if (file_exists($schedPath) || is_link($schedPath)) {
-    echo "perms: " . substr(sprintf('%o', fileperms($schedPath)), -4) . "\n";
-}
+$dir = dirname(__DIR__) . '/resources/views/monitoring';
+echo "monitoring dir: $dir\n";
+echo "is_dir: " . (is_dir($dir) ? '1' : '0') . "\n";
+echo "is_writable: " . (is_writable($dir) ? '1' : '0') . "\n";
+echo "owner: " . fileowner($dir) . "\n";
+echo "current_user: " . get_current_user() . " / posix uid: " . (function_exists('posix_getuid') ? posix_getuid() : 'none') . "\n";
 
-$monitoringPath = resource_path('views/monitoring');
-foreach (scandir($monitoringPath) as $f) {
-    if ($f === '.' || $f === '..') continue;
-    $p = $monitoringPath . '/' . $f;
-    echo "$f: is_dir=" . (is_dir($p) ? '1' : '0') . " is_file=" . (is_file($p) ? '1' : '0') . " size=" . filesize($p) . " perms=" . substr(sprintf('%o', fileperms($p)), -4) . "\n";
+$schedDir = $dir . '/schedules';
+echo "attempting mkdir($schedDir)...\n";
+$mk = @mkdir($schedDir, 0777, true);
+echo "mkdir result: " . ($mk ? 'SUCCESS' : 'FAILED') . "\n";
+if (!$mk) {
+    $err = error_get_last();
+    print_r($err);
+} else {
+    echo "schedules dir created successfully!\n";
 }
