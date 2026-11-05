@@ -109,11 +109,20 @@ class MonitoringScheduleController extends Controller
 
     public function update(Request $request, string $module, DailySchedule $schedule): JsonResponse|RedirectResponse
     {
-        $incidentRule = DailySchedule::requiresIncidentSelection($module)
+        $targetModule = null;
+        foreach (['exams', 'online', 'external-practice', 'homeroom', 'in-person'] as $m) {
+            if (DailySchedule::itemMatchesModule($schedule, $m)) {
+                $targetModule = $m;
+                break;
+            }
+        }
+        $effectiveModule = $targetModule ?? $module;
+
+        $incidentRule = (DailySchedule::requiresIncidentSelection($module) || DailySchedule::requiresIncidentSelection($effectiveModule))
             ? 'required|string|max:255'
             : 'nullable|string|max:255';
             
-        $incidentDetailRule = in_array($module, ['homeroom', 'external-practice'])
+        $incidentDetailRule = (in_array($module, ['homeroom', 'external-practice']) || in_array($effectiveModule, ['homeroom', 'external-practice']))
             ? 'required|string'
             : 'nullable|string';
 
@@ -564,6 +573,19 @@ BLADE;
                 'id' => $c->id,
                 'name' => $c->name,
             ])->values()->all();
+        }
+
+        foreach (['Thi kết thúc học phần', 'Thi trực tuyến', 'Cố vấn học tập', 'Lớp học trực tiếp', 'Lớp học trực tuyến', 'Thực hành ngoài'] as $recName) {
+            $rec = Recognition::where('name', $recName)->first();
+            if ($rec) {
+                $cats = IncidentCategory::where('recognition_id', $rec->id)->orderBy('name')->get();
+                if ($cats->isNotEmpty()) {
+                    $result[$recName] = $cats->map(fn ($c) => [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                    ])->values()->all();
+                }
+            }
         }
 
         return $result;

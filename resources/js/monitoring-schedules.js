@@ -789,20 +789,37 @@ export function monitoringSchedulesPage(config) {
             const building = String(item.building || '').toLowerCase();
             const room = String(item.room || '').toLowerCase();
 
-            if (statusRaw === 'Phòng thi' || statusRaw === 'Thi cuối kỳ' || status.includes('phòng thi') || status.includes('thi kết thúc')) {
+            // 1. Lớp thi / Phòng thi (kể cả trực tiếp và trực tuyến)
+            if (
+                statusRaw === 'Phòng thi' ||
+                statusRaw === 'Thi cuối kỳ' ||
+                status.includes('phòng thi') ||
+                status.includes('thi kết thúc') ||
+                status.includes('thi cuối kỳ') ||
+                building.includes('thi trực tuyến') ||
+                room.includes('thi trực tuyến') ||
+                building.startsWith('thi') ||
+                room.startsWith('thi') ||
+                content.includes('thi kết thúc') ||
+                content.includes('thi kthm') ||
+                content.includes('thi kthp')
+            ) {
                 return 'exams';
             }
 
+            // 2. Sinh hoạt lớp / Cố vấn học tập (kể cả trực tiếp và trực tuyến)
             const homeroomKeywords = ['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'];
-            if (homeroomKeywords.some((kw) => content.includes(kw) || status.includes(kw))) {
+            if (homeroomKeywords.some((kw) => content.includes(kw) || status.includes(kw) || building.includes(kw) || room.includes(kw))) {
                 return 'homeroom';
             }
 
+            // 3. Thực hành ngoài
             if (building.includes('ngoài') || building.includes('thực hành ngoài') || room.includes('ngoài') || room.includes('ngoai') || item.building === 'THN') {
                 return 'external-practice';
             }
 
-            if (building.includes('trực tuyến')) {
+            // 4. Lớp học trực tuyến
+            if (building.includes('trực tuyến') || room.includes('trực tuyến') || building.includes('online') || room.includes('online')) {
                 return 'online';
             }
 
@@ -815,7 +832,13 @@ export function monitoringSchedulesPage(config) {
 
         get currentIncidentCategories() {
             const mod = this.currentItemModule || this.module || 'in-person';
-            let rawList = (this.incidentCategoriesByModule && this.incidentCategoriesByModule[mod])
+            let rawList = (this.incidentCategoriesByModule && (
+                    this.incidentCategoriesByModule[mod] ||
+                    (mod === 'exams' && (this.incidentCategoriesByModule['Thi trực tuyến'] || this.incidentCategoriesByModule['Thi kết thúc học phần'])) ||
+                    (mod === 'homeroom' && this.incidentCategoriesByModule['Cố vấn học tập']) ||
+                    (mod === 'online' && this.incidentCategoriesByModule['Lớp học trực tuyến']) ||
+                    (mod === 'in-person' && this.incidentCategoriesByModule['Lớp học trực tiếp'])
+                ))
                 || NTTU_INCIDENT_CATEGORIES[mod]
                 || this.incidentCategories
                 || [];
@@ -839,23 +862,23 @@ export function monitoringSchedulesPage(config) {
         },
 
         get cameraModalTitle() {
-            return this.currentItemModule === 'exams'
+            return this.currentItemModule === 'exams' || this.module === 'exams'
                 ? 'Chụp ảnh phiếu ghi nhận phòng thi'
                 : 'Chụp ảnh phiếu sinh hoạt';
         },
 
         get cameraGuideText() {
-            return this.currentItemModule === 'exams'
+            return this.currentItemModule === 'exams' || this.module === 'exams'
                 ? 'Đưa phiếu vào giữa khung, đủ sáng, rõ mục "Vi phạm quy chế" hoặc "Tình hình phòng thi".'
                 : 'Đưa phiếu vào giữa khung, đủ sáng, rõ mục "Nội dung sinh hoạt (CVHT)".';
         },
 
         get isIncidentDetailRequired() {
-            return ['homeroom', 'external-practice'].includes(this.currentItemModule);
+            return ['homeroom', 'external-practice'].includes(this.currentItemModule) || ['homeroom', 'external-practice'].includes(this.module);
         },
 
         get requiresIncident() {
-            return !!this.uiConfig.requiresIncident || ['homeroom', 'external-practice'].includes(this.currentItemModule);
+            return !!this.uiConfig.requiresIncident || ['homeroom', 'external-practice'].includes(this.currentItemModule) || ['homeroom', 'external-practice'].includes(this.module);
         },
 
         syncIncidentOptionsAndCameraButtons() {
@@ -868,7 +891,13 @@ export function monitoringSchedulesPage(config) {
                 // 1. Sync Incident Categories in <select x-model="form.incident">
                 const incidentSelect = root.querySelector('select[x-model="form.incident"]');
                 if (incidentSelect) {
-                    const rawCategories = (this.incidentCategoriesByModule && this.incidentCategoriesByModule[targetModule])
+                    const rawCategories = (this.incidentCategoriesByModule && (
+                            this.incidentCategoriesByModule[targetModule] ||
+                            (targetModule === 'exams' && (this.incidentCategoriesByModule['Thi trực tuyến'] || this.incidentCategoriesByModule['Thi kết thúc học phần'])) ||
+                            (targetModule === 'homeroom' && this.incidentCategoriesByModule['Cố vấn học tập']) ||
+                            (targetModule === 'online' && this.incidentCategoriesByModule['Lớp học trực tuyến']) ||
+                            (targetModule === 'in-person' && this.incidentCategoriesByModule['Lớp học trực tiếp'])
+                        ))
                         || NTTU_INCIDENT_CATEGORIES[targetModule]
                         || this.incidentCategories
                         || [];
