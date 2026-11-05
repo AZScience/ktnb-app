@@ -113,7 +113,13 @@ if ($content) {
         $zip->close();
         @unlink($zipFile);
 
-        // 4. Xóa cache của Laravel
+        // 4. Xóa cache của Laravel và view cache trực tiếp
+        $viewFiles = glob(__DIR__ . '/../storage/framework/views/*.php');
+        if ($viewFiles) {
+            foreach ($viewFiles as $vf) {
+                @unlink($vf);
+            }
+        }
         try {
             if (file_exists(__DIR__.'/../vendor/autoload.php')) {
                 require __DIR__.'/../vendor/autoload.php';
