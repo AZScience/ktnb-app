@@ -134,7 +134,12 @@
                                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                                     </span>
                                                 </template>
-                                                <svg x-show="!sortStateFor(tabKey, col.key)" x-cloak class="ml-1 h-3 w-3 shrink-0 opacity-30 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                                <template x-if="!sortStateFor(tabKey, col.key) && isFiltered(tabKey, col.key)">
+                                                    <span class="nttu-header-badge-active" title="Cột đang có bộ lọc">
+                                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                                    </span>
+                                                </template>
+                                                <svg x-show="!sortStateFor(tabKey, col.key) && !isFiltered(tabKey, col.key)" x-cloak class="ml-1 h-3 w-3 shrink-0 opacity-30 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                                             </button>
                                             <div x-cloak x-float.start="stateFor(tabKey).openPopover === col.key" data-float-close="stateFor(tabKey).openPopover = null"
                                                 class="nttu-report-header-popover nttu-floating-panel w-64 rounded-md border border-gray-100 bg-white py-1 shadow-2xl">
