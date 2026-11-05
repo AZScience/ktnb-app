@@ -905,12 +905,13 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             toggleSelectAllCurrentPage() {
-                const pageIds = (this.paginatedItems || []).map((item) => item.id);
-                const allSelected = pageIds.every((id) => this.selectedRowIds.includes(id));
+                const allItems = (this.filteredItems && this.filteredItems.length > 0) ? this.filteredItems : (this.paginatedItems || []);
+                const allIds = allItems.map((item) => item.id);
+                const allSelected = allIds.length > 0 && allIds.every((id) => this.selectedRowIds.includes(id));
                 if (allSelected) {
-                    this.selectedRowIds = this.selectedRowIds.filter((id) => !pageIds.includes(id));
+                    this.selectedRowIds = this.selectedRowIds.filter((id) => !allIds.includes(id));
                 } else {
-                    this.selectedRowIds = Array.from(new Set([...this.selectedRowIds, ...pageIds]));
+                    this.selectedRowIds = Array.from(new Set([...this.selectedRowIds, ...allIds]));
                 }
                 localStorage.setItem(selKey, JSON.stringify(this.selectedRowIds));
                 this.updateSelectionHeaderBadge();
@@ -993,7 +994,7 @@ export function registerDailyScheduleSettings(Alpine) {
                             <div class="border-t pt-1 mt-1 space-y-0.5">
                                 <button type="button" class="btn-toggle-page flex w-full items-center gap-2 px-2 py-1 rounded text-gray-600 hover:bg-gray-100">
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    <span>Chọn/Bỏ chọn trang này</span>
+                                    <span>Chọn/Bỏ chọn tất cả</span>
                                 </button>
                                 <button type="button" class="btn-clear-sel flex w-full items-center gap-2 px-2 py-1 rounded text-red-600 hover:bg-red-50">
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>

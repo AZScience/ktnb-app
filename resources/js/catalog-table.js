@@ -1243,12 +1243,13 @@ export function catalogTablePage(config) {
         },
 
         toggleSelectAllCurrentPage() {
-            const currentIds = (this.currentItems || []).map((item) => item.id);
-            const allSelected = currentIds.every((id) => this.selectedIds.includes(id));
+            const allItems = (this.filteredItems && this.filteredItems.length > 0) ? this.filteredItems : (this.currentItems || []);
+            const allIds = allItems.map((item) => item.id);
+            const allSelected = allIds.length > 0 && allIds.every((id) => this.selectedIds.includes(id));
             if (allSelected) {
-                this.selectedIds = this.selectedIds.filter((id) => !currentIds.includes(id));
+                this.selectedIds = this.selectedIds.filter((id) => !allIds.includes(id));
             } else {
-                this.selectedIds = Array.from(new Set([...this.selectedIds, ...currentIds]));
+                this.selectedIds = Array.from(new Set([...this.selectedIds, ...allIds]));
             }
             saveJson('selected', this.selectedIds);
             this.updateSelectionHeaderBadge();
@@ -1331,7 +1332,7 @@ export function catalogTablePage(config) {
                         <div class="border-t pt-1 mt-1 space-y-0.5">
                             <button type="button" class="btn-toggle-page flex w-full items-center gap-2 px-2 py-1 rounded text-gray-600 hover:bg-gray-100">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                <span>Chọn/Bỏ chọn trang này</span>
+                                <span>Chọn/Bỏ chọn tất cả</span>
                             </button>
                             <button type="button" class="btn-clear-sel flex w-full items-center gap-2 px-2 py-1 rounded text-red-600 hover:bg-red-50">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
