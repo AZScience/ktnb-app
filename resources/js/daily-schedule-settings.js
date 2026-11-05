@@ -134,11 +134,13 @@ export function registerDailyScheduleSettings(Alpine) {
         const presetKey = 'nttu_schedule_settings_filter_presets';
         const sortKey = 'nttu_schedule_settings_sort';
         const colFiltersKey = 'nttu_schedule_settings_col_filters';
+        const selFilterKey = 'nttu_schedule_settings_sel_filter';
 
         let savedVisibility = DEFAULT_VISIBILITY;
         let savedPage = 1;
         let savedRows = 10;
         let savedSelected = [];
+        let savedSelectionFilter = 'all';
         let savedAdvanced = null;
         let savedPresets = [];
         let savedSort = null;
@@ -149,6 +151,7 @@ export function registerDailyScheduleSettings(Alpine) {
             savedPage = normalizeCurrentPage(localStorage.getItem(pageKey) || '1', 1);
             savedRows = normalizeRowsPerPage(localStorage.getItem(rowsKey) || '10', 10);
             savedSelected = JSON.parse(localStorage.getItem(selKey) || '[]');
+            savedSelectionFilter = localStorage.getItem(selFilterKey) || 'all';
             savedAdvanced = JSON.parse(localStorage.getItem(advKey) || 'null');
             savedPresets = JSON.parse(localStorage.getItem(presetKey) || '[]');
             savedSort = JSON.parse(localStorage.getItem(sortKey) || 'null');
@@ -217,7 +220,7 @@ export function registerDailyScheduleSettings(Alpine) {
             currentPage: savedPage,
             rowsPerPage: savedRows,
             selectedRowIds: savedSelected,
-            selectionFilter: 'all',
+            selectionFilter: savedSelectionFilter,
             selectionPopover: false,
             filterPresets: savedPresets,
             presetNaming: false,
@@ -549,7 +552,11 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             sortIconClass(key) {
-                return this.isColumnFiltered(key) ? 'nttu-sort-filtered' : '';
+                const hasSort = !!this.sortDirection(key);
+                const hasFilter = this.isColumnFiltered(key);
+                if (hasSort) return 'nttu-sort-active text-red-500 font-bold';
+                if (hasFilter) return 'nttu-sort-filtered text-red-500 font-bold';
+                return '';
             },
 
             buildingMatchesFilter(item, filterValue) {
@@ -878,8 +885,11 @@ export function registerDailyScheduleSettings(Alpine) {
                 this.selectionFilter = 'all';
                 this.updateSelectionHeaderBadge();
                 this.sortConfig = null;
+                this.selectionFilter = 'all';
                 localStorage.removeItem(colFiltersKey);
                 localStorage.removeItem(sortKey);
+                localStorage.removeItem(selFilterKey);
+                this.updateSelectionHeaderBadge();
                 this.resetAdvanced();
                 await this.fetchData();
                 this.showToast('Đã xóa tất cả bộ lọc');
@@ -889,6 +899,7 @@ export function registerDailyScheduleSettings(Alpine) {
                 this.selectionFilter = mode;
                 this.selectionPopover = false;
                 this.currentPage = 1;
+                localStorage.setItem(selFilterKey, mode);
                 localStorage.setItem(pageKey, '1');
                 this.updateSelectionHeaderBadge();
             },
@@ -909,15 +920,27 @@ export function registerDailyScheduleSettings(Alpine) {
                 const th = this.$root?.querySelector?.('.nttu-th-index');
                 if (!th) return;
                 const badge = th.querySelector('.selection-filter-badge');
+                const funnelSvg = th.querySelector('.btn-selection-filter svg');
                 if (badge) {
                     if (this.selectionFilter === 'selected') {
                         badge.textContent = `(${this.selectedRowIds.length})`;
+                        badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
                         badge.classList.remove('hidden');
                     } else if (this.selectionFilter === 'unselected') {
                         badge.textContent = '(Chưa)';
+                        badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
                         badge.classList.remove('hidden');
                     } else {
                         badge.classList.add('hidden');
+                    }
+                }
+                if (funnelSvg) {
+                    if (this.selectionFilter !== 'all') {
+                        funnelSvg.classList.add('!text-red-400', 'font-bold');
+                        funnelSvg.classList.remove('opacity-80');
+                    } else {
+                        funnelSvg.classList.remove('!text-red-400', 'font-bold');
+                        funnelSvg.classList.add('opacity-80');
                     }
                 }
                 if (this.selectionFilter !== 'all') {

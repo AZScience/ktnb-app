@@ -191,12 +191,19 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="columnIcon(col.key)"></path>
                                         </svg>
                                         <span class="nttu-th-label-text" x-text="col.label"></span>
+                                        <span x-show="columnFilters[col.key]" x-cloak class="ml-1 inline-flex items-center text-red-500" title="Đang lọc cột này">
+                                            <svg class="h-3 w-3 shrink-0 nttu-header-active-icon" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </span>
                                         <template x-if="sortKey === col.key">
-                                            <svg x-show="sortDir === 'asc'" class="ml-2 h-4 w-4 shrink-0" :class="columnFilters[col.key] && 'nttu-sort-filtered'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                                            <svg x-show="sortDir === 'desc'" class="ml-2 h-4 w-4 shrink-0" :class="columnFilters[col.key] && 'nttu-sort-filtered'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            <svg x-show="sortDir === 'asc'" class="ml-2 h-3.5 w-3.5 shrink-0 nttu-sort-active text-red-500 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                        </template>
+                                        <template x-if="sortKey === col.key">
+                                            <svg x-show="sortDir === 'desc'" class="ml-2 h-3.5 w-3.5 shrink-0 nttu-sort-active text-red-500 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                         </template>
                                         <template x-if="sortKey !== col.key">
-                                            <svg class="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 shrink-0" :class="columnFilters[col.key] && 'nttu-sort-filtered'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                            <svg class="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                                         </template>
                                     </button>
                                     <div x-show="openFilterCol === col.key" @click.outside="openFilterCol = null" x-cloak

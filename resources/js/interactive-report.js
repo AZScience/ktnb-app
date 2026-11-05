@@ -299,7 +299,7 @@ export function registerInteractiveReport(Alpine) {
         settingsOpen: false,
         savingPresets: false,
         selectedRowIds: [],
-        selectionFilter: 'all',
+        selectionFilter: initialTabPrefs.selectionFilter || 'all',
         selectionPopover: false,
         currentPage: normalizeCurrentPage(initialTabPrefs.currentPage || 1, 1),
         pageInput: 1,
@@ -566,15 +566,27 @@ export function registerInteractiveReport(Alpine) {
             const ths = this.$root?.querySelectorAll?.('th.catalog-th-index, th.nttu-th-index') || [];
             ths.forEach((th) => {
                 const badge = th.querySelector('.selection-filter-badge');
+                const funnelSvg = th.querySelector('.btn-selection-filter svg');
                 if (badge) {
                     if (this.selectionFilter === 'selected') {
                         badge.textContent = `(${this.selectedRowIds.length})`;
+                        badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
                         badge.classList.remove('hidden');
                     } else if (this.selectionFilter === 'unselected') {
                         badge.textContent = '(Chưa)';
+                        badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
                         badge.classList.remove('hidden');
                     } else {
                         badge.classList.add('hidden');
+                    }
+                }
+                if (funnelSvg) {
+                    if (this.selectionFilter !== 'all') {
+                        funnelSvg.classList.add('!text-red-400', 'font-bold');
+                        funnelSvg.classList.remove('opacity-70');
+                    } else {
+                        funnelSvg.classList.remove('!text-red-400', 'font-bold');
+                        funnelSvg.classList.add('opacity-70');
                     }
                 }
                 if (this.selectionFilter !== 'all') {
@@ -1095,6 +1107,7 @@ export function registerInteractiveReport(Alpine) {
             this.columnFilters = { ...(tabPrefs.columnFilters || {}) };
             this.sortKey = tabPrefs.sortKey || '';
             this.sortDir = tabPrefs.sortDir || 'asc';
+            this.selectionFilter = tabPrefs.selectionFilter || 'all';
             this.currentPage = normalizeCurrentPage(tabPrefs.currentPage || 1, 1);
             this.pageInput = this.currentPage;
             const defaults = {};
@@ -1102,6 +1115,7 @@ export function registerInteractiveReport(Alpine) {
                 defaults[col.key] = col.defaultVisible !== false;
             });
             this.columnVisibility = loadJson(this.tabStorageKey, defaults);
+            this.updateSelectionHeaderBadge();
             this.persistUserPrefs();
         },
 
@@ -1146,6 +1160,7 @@ export function registerInteractiveReport(Alpine) {
                         columnFilters: this.columnFilters,
                         sortKey: this.sortKey,
                         sortDir: this.sortDir,
+                        selectionFilter: this.selectionFilter,
                         currentPage: this.currentPage,
                     },
                 },

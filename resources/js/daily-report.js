@@ -224,6 +224,7 @@ export function registerDailyReport(Alpine) {
             saveJson(`daily_report_${slugify(def.title)}_state`, {
                 sortConfig: state.sortConfig,
                 filters: state.filters,
+                selectionFilter: state.selectionFilter,
                 currentPage: state.currentPage,
                 rowsPerPage: state.rowsPerPage,
                 columnVisibility: state.columnVisibility,
@@ -258,7 +259,11 @@ export function registerDailyReport(Alpine) {
         },
 
         sortIconClass(tabKey, colKey) {
-            return this.isFiltered(tabKey, colKey) ? 'nttu-sort-filtered' : '';
+            const hasSort = !!this.sortStateFor(tabKey, colKey);
+            const hasFilter = this.isFiltered(tabKey, colKey);
+            if (hasSort) return 'nttu-sort-active text-red-500 font-bold';
+            if (hasFilter) return 'nttu-sort-filtered text-red-500 font-bold';
+            return '';
         },
 
         processedItems(tabKey) {

@@ -150,6 +150,7 @@ export function registerCheckinMonitor(Alpine) {
                 if (savedPrefs.columnFilters && typeof savedPrefs.columnFilters === 'object') {
                     this.columnFilters = savedPrefs.columnFilters;
                 }
+                if (savedPrefs.selectionFilter) this.selectionFilter = savedPrefs.selectionFilter;
                 if (savedPrefs.sortKey) this.sortKey = savedPrefs.sortKey;
                 if (savedPrefs.sortDir === 'asc' || savedPrefs.sortDir === 'desc') {
                     this.sortDir = savedPrefs.sortDir;
@@ -162,6 +163,7 @@ export function registerCheckinMonitor(Alpine) {
             this.$watch('searchTerm', () => this.persistTablePrefs());
             this.$watch('statusFilter', () => this.persistTablePrefs());
             this.$watch('columnFilters', () => this.persistTablePrefs(), { deep: true });
+            this.$watch('selectionFilter', () => this.persistTablePrefs());
             this.$watch('sortKey', () => this.persistTablePrefs());
             this.$watch('sortDir', () => this.persistTablePrefs());
             this.$watch('currentPage', () => this.persistTablePrefs());
@@ -235,6 +237,7 @@ export function registerCheckinMonitor(Alpine) {
                 searchTerm: this.searchTerm,
                 statusFilter: this.statusFilter,
                 columnFilters: this.columnFilters,
+                selectionFilter: this.selectionFilter,
                 sortKey: this.sortKey,
                 sortDir: this.sortDir,
                 currentPage: this.currentPage,

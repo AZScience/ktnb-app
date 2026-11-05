@@ -821,7 +821,7 @@ export function catalogTablePage(config) {
         ),
         sortConfig: normalizeSortConfig(loadJson('sort', [])),
         selectedIds: loadJson('selected', []),
-        selectionFilter: 'all',
+        selectionFilter: loadJson('selection_filter', 'all'),
         selectionPopover: false,
 
         init() {
@@ -1220,6 +1220,7 @@ export function catalogTablePage(config) {
         clearFilters() {
             this.filters = {};
             this.selectionFilter = 'all';
+            saveJson('selection_filter', 'all');
             this.updateSelectionHeaderBadge();
             if (['violations', 'assets', 'documents', 'announcements'].includes(this.advancedFilterMode)) {
                 this.advancedFilters = defaultAdvancedFilters(this.advancedFilterMode);
@@ -1236,6 +1237,7 @@ export function catalogTablePage(config) {
             this.selectionPopover = false;
             this.safePage = 1;
             this.currentPage = 1;
+            saveJson('selection_filter', mode);
             saveJson('page', 1);
             this.updateSelectionHeaderBadge();
         },
@@ -1256,15 +1258,27 @@ export function catalogTablePage(config) {
             const th = this.$root?.querySelector?.('.catalog-th-index');
             if (!th) return;
             const badge = th.querySelector('.selection-filter-badge');
+            const funnelSvg = th.querySelector('.btn-selection-filter svg');
             if (badge) {
                 if (this.selectionFilter === 'selected') {
                     badge.textContent = `(${this.selectedIds.length})`;
+                    badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
                     badge.classList.remove('hidden');
                 } else if (this.selectionFilter === 'unselected') {
                     badge.textContent = '(Chưa)';
+                    badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
                     badge.classList.remove('hidden');
                 } else {
                     badge.classList.add('hidden');
+                }
+            }
+            if (funnelSvg) {
+                if (this.selectionFilter !== 'all') {
+                    funnelSvg.classList.add('!text-red-400', 'font-bold');
+                    funnelSvg.classList.remove('opacity-70');
+                } else {
+                    funnelSvg.classList.remove('!text-red-400', 'font-bold');
+                    funnelSvg.classList.add('opacity-70');
                 }
             }
             if (this.selectionFilter !== 'all') {
@@ -1540,7 +1554,11 @@ export function catalogTablePage(config) {
         },
 
         sortIconClass(key) {
-            return this.isFiltered(key) ? 'nttu-sort-filtered' : '';
+            const hasSort = !!this.sortStateFor(key);
+            const hasFilter = this.isFiltered(key);
+            if (hasSort) return 'nttu-sort-active text-red-500 font-bold';
+            if (hasFilter) return 'nttu-sort-filtered text-red-500 font-bold';
+            return '';
         },
 
         columnHeaderIconPath(key) {

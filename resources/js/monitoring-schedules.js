@@ -269,6 +269,7 @@ export function monitoringSchedulesPage(config) {
     const presetKey = `nttu_monitoring_${config.module}_filter_presets`;
     const sortKey = `nttu_monitoring_${config.module}_sort`;
     const colFiltersKey = `nttu_monitoring_${config.module}_col_filters`;
+    const selFilterKey = `nttu_monitoring_${config.module}_sel_filter`;
     const moduleColumns = getModuleColumns(config.module);
     const moduleColumnOrder = getModuleColumnOrder(config.module);
     const defaultVisibility = getModuleDefaultVisibility(config.module);
@@ -287,6 +288,7 @@ export function monitoringSchedulesPage(config) {
     let savedPage = 1;
     let savedRows = 10;
     let savedSelected = [];
+    let savedSelectionFilter = 'all';
     let savedAdvanced = null;
     let savedPresets = [];
     let savedSort = null;
@@ -296,6 +298,7 @@ export function monitoringSchedulesPage(config) {
         savedPage = normalizeCurrentPage(localStorage.getItem(pageKey) || '1', 1);
         savedRows = normalizeRowsPerPage(localStorage.getItem(rowsKey) || '10', 10);
         savedSelected = JSON.parse(localStorage.getItem(selKey) || '[]');
+        savedSelectionFilter = localStorage.getItem(selFilterKey) || 'all';
         savedAdvanced = JSON.parse(localStorage.getItem(advKey) || 'null');
         savedPresets = JSON.parse(localStorage.getItem(presetKey) || '[]');
         savedSort = JSON.parse(localStorage.getItem(sortKey) || 'null');
@@ -373,7 +376,7 @@ export function monitoringSchedulesPage(config) {
         currentPage: savedPage,
         rowsPerPage: savedRows,
         selectedRowIds: savedSelected,
-        selectionFilter: 'all',
+        selectionFilter: savedSelectionFilter,
         selectionPopover: false,
         includeExams: localStorage.getItem(`nttu_${config.module}_include_exams`) === '1'
             || (config.module === 'in-person' && localStorage.getItem('nttu_in_person_include_exams') === '1'),
@@ -798,7 +801,11 @@ export function monitoringSchedulesPage(config) {
         },
 
         sortIconClass(key) {
-            return this.isColumnFiltered(key) ? 'nttu-sort-filtered' : '';
+            const hasSort = !!this.sortDirection(key);
+            const hasFilter = this.isColumnFiltered(key);
+            if (hasSort) return 'nttu-sort-active text-red-500 font-bold';
+            if (hasFilter) return 'nttu-sort-filtered text-red-500 font-bold';
+            return '';
         },
 
         clearColumnFilter(key) {
@@ -1146,6 +1153,8 @@ export function monitoringSchedulesPage(config) {
             this.sortConfig = null;
             localStorage.removeItem(colFiltersKey);
             localStorage.removeItem(sortKey);
+            localStorage.removeItem(selFilterKey);
+            this.updateSelectionHeaderBadge();
             await this.resetAdvanced();
         },
 
@@ -1153,6 +1162,7 @@ export function monitoringSchedulesPage(config) {
             this.selectionFilter = mode;
             this.selectionPopover = false;
             this.currentPage = 1;
+            localStorage.setItem(selFilterKey, mode);
             localStorage.setItem(pageKey, '1');
             this.updateSelectionHeaderBadge();
         },
@@ -1173,15 +1183,27 @@ export function monitoringSchedulesPage(config) {
             const th = this.$root?.querySelector?.('.catalog-th-index');
             if (!th) return;
             const badge = th.querySelector('.selection-filter-badge');
+            const funnelSvg = th.querySelector('.btn-selection-filter svg');
             if (badge) {
                 if (this.selectionFilter === 'selected') {
                     badge.textContent = `(${this.selectedRowIds.length})`;
+                    badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
                     badge.classList.remove('hidden');
                 } else if (this.selectionFilter === 'unselected') {
                     badge.textContent = '(Chưa)';
+                    badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
                     badge.classList.remove('hidden');
                 } else {
                     badge.classList.add('hidden');
+                }
+            }
+            if (funnelSvg) {
+                if (this.selectionFilter !== 'all') {
+                    funnelSvg.classList.add('!text-red-400', 'font-bold');
+                    funnelSvg.classList.remove('opacity-70');
+                } else {
+                    funnelSvg.classList.remove('!text-red-400', 'font-bold');
+                    funnelSvg.classList.add('opacity-70');
                 }
             }
             if (this.selectionFilter !== 'all') {
