@@ -11,7 +11,7 @@ $options = [
 ];
 $context = stream_context_create($options);
 
-echo "<h2>🚀 Đang tải mã nguồn toàn diện từ GitHub...</h2>";
+echo "<h2>🚀 Đang tải mã nguồn từ GitHub...</h2>";
 $content = file_get_contents($zipUrl, false, $context);
 if (!$content) {
     die("<h2 style='color:red;'>❌ Không thể tải zip từ GitHub!</h2>");
@@ -28,48 +28,44 @@ $rootPrefix = 'ktnb-app-kiemtranoibo/';
 $appDir = dirname(__DIR__, 2);
 $publicDir = dirname(__DIR__);
 
-$updated = [];
-$errors = [];
+$targetFiles = [
+    'resources/views/monitoring/schedules/index.blade.php',
+    'resources/views/components/monitoring-schedule-table.blade.php',
+    'app/Http/Controllers/MonitoringScheduleController.php',
+    'public/update_frontend.php',
+];
 
-$write = function($dest, $data) use (&$updated, &$errors) {
-    $dir = dirname($dest);
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0775, true);
-    }
-    @chmod($dest, 0666);
-    if (@file_put_contents($dest, $data) !== false) {
-        $updated[] = $dest;
-    } else {
-        $errors[] = $dest;
-    }
-};
+$results = [];
 
-for ($i = 0; $i < $zip->numFiles; $i++) {
-    $name = $zip->getNameIndex($i);
-    if (strpos($name, $rootPrefix) !== 0 || substr($name, -1) === '/') {
+foreach ($targetFiles as $targetRel) {
+    $zipEntry = $rootPrefix . $targetRel;
+    $content = $zip->getFromName($zipEntry);
+    if ($content === false) {
+        $results[$targetRel] = 'Không tìm thấy trong ZIP';
         continue;
     }
 
-    $relPath = substr($name, strlen($rootPrefix));
+    $dest = ($targetRel === 'public/update_frontend.php')
+        ? $publicDir . '/update_frontend.php'
+        : $appDir . '/' . $targetRel;
 
-    if (strpos($relPath, 'resources/views/') === 0) {
-        $write($appDir . '/' . $relPath, $zip->getFromIndex($i));
+    // Check if writable, try chmod or unlink
+    $dir = dirname($dest);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0777, true);
     }
-    elseif (strpos($relPath, 'app/Http/Controllers/') === 0) {
-        $write($appDir . '/' . $relPath, $zip->getFromIndex($i));
+    
+    @chmod($dir, 0777);
+    @chmod($dest, 0777);
+    
+    // Try unlink first if write fails
+    $ok = @file_put_contents($dest, $content);
+    if ($ok === false) {
+        @unlink($dest);
+        $ok = @file_put_contents($dest, $content);
     }
-    elseif (strpos($relPath, 'app/Models/') === 0) {
-        $write($appDir . '/' . $relPath, $zip->getFromIndex($i));
-    }
-    elseif (strpos($relPath, 'app/Services/') === 0) {
-        $write($appDir . '/' . $relPath, $zip->getFromIndex($i));
-    }
-    elseif (strpos($relPath, 'routes/') === 0) {
-        $write($appDir . '/' . $relPath, $zip->getFromIndex($i));
-    }
-    elseif ($relPath === 'public/update_frontend.php') {
-        $write($publicDir . '/update_frontend.php', $zip->getFromIndex($i));
-    }
+
+    $results[$targetRel] = ($ok !== false) ? '✅ Ghi thành công (' . strlen($content) . ' bytes)' : '❌ Lỗi quyền ghi (' . substr(sprintf('%o', @fileperms($dest)), -4) . ', owner: ' . @fileowner($dest) . ')';
 }
 
 $zip->close();
@@ -86,21 +82,13 @@ try {
         $kernel->bootstrap();
         \Illuminate\Support\Facades\Artisan::call('view:clear');
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
-        \Illuminate\Support\Facades\Artisan::call('route:clear');
     }
 } catch (\Throwable $e) {
-    echo "<p>Lưu ý cache: " . htmlspecialchars($e->getMessage()) . "</p>";
+    echo "<p>Lưu ý: " . htmlspecialchars($e->getMessage()) . "</p>";
 }
 
-echo "<h1 style='color:green;'>✅ CẬP NHẬT BACKEND & BLADE VIEWS THÀNH CÔNG!</h1>";
-echo "<p><b>Số file đã cập nhật:</b> " . count($updated) . "</p>";
-if (!empty($errors)) {
-    echo "<p style='color:red;'><b>Các file bị lỗi phân quyền ghi:</b><br>" . implode('<br>', $errors) . "</p>";
-}
-echo "<p>Danh sách file cập nhật quan trọng:</p><ul>";
-foreach ($updated as $f) {
-    if (strpos($f, 'monitoring') !== false || strpos($f, 'Controller') !== false) {
-        echo "<li>" . htmlspecialchars($f) . "</li>";
-    }
+echo "<h2>Kết quả ghi các file mục tiêu:</h2><ul>";
+foreach ($results as $file => $status) {
+    echo "<li><b>{$file}:</b> {$status}</li>";
 }
 echo "</ul>";
