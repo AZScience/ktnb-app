@@ -5,23 +5,19 @@ $app = require_once __DIR__ . '/../../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-echo "View monitoring.schedules.index exists: " . (view()->exists('monitoring.schedules.index') ? 'YES' : 'NO') . "\n";
-echo "View monitoring.index exists: " . (view()->exists('monitoring.index') ? 'YES' : 'NO') . "\n";
-
-$monitoringPath = resource_path('views/monitoring');
-echo "Monitoring path: $monitoringPath\n";
-if (is_dir($monitoringPath)) {
-    echo "Is writable: " . (is_writable($monitoringPath) ? 'YES' : 'NO') . "\n";
-    $files = scandir($monitoringPath);
-    echo "Files in monitoring:\n";
-    print_r($files);
+$schedPath = resource_path('views/monitoring/schedules');
+echo "schedules path: $schedPath\n";
+echo "file_exists: " . (file_exists($schedPath) ? 'YES' : 'NO') . "\n";
+echo "is_file: " . (is_file($schedPath) ? 'YES' : 'NO') . "\n";
+echo "is_dir: " . (is_dir($schedPath) ? 'YES' : 'NO') . "\n";
+echo "is_link: " . (is_link($schedPath) ? 'YES' : 'NO') . "\n";
+if (file_exists($schedPath) || is_link($schedPath)) {
+    echo "perms: " . substr(sprintf('%o', fileperms($schedPath)), -4) . "\n";
 }
 
-$schedPath = resource_path('views/monitoring/schedules');
-echo "Schedules path: $schedPath\n";
-if (is_dir($schedPath)) {
-    echo "Files in schedules:\n";
-    print_r(scandir($schedPath));
-} else {
-    echo "schedules directory DOES NOT EXIST!\n";
+$monitoringPath = resource_path('views/monitoring');
+foreach (scandir($monitoringPath) as $f) {
+    if ($f === '.' || $f === '..') continue;
+    $p = $monitoringPath . '/' . $f;
+    echo "$f: is_dir=" . (is_dir($p) ? '1' : '0') . " is_file=" . (is_file($p) ? '1' : '0') . " size=" . filesize($p) . " perms=" . substr(sprintf('%o', fileperms($p)), -4) . "\n";
 }
