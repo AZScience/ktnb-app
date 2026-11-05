@@ -479,7 +479,7 @@ export function monitoringSchedulesPage(config) {
                     this.syncIncidentOptionsAndCameraButtons();
                 }
             });
-            this.$watch('form.status', () => {
+            this.$watch(() => this.form?.status, () => {
                 if (this.modalOpen) {
                     this.syncIncidentOptionsAndCameraButtons();
                 }
@@ -814,13 +814,21 @@ export function monitoringSchedulesPage(config) {
         },
 
         get currentIncidentCategories() {
-            const mod = this.currentItemModule || this.module;
-            let list = (this.incidentCategoriesByModule && this.incidentCategoriesByModule[mod])
+            const mod = this.currentItemModule || this.module || 'in-person';
+            let rawList = (this.incidentCategoriesByModule && this.incidentCategoriesByModule[mod])
                 || NTTU_INCIDENT_CATEGORIES[mod]
                 || this.incidentCategories
                 || [];
+
+            let list = (rawList || []).map((c, i) => {
+                if (typeof c === 'string') {
+                    return { id: String(i), name: c };
+                }
+                return { id: c.id || String(i), name: c.name || String(c) };
+            });
+
             const current = this.form?.incident;
-            if (current && !list.some((c) => (typeof c === 'string' ? c : c.name) === current)) {
+            if (current && !list.some((c) => c.name === current)) {
                 list = [{ id: 'custom', name: current }, ...list];
             }
             return list;
@@ -855,7 +863,7 @@ export function monitoringSchedulesPage(config) {
                 const root = this.$root;
                 if (!root) return;
 
-                const targetModule = this.currentItemModule || this.module;
+                const targetModule = this.currentItemModule || this.module || 'in-person';
 
                 // 1. Sync Incident Categories in <select x-model="form.incident">
                 const incidentSelect = root.querySelector('select[x-model="form.incident"]');
@@ -865,28 +873,30 @@ export function monitoringSchedulesPage(config) {
                         || this.incidentCategories
                         || [];
 
-                    const catNames = rawCategories.map((c) => (typeof c === 'string' ? c : c.name));
+                    const catNames = rawCategories.map((c) => (typeof c === 'string' ? c : (c.name || String(c))));
                     const currentVal = String(this.form?.incident || '').trim();
                     const requires = this.requiresIncident;
 
-                    let html = `<option value="" ${!requires ? '' : 'disabled hidden'}>${requires ? '— Chọn việc phát sinh —' : '--- Không có ---'}</option>`;
-                    
-                    if (currentVal && !catNames.includes(currentVal)) {
-                        catNames.unshift(currentVal);
-                    }
+                    const existingOpts = Array.from(incidentSelect.options).map((o) => o.value).filter(Boolean);
+                    const isMismatch = catNames.length > 0 && !catNames.some((name) => existingOpts.includes(name));
 
-                    for (const name of catNames) {
-                        const selected = (currentVal === name) ? 'selected' : '';
-                        html += `<option value="${name}" ${selected}>${name}</option>`;
+                    if (existingOpts.length === 0 || isMismatch) {
+                        let html = `<option value="" ${!requires ? '' : 'disabled hidden'}>${requires ? '— Chọn việc phát sinh —' : '--- Không có ---'}</option>`;
+                        if (currentVal && !catNames.includes(currentVal)) {
+                            catNames.unshift(currentVal);
+                        }
+                        for (const name of catNames) {
+                            const selected = (currentVal === name) ? 'selected' : '';
+                            html += `<option value="${name}" ${selected}>${name}</option>`;
+                        }
+                        incidentSelect.innerHTML = html;
+                        if (currentVal) {
+                            incidentSelect.value = currentVal;
+                        }
+                        incidentSelect.onchange = (e) => {
+                            this.form.incident = e.target.value;
+                        };
                     }
-
-                    incidentSelect.innerHTML = html;
-                    if (currentVal) {
-                        incidentSelect.value = currentVal;
-                    }
-                    incidentSelect.onchange = (e) => {
-                        this.form.incident = e.target.value;
-                    };
                 }
 
                 // 2. Sync Camera & Photo Upload Buttons
@@ -894,47 +904,60 @@ export function monitoringSchedulesPage(config) {
                 if (detailInput) {
                     const btnContainer = detailInput.parentElement?.querySelector('.absolute.inset-y-0.right-2');
                     if (btnContainer) {
-                        let existingCameraBtn = btnContainer.querySelector('.btn-incident-camera-dynamic');
-                        let existingUploadBtn = btnContainer.querySelector('.btn-incident-upload-dynamic');
-
                         const isSupported = ['exams', 'homeroom'].includes(targetModule) || ['exams', 'homeroom'].includes(this.module);
 
                         if (isSupported && !this.isViewMode) {
                             detailInput.classList.add('pr-20');
-                            if (!existingCameraBtn) {
-                                const camBtn = document.createElement('button');
-                                camBtn.type = 'button';
-                                camBtn.className = 'btn-incident-camera-dynamic inline-flex h-7 w-7 items-center justify-center rounded text-orange-600 hover:bg-orange-100';
-                                camBtn.title = 'Chụp ảnh phiếu để trích xuất nội dung';
-                                camBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
-                                camBtn.onclick = (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    this.openIncidentDetailCamera();
-                                };
-                                btnContainer.appendChild(camBtn);
+                            const bladeButtons = btnContainer.querySelectorAll('button:not(.btn-incident-camera-dynamic):not(.btn-incident-upload-dynamic)');
+                            if (bladeButtons.length > 0) {
+                                bladeButtons.forEach((btn) => {
+                                    btn.style.setProperty('display', 'inline-flex', 'important');
+                                });
                             } else {
-                                existingCameraBtn.style.display = 'inline-flex';
-                            }
+                                let existingCameraBtn = btnContainer.querySelector('.btn-incident-camera-dynamic');
+                                let existingUploadBtn = btnContainer.querySelector('.btn-incident-upload-dynamic');
 
-                            if (!existingUploadBtn) {
-                                const uploadBtn = document.createElement('button');
-                                uploadBtn.type = 'button';
-                                uploadBtn.className = 'btn-incident-upload-dynamic inline-flex h-7 w-7 items-center justify-center rounded text-orange-600 hover:bg-orange-100';
-                                uploadBtn.title = 'Tải ảnh phiếu từ máy để trích xuất nội dung';
-                                uploadBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
-                                uploadBtn.onclick = (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    this.$refs.incidentDetailPhotoInput?.click();
-                                };
-                                btnContainer.appendChild(uploadBtn);
-                            } else {
-                                existingUploadBtn.style.display = 'inline-flex';
+                                if (!existingCameraBtn) {
+                                    const camBtn = document.createElement('button');
+                                    camBtn.type = 'button';
+                                    camBtn.className = 'btn-incident-camera-dynamic inline-flex h-7 w-7 items-center justify-center rounded text-orange-600 hover:bg-orange-100';
+                                    camBtn.title = 'Chụp ảnh phiếu để trích xuất nội dung';
+                                    camBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+                                    camBtn.onclick = (e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        this.openIncidentDetailCamera();
+                                    };
+                                    btnContainer.appendChild(camBtn);
+                                } else {
+                                    existingCameraBtn.style.setProperty('display', 'inline-flex', 'important');
+                                }
+
+                                if (!existingUploadBtn) {
+                                    const uploadBtn = document.createElement('button');
+                                    uploadBtn.type = 'button';
+                                    uploadBtn.className = 'btn-incident-upload-dynamic inline-flex h-7 w-7 items-center justify-center rounded text-orange-600 hover:bg-orange-100';
+                                    uploadBtn.title = 'Tải ảnh phiếu từ máy để trích xuất nội dung';
+                                    uploadBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
+                                    uploadBtn.onclick = (e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        this.$refs.incidentDetailPhotoInput?.click();
+                                    };
+                                    btnContainer.appendChild(uploadBtn);
+                                } else {
+                                    existingUploadBtn.style.setProperty('display', 'inline-flex', 'important');
+                                }
                             }
                         } else {
-                            if (existingCameraBtn) existingCameraBtn.style.display = 'none';
-                            if (existingUploadBtn) existingUploadBtn.style.display = 'none';
+                            const dynCam = btnContainer.querySelector('.btn-incident-camera-dynamic');
+                            const dynUp = btnContainer.querySelector('.btn-incident-upload-dynamic');
+                            if (dynCam) dynCam.style.display = 'none';
+                            if (dynUp) dynUp.style.display = 'none';
+                            const bladeButtons = btnContainer.querySelectorAll('button:not(.btn-incident-camera-dynamic):not(.btn-incident-upload-dynamic)');
+                            bladeButtons.forEach((btn) => {
+                                btn.style.display = 'none';
+                            });
                             detailInput.classList.remove('pr-20');
                         }
                     }
@@ -945,6 +968,7 @@ export function monitoringSchedulesPage(config) {
             setTimeout(doSync, 50);
             setTimeout(doSync, 150);
             setTimeout(doSync, 300);
+            setTimeout(doSync, 600);
         },
 
         get hasActiveAdvancedFilters() {

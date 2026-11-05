@@ -33,27 +33,27 @@ class MonitoringScheduleController extends Controller
         private ScheduleMasterDataService $masterDataService,
     ) {}
 
-    public function online(Request $request): View
+    public function online(Request $request): mixed
     {
         return $this->index($request, 'online');
     }
 
-    public function inPerson(Request $request): View
+    public function inPerson(Request $request): mixed
     {
         return $this->index($request, 'in-person');
     }
 
-    public function exams(Request $request): View
+    public function exams(Request $request): mixed
     {
         return $this->index($request, 'exams');
     }
 
-    public function externalPractice(Request $request): View
+    public function externalPractice(Request $request): mixed
     {
         return $this->index($request, 'external-practice');
     }
 
-    public function homeroom(Request $request): View
+    public function homeroom(Request $request): mixed
     {
         return $this->index($request, 'homeroom');
     }
@@ -96,7 +96,7 @@ class MonitoringScheduleController extends Controller
         ]);
     }
 
-    public function edit(string $module, DailySchedule $schedule): View
+    public function edit(string $module, DailySchedule $schedule): mixed
     {
         return view('monitoring.schedules.monitor-form', [
             'item' => $schedule,
@@ -424,7 +424,7 @@ class MonitoringScheduleController extends Controller
             ->with('success', "Đã import {$count} tiết học.");
     }
 
-    private function index(Request $request, string $module): View
+    private function index(Request $request, string $module): mixed
     {
         [$date, $dateNotice] = $this->resolveScheduleDate(
             $module,
@@ -432,7 +432,7 @@ class MonitoringScheduleController extends Controller
             allowFallback: ! $request->has('date'),
         );
 
-        return view('monitoring.schedules.index', [
+        $viewData = [
             'items' => collect(),
             'date' => $date,
             'dateNotice' => $dateNotice,
@@ -445,7 +445,35 @@ class MonitoringScheduleController extends Controller
             'incidentCategoriesByModule' => $this->allIncidentCategoriesByModule(),
             'masterData' => $this->masterDataService->all(),
             'employeeDefault' => $this->employeeDefault(),
-        ]);
+        ];
+
+        if (view()->exists('monitoring.schedules.index')) {
+            return view('monitoring.schedules.index', $viewData);
+        }
+
+        $template = <<<'BLADE'
+@extends('layouts.nttu')
+@section('title', $title)
+@section('page-section', $title)
+@section('content')
+<x-monitoring-schedule-table
+    :items="$items"
+    :module="$module"
+    :date="$date"
+    :date-notice="$dateNotice ?? null"
+    :title="$title"
+    :card-title="$cardTitle ?? $title"
+    :modal-entity="$modalEntity ?? null"
+    :ui-config="$uiConfig ?? []"
+    :incident-categories="$incidentCategories"
+    :incident-categories-by-module="$incidentCategoriesByModule ?? []"
+    :master-data="$masterData"
+    :employee-default="$employeeDefault ?? null"
+/>
+@endsection
+BLADE;
+
+        return response(\Illuminate\Support\Facades\Blade::render($template, $viewData));
     }
 
     private function employeeDefault(): string

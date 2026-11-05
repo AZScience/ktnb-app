@@ -20,21 +20,31 @@ if ($content) {
         $updatedFiles = [];
         $failedFiles = [];
 
+        // Đảm bảo tất cả thư mục views có quyền 0777 để đọc ghi bình thường
+        @chmod(__DIR__ . '/../resources/views', 0777);
+        @chmod(__DIR__ . '/../resources/views/components', 0777);
+        @chmod(__DIR__ . '/../resources/views/monitoring', 0777);
+
         $writeFile = function($destPath, $data) use (&$updatedFiles, &$failedFiles) {
+            if (substr($destPath, -1) === '/' || is_dir($destPath)) {
+                @chmod($destPath, 0777);
+                return true;
+            }
             $dir = dirname($destPath);
             if (is_link($dir) && !is_dir($dir)) {
                 @unlink($dir);
             }
             if (!is_dir($dir)) {
-                if (file_exists($dir) && !is_dir($dir)) @unlink($dir);
+                if (file_exists($dir)) @unlink($dir);
                 @mkdir($dir, 0777, true);
             }
+            @chmod($dir, 0777);
             if (is_link($destPath) && !file_exists($destPath)) {
                 @unlink($destPath);
             }
-            @chmod($destPath, 0666);
             $ok = @file_put_contents($destPath, $data);
             if ($ok !== false) {
+                @chmod($destPath, 0666);
                 $updatedFiles[] = basename($destPath);
             } else {
                 $failedFiles[] = basename($destPath);
