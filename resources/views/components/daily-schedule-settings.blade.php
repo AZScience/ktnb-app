@@ -95,17 +95,10 @@
                                     class="btn-selection-filter flex items-center justify-center gap-1 w-full h-full py-2 px-1 hover:bg-black/20 text-white transition-colors"
                                     title="Lọc theo dòng đã chọn">
                                     <span class="font-bold">#</span>
-                                    <template x-if="selectionFilter !== 'all'">
-                                        <span class="nttu-header-badge-active" title="Đang lọc dòng đã chọn">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                                        </span>
-                                    </template>
-                                    <template x-if="selectionFilter === 'all'">
-                                        <svg class="h-3 w-3 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                                        </svg>
-                                    </template>
-                                    <span x-show="selectionFilter !== 'all'" x-cloak class="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white text-red-600 shadow-sm" x-text="selectionFilter === 'selected' ? `(${selectedRowIds.length})` : '(Chưa)'"></span>
+                                    <svg class="h-3 w-3 shrink-0" :class="selectionFilter !== 'all' ? '!text-yellow-300 font-bold drop-shadow' : 'opacity-80'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                                    </svg>
+                                    <span x-show="selectionFilter !== 'all'" x-cloak class="text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900" x-text="selectionFilter === 'selected' ? `(${selectedRowIds.length})` : '(Chưa)'"></span>
                                 </button>
                                 <div x-cloak x-float.start="selectionPopover" data-float-close="selectionPopover = false"
                                      class="selection-filter-popover nttu-floating-panel w-56 rounded-md border bg-white p-1 text-gray-800 shadow-xl text-left font-normal text-xs z-50">
@@ -165,9 +158,6 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="columnIcon(key)"></path>
                                     </svg>
                                     <span class="nttu-th-label-text" x-text="columnLabel(key)"></span>
-                                    <span x-show="isColumnFiltered(key)" x-cloak class="nttu-header-badge-active" title="Cột đang có bộ lọc">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                                    </span>
                                     <template x-if="sortDirection(key) === 'asc'">
                                         <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
@@ -178,7 +168,7 @@
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                         </span>
                                     </template>
-                                    <template x-if="!sortDirection(key) && !isColumnFiltered(key)">
+                                    <template x-if="!sortDirection(key)">
                                         <svg class="ml-1 h-3 w-3 shrink-0 opacity-30 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                                     </template>
                                 </button>

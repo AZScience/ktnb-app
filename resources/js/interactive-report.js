@@ -570,22 +570,23 @@ export function registerInteractiveReport(Alpine) {
                 if (badge) {
                     if (this.selectionFilter === 'selected') {
                         badge.textContent = `(${this.selectedRowIds.length})`;
-                        badge.className = 'selection-filter-badge text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white text-red-600 shadow-sm';
+                        badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900';
                         badge.classList.remove('hidden');
                     } else if (this.selectionFilter === 'unselected') {
                         badge.textContent = '(Chưa)';
-                        badge.className = 'selection-filter-badge text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white text-red-600 shadow-sm';
+                        badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900';
                         badge.classList.remove('hidden');
                     } else {
                         badge.classList.add('hidden');
                     }
                 }
                 if (funnelSvg) {
+                    funnelSvg.classList.remove('nttu-header-badge-active');
                     if (this.selectionFilter !== 'all') {
-                        funnelSvg.classList.add('nttu-header-badge-active');
+                        funnelSvg.classList.add('!text-yellow-300', 'font-bold', 'drop-shadow');
                         funnelSvg.classList.remove('opacity-70');
                     } else {
-                        funnelSvg.classList.remove('nttu-header-badge-active');
+                        funnelSvg.classList.remove('!text-yellow-300', 'font-bold', 'drop-shadow');
                         funnelSvg.classList.add('opacity-70');
                     }
                 }
