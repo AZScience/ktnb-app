@@ -23,7 +23,10 @@ if ($content) {
         // Đảm bảo tất cả thư mục views có quyền 0777 để đọc ghi bình thường
         @chmod(__DIR__ . '/../resources/views', 0777);
         @chmod(__DIR__ . '/../resources/views/components', 0777);
+        @chmod(__DIR__ . '/../resources/views/components/partials', 0777);
         @chmod(__DIR__ . '/../resources/views/monitoring', 0777);
+        @chmod(__DIR__ . '/../resources/views/reports', 0777);
+        @chmod(__DIR__ . '/../resources/views/layouts', 0777);
 
         $writeFile = function($destPath, $data) use (&$updatedFiles, &$failedFiles) {
             if (substr($destPath, -1) === '/' || is_dir($destPath)) {
@@ -39,10 +42,17 @@ if ($content) {
                 @mkdir($dir, 0777, true);
             }
             @chmod($dir, 0777);
-            if (is_link($destPath) && !file_exists($destPath)) {
+            if (file_exists($destPath) || is_link($destPath)) {
+                @chmod($destPath, 0777);
                 @unlink($destPath);
             }
             $ok = @file_put_contents($destPath, $data);
+            if ($ok === false && file_exists($destPath)) {
+                $tempOld = $destPath . '.old.' . uniqid();
+                @rename($destPath, $tempOld);
+                $ok = @file_put_contents($destPath, $data);
+                @unlink($tempOld);
+            }
             if ($ok !== false) {
                 @chmod($destPath, 0666);
                 $updatedFiles[] = basename($destPath);
