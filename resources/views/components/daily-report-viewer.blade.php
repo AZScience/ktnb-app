@@ -125,9 +125,7 @@
                                                 <svg x-show="columnHeaderIconPath(col)" x-cloak class="mr-0.5 h-3.5 w-3.5 shrink-0 opacity-80" :class="columnHeaderIconClass(col)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="columnHeaderIconPath(col)"></path></svg>
                                                 <span class="nttu-th-label-text flex-1" :class="col.key === 'period' ? 'whitespace-nowrap' : ''" x-text="col.label"></span>
                                                 <span x-show="isFiltered(tabKey, col.key)" x-cloak class="nttu-header-badge-active" title="Cột đang có bộ lọc">
-                                                    <svg fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
-                                                    </svg>
+                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                                                 </span>
                                                 <template x-if="sortStateFor(tabKey, col.key)?.direction === 'ascending'">
                                                     <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
@@ -139,7 +137,7 @@
                                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                                     </span>
                                                 </template>
-                                                <svg x-show="!sortStateFor(tabKey, col.key)" x-cloak class="ml-1 h-3 w-3 shrink-0 opacity-30 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                                <svg x-show="!sortStateFor(tabKey, col.key) && !isFiltered(tabKey, col.key)" x-cloak class="ml-1 h-3 w-3 shrink-0 opacity-30 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                                             </button>
                                             <div x-cloak x-float.start="stateFor(tabKey).openPopover === col.key" data-float-close="stateFor(tabKey).openPopover = null"
                                                 class="nttu-report-header-popover nttu-floating-panel w-64 rounded-md border border-gray-100 bg-white py-1 shadow-2xl">

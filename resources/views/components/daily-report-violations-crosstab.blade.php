@@ -14,9 +14,20 @@
                                 <svg x-show="columnHeaderIconPath(col)" x-cloak class="nttu-th-col-icon mr-0.5 h-3.5 w-3.5 shrink-0 opacity-90" :class="crosstabColumnHeaderIconClass(col)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="columnHeaderIconPath(col)"></path></svg>
                                 <span class="nttu-th-label-text" x-text="col.label"></span>
                                 <span class="nttu-th-sort-icons shrink-0 whitespace-nowrap">
-                                    <svg x-show="sortStateFor(tabKey, col.key)?.direction === 'ascending'" x-cloak class="h-3 w-3 shrink-0" :class="sortIconClass(tabKey, col.key)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                                    <svg x-show="sortStateFor(tabKey, col.key)?.direction === 'descending'" x-cloak class="h-3 w-3 shrink-0" :class="sortIconClass(tabKey, col.key)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                    <svg x-show="!sortStateFor(tabKey, col.key)" x-cloak class="h-3 w-3 shrink-0 opacity-40 group-hover:opacity-100" :class="sortIconClass(tabKey, col.key)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                    <span x-show="isFiltered(tabKey, col.key)" x-cloak class="nttu-header-badge-active" title="Cột đang có bộ lọc">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                                    </span>
+                                    <template x-if="sortStateFor(tabKey, col.key)?.direction === 'ascending'">
+                                        <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                        </span>
+                                    </template>
+                                    <template x-if="sortStateFor(tabKey, col.key)?.direction === 'descending'">
+                                        <span class="nttu-header-badge-active" title="Sắp xếp giảm dần">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                        </span>
+                                    </template>
+                                    <svg x-show="!sortStateFor(tabKey, col.key) && !isFiltered(tabKey, col.key)" x-cloak class="h-3 w-3 shrink-0 opacity-40 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                                 </span>
                             </button>
                             <div x-cloak x-float.start="stateFor(tabKey).openPopover === col.key" data-float-close="stateFor(tabKey).openPopover = null"
@@ -62,9 +73,20 @@
                                 <svg x-show="columnHeaderIconPath(col)" x-cloak class="nttu-th-col-icon mr-0.5 h-3.5 w-3.5 shrink-0 opacity-90" :class="crosstabColumnHeaderIconClass(col)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="columnHeaderIconPath(col)"></path></svg>
                                 <span class="nttu-th-label-text" x-text="col.label"></span>
                                 <span class="nttu-th-sort-icons shrink-0 whitespace-nowrap">
-                                    <svg x-show="sortStateFor(tabKey, col.key)?.direction === 'ascending'" x-cloak class="h-3 w-3 shrink-0" :class="sortIconClass(tabKey, col.key)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                                    <svg x-show="sortStateFor(tabKey, col.key)?.direction === 'descending'" x-cloak class="h-3 w-3 shrink-0" :class="sortIconClass(tabKey, col.key)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                    <svg x-show="!sortStateFor(tabKey, col.key)" x-cloak class="h-3 w-3 shrink-0 opacity-40 group-hover:opacity-100" :class="sortIconClass(tabKey, col.key)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                    <span x-show="isFiltered(tabKey, col.key)" x-cloak class="nttu-header-badge-active" title="Cột đang có bộ lọc">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                                    </span>
+                                    <template x-if="sortStateFor(tabKey, col.key)?.direction === 'ascending'">
+                                        <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                        </span>
+                                    </template>
+                                    <template x-if="sortStateFor(tabKey, col.key)?.direction === 'descending'">
+                                        <span class="nttu-header-badge-active" title="Sắp xếp giảm dần">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                        </span>
+                                    </template>
+                                    <svg x-show="!sortStateFor(tabKey, col.key) && !isFiltered(tabKey, col.key)" x-cloak class="h-3 w-3 shrink-0 opacity-40 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                                 </span>
                             </button>
                             <div x-cloak x-float.start="stateFor(tabKey).openPopover === col.key" data-float-close="stateFor(tabKey).openPopover = null"
