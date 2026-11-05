@@ -22,7 +22,16 @@ if ($content) {
 
         $writeFile = function($destPath, $data) use (&$updatedFiles, &$failedFiles) {
             $dir = dirname($destPath);
-            if (!is_dir($dir)) @mkdir($dir, 0775, true);
+            if (is_link($dir) && !is_dir($dir)) {
+                @unlink($dir);
+            }
+            if (!is_dir($dir)) {
+                if (file_exists($dir) && !is_dir($dir)) @unlink($dir);
+                @mkdir($dir, 0777, true);
+            }
+            if (is_link($destPath) && !file_exists($destPath)) {
+                @unlink($destPath);
+            }
             @chmod($destPath, 0666);
             $ok = @file_put_contents($destPath, $data);
             if ($ok !== false) {
