@@ -16,15 +16,23 @@
 
             <span class="nttu-th-label-text" :class="columnHeaderTextClass(col)" x-text="columnLabel(col)">{{ $headerDisplay }}</span>
 
-            <span x-show="isColumnFiltered(col.key)" x-cloak class="ml-1 inline-flex items-center text-yellow-300" title="Đang lọc cột này">
-                <svg class="h-3 w-3 shrink-0 nttu-header-active-icon" fill="currentColor" viewBox="0 0 20 20">
+            <span x-show="isColumnFiltered(col.key)" x-cloak class="nttu-header-badge-active" title="Cột đang có bộ lọc">
+                <svg fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
                 </svg>
             </span>
 
-            <svg x-show="sortDirection(col.key) === 'asc'" x-cloak class="ml-1 h-3.5 w-3.5 shrink-0 nttu-sort-active text-yellow-300 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+            <template x-if="sortDirection(col.key) === 'asc'">
+                <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                </span>
+            </template>
 
-            <svg x-show="sortDirection(col.key) === 'desc'" x-cloak class="ml-1 h-3.5 w-3.5 shrink-0 nttu-sort-active text-yellow-300 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+            <template x-if="sortDirection(col.key) === 'desc'">
+                <span class="nttu-header-badge-active" title="Sắp xếp giảm dần">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+            </template>
 
             <svg x-show="!sortDirection(col.key)" class="ml-1 h-3 w-3 shrink-0 opacity-30 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
 

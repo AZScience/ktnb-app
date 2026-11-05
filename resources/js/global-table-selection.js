@@ -271,7 +271,7 @@ export function enhanceTableHeader(th) {
                 <svg class="h-3 w-3 shrink-0 opacity-70 filter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                 </svg>
-                <span class="selection-filter-badge hidden text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900"></span>
+                <span class="selection-filter-badge hidden text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white text-red-600 shadow-sm"></span>
             </button>
             <div class="selection-filter-popover hidden absolute top-full left-0 z-50 w-56 rounded-md border bg-white p-1 text-gray-800 shadow-xl text-left font-normal text-xs">
                 <div class="px-2 py-1.5 font-bold text-gray-700 border-b flex items-center justify-between">

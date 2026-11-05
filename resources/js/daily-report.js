@@ -261,8 +261,8 @@ export function registerDailyReport(Alpine) {
         sortIconClass(tabKey, colKey) {
             const hasSort = !!this.sortStateFor(tabKey, colKey);
             const hasFilter = this.isFiltered(tabKey, colKey);
-            if (hasSort) return 'nttu-sort-active text-yellow-300 font-bold';
-            if (hasFilter) return 'nttu-sort-filtered text-yellow-300 font-bold';
+            if (hasSort) return 'nttu-sort-active';
+            if (hasFilter) return 'nttu-sort-filtered';
             return '';
         },
 

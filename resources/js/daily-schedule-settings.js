@@ -554,8 +554,8 @@ export function registerDailyScheduleSettings(Alpine) {
             sortIconClass(key) {
                 const hasSort = !!this.sortDirection(key);
                 const hasFilter = this.isColumnFiltered(key);
-                if (hasSort) return 'nttu-sort-active text-yellow-300 font-bold';
-                if (hasFilter) return 'nttu-sort-filtered text-yellow-300 font-bold';
+                if (hasSort) return 'nttu-sort-active';
+                if (hasFilter) return 'nttu-sort-filtered';
                 return '';
             },
 
@@ -924,11 +924,11 @@ export function registerDailyScheduleSettings(Alpine) {
                 if (badge) {
                     if (this.selectionFilter === 'selected') {
                         badge.textContent = `(${this.selectedRowIds.length})`;
-                        badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900';
+                        badge.className = 'selection-filter-badge text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white text-red-600 shadow-sm';
                         badge.classList.remove('hidden');
                     } else if (this.selectionFilter === 'unselected') {
                         badge.textContent = '(Chưa)';
-                        badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900';
+                        badge.className = 'selection-filter-badge text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white text-red-600 shadow-sm';
                         badge.classList.remove('hidden');
                     } else {
                         badge.classList.add('hidden');
@@ -936,10 +936,10 @@ export function registerDailyScheduleSettings(Alpine) {
                 }
                 if (funnelSvg) {
                     if (this.selectionFilter !== 'all') {
-                        funnelSvg.classList.add('!text-yellow-300', 'font-bold');
+                        funnelSvg.classList.add('nttu-header-badge-active');
                         funnelSvg.classList.remove('opacity-80');
                     } else {
-                        funnelSvg.classList.remove('!text-yellow-300', 'font-bold');
+                        funnelSvg.classList.remove('nttu-header-badge-active');
                         funnelSvg.classList.add('opacity-80');
                     }
                 }
@@ -962,7 +962,7 @@ export function registerDailyScheduleSettings(Alpine) {
                             <svg class="h-3 w-3 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                             </svg>
-                            <span class="selection-filter-badge hidden text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900"></span>
+                            <span class="selection-filter-badge hidden text-[10px] font-black px-1.5 py-0.5 rounded-full bg-white text-red-600 shadow-sm"></span>
                         </button>
                         <div class="selection-filter-popover hidden absolute top-full left-0 z-50 w-56 rounded-md border bg-white p-1 text-gray-800 shadow-xl text-left font-normal text-xs">
                             <div class="px-2 py-1.5 font-bold text-gray-700 border-b flex items-center justify-between">
