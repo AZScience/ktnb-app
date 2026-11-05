@@ -2,16 +2,18 @@
 header('Content-Type: text/plain; charset=utf-8');
 
 $root = dirname(dirname(__DIR__));
-$m = $root . '/resources/views/monitoring';
+$comp = $root . '/resources/views/components/monitoring-schedule-table.blade.php';
 
-echo "m: $m\n";
-echo "file_exists: " . (file_exists($m) ? 'YES' : 'NO') . "\n";
-echo "is_dir: " . (is_dir($m) ? 'YES' : 'NO') . "\n";
-echo "is_link: " . (is_link($m) ? 'YES' : 'NO') . "\n";
-echo "is_file: " . (is_file($m) ? 'YES' : 'NO') . "\n";
-echo "is_writable: " . (is_writable($m) ? 'YES' : 'NO') . "\n";
-echo "perms: " . substr(sprintf('%o', fileperms($m)), -4) . "\n";
-echo "owner: " . fileowner($m) . "\n";
+if (!file_exists($comp)) {
+    echo "monitoring-schedule-table.blade.php does NOT exist!\n";
+    exit;
+}
 
-// Can we chmod it?
-echo "chmod(0777)... " . (@chmod($m, 0777) ? 'SUCCESS' : 'FAILED') . "\n";
+$lines = file($comp);
+echo "Total lines: " . count($lines) . "\n";
+echo "Lines containing incident_detail or openIncidentDetailCamera:\n";
+foreach ($lines as $i => $line) {
+    if (strpos($line, 'incident_detail') !== false || strpos($line, 'openIncidentDetailCamera') !== false || strpos($line, 'isCameraExtractSupported') !== false) {
+        echo ($i + 1) . ": " . trim($line) . "\n";
+    }
+}
