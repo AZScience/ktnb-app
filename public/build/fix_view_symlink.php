@@ -1,21 +1,17 @@
 <?php
 header('Content-Type: text/plain; charset=utf-8');
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 
-try {
-    $root = dirname(dirname(__DIR__));
-    $viewsDir = $root . '/resources/views';
+$root = dirname(dirname(__DIR__));
+$viewsDir = $root . '/resources/views';
 
-    echo "Scanning $viewsDir...\n";
-    $files = glob($viewsDir . '/monitoring/*/*.blade.php');
-    print_r($files);
+echo "viewsDir: $viewsDir\n";
+echo "is_writable: " . (is_writable($viewsDir) ? 'YES' : 'NO') . "\n";
 
-    $files2 = glob($viewsDir . '/monitoring/*.blade.php');
-    print_r($files2);
+$testFile = $viewsDir . '/test_write.txt';
+$w = @file_put_contents($testFile, "hello");
+echo "write in resources/views: " . ($w !== false ? 'SUCCESS' : 'FAILED') . "\n";
+if ($w !== false) @unlink($testFile);
 
-    $files3 = glob($viewsDir . '/*/*.blade.php');
-    print_r($files3);
-} catch (\Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "\n" . $e->getTraceAsString();
-}
+$storageViews = storage_path('framework/views');
+echo "storage views dir: $storageViews\n";
+echo "storage views is_writable: " . (is_writable($storageViews) ? 'YES' : 'NO') . "\n";
