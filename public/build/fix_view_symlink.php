@@ -2,16 +2,16 @@
 header('Content-Type: text/plain; charset=utf-8');
 
 $root = dirname(dirname(__DIR__));
-$viewsDir = $root . '/resources/views';
+$m = $root . '/resources/views/monitoring';
 
-echo "viewsDir: $viewsDir\n";
-echo "is_writable: " . (is_writable($viewsDir) ? 'YES' : 'NO') . "\n";
+echo "m: $m\n";
+echo "file_exists: " . (file_exists($m) ? 'YES' : 'NO') . "\n";
+echo "is_dir: " . (is_dir($m) ? 'YES' : 'NO') . "\n";
+echo "is_link: " . (is_link($m) ? 'YES' : 'NO') . "\n";
+echo "is_file: " . (is_file($m) ? 'YES' : 'NO') . "\n";
+echo "is_writable: " . (is_writable($m) ? 'YES' : 'NO') . "\n";
+echo "perms: " . substr(sprintf('%o', fileperms($m)), -4) . "\n";
+echo "owner: " . fileowner($m) . "\n";
 
-$testFile = $viewsDir . '/test_write.txt';
-$w = @file_put_contents($testFile, "hello");
-echo "write in resources/views: " . ($w !== false ? 'SUCCESS' : 'FAILED') . "\n";
-if ($w !== false) @unlink($testFile);
-
-$storageViews = storage_path('framework/views');
-echo "storage views dir: $storageViews\n";
-echo "storage views is_writable: " . (is_writable($storageViews) ? 'YES' : 'NO') . "\n";
+// Can we chmod it?
+echo "chmod(0777)... " . (@chmod($m, 0777) ? 'SUCCESS' : 'FAILED') . "\n";
