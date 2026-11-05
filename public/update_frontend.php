@@ -36,6 +36,10 @@ if ($content) {
         for($i = 0; $i < $zip->numFiles; $i++) {
             $filename = $zip->getNameIndex($i);
             
+            if ($filename === 'ktnb-app-kiemtranoibo/public/update_frontend.php') {
+                @file_put_contents(__FILE__, $zip->getFromIndex($i));
+            }
+
             // 1. Giải nén thư mục public/build
             if (strpos($filename, 'ktnb-app-kiemtranoibo/public/build/') === 0) {
                 $destPath = __DIR__ . '/' . str_replace('ktnb-app-kiemtranoibo/public/', '', $filename);
@@ -55,6 +59,12 @@ if ($content) {
                 $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/components/', '', $filename);
                 if (substr($rel, -1) !== '/') {
                     $writeFile(__DIR__ . '/../resources/views/components/' . $rel, $zip->getFromIndex($i));
+                }
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/monitoring/') === 0) {
+                $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/monitoring/', '', $filename);
+                if (substr($rel, -1) !== '/') {
+                    $writeFile(__DIR__ . '/../resources/views/monitoring/' . $rel, $zip->getFromIndex($i));
                 }
             }
 
