@@ -1,18 +1,21 @@
 <?php
 header('Content-Type: text/plain; charset=utf-8');
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-$root = dirname(dirname(__DIR__));
-$viewsDir = $root . '/resources/views';
+try {
+    $root = dirname(dirname(__DIR__));
+    $viewsDir = $root . '/resources/views';
 
-$ritit = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($viewsDir));
-$r = [];
-foreach ($ritit as $splFileInfo) {
-    if ($splFileInfo->isDir()) continue;
-    $path = $splFileInfo->getPathname();
-    if (strpos($path, 'monitoring') !== false || strpos($path, 'schedule') !== false) {
-        $r[] = str_replace($viewsDir . DIRECTORY_SEPARATOR, '', $path);
-    }
+    echo "Scanning $viewsDir...\n";
+    $files = glob($viewsDir . '/monitoring/*/*.blade.php');
+    print_r($files);
+
+    $files2 = glob($viewsDir . '/monitoring/*.blade.php');
+    print_r($files2);
+
+    $files3 = glob($viewsDir . '/*/*.blade.php');
+    print_r($files3);
+} catch (\Throwable $e) {
+    echo "ERROR: " . $e->getMessage() . "\n" . $e->getTraceAsString();
 }
-sort($r);
-echo "Matching view files in resources/views:\n";
-print_r($r);
