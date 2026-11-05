@@ -50,45 +50,12 @@ if ($content) {
                 }
             }
 
-            // 2. Cập nhật Blade view component
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/interactive-report.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/interactive-report.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/daily-schedule-settings.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/daily-schedule-settings.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/violation-form-modals.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/violation-form-modals.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/asset-reception-form.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/asset-reception-form.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/petition-form.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/petition-form.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/service-request-form.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/service-request-form.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/avatar-input.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/avatar-input.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/evidence-input-panel.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/evidence-input-panel.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/catalog-data-table.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/catalog-data-table.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/monitoring-schedule-table.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/monitoring-schedule-table.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/daily-report-viewer.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/daily-report-viewer.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/checkin-monitor.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/checkin-monitor.blade.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/activity-log-settings.blade.php') === 0) {
-                $writeFile(__DIR__ . '/../resources/views/components/activity-log-settings.blade.php', $zip->getFromIndex($i));
+            // 2. Cập nhật tất cả Blade view components & partials
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/') === 0) {
+                $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/components/', '', $filename);
+                if (substr($rel, -1) !== '/') {
+                    $writeFile(__DIR__ . '/../resources/views/components/' . $rel, $zip->getFromIndex($i));
+                }
             }
 
             // 3. Cập nhật các service và controller liên quan
