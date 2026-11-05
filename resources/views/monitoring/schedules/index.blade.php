@@ -12,6 +12,7 @@
     :modal-entity="$modalEntity ?? null"
     :ui-config="$uiConfig ?? []"
     :incident-categories="$incidentCategories"
+    :incident-categories-by-module="$incidentCategoriesByModule ?? []"
     :master-data="$masterData"
     :employee-default="$employeeDefault ?? null"
 />

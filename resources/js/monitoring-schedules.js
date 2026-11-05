@@ -330,6 +330,7 @@ export function monitoringSchedulesPage(config) {
         items: config.items,
         masterData: config.masterData,
         incidentCategories: config.incidentCategories,
+        incidentCategoriesByModule: config.incidentCategoriesByModule || {},
         employeeDefault: config.employeeDefault,
         todayDate: config.todayDate,
         modalEntity: config.modalEntity || 'lớp học',
@@ -719,8 +720,69 @@ export function monitoringSchedulesPage(config) {
             return this.uiConfig.attendingStudentsLabel || 'SV tham gia';
         },
 
+        detectItemModule(item) {
+            if (!item) return this.module || 'in-person';
+            const statusRaw = String(item.status || '').trim();
+            const status = statusRaw.toLowerCase();
+            const content = String(item.content || '').toLowerCase();
+            const building = String(item.building || '').toLowerCase();
+            const room = String(item.room || '').toLowerCase();
+
+            if (statusRaw === 'Phòng thi' || statusRaw === 'Thi cuối kỳ' || status.includes('phòng thi') || status.includes('thi kết thúc')) {
+                return 'exams';
+            }
+
+            const homeroomKeywords = ['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'];
+            if (homeroomKeywords.some((kw) => content.includes(kw) || status.includes(kw))) {
+                return 'homeroom';
+            }
+
+            if (building.includes('ngoài') || building.includes('thực hành ngoài') || room.includes('ngoài') || room.includes('ngoai') || item.building === 'THN') {
+                return 'external-practice';
+            }
+
+            if (building.includes('trực tuyến')) {
+                return 'online';
+            }
+
+            return this.module || 'in-person';
+        },
+
+        get currentItemModule() {
+            return this.detectItemModule(this.form);
+        },
+
+        get currentIncidentCategories() {
+            const mod = this.currentItemModule || this.module;
+            let list = (this.incidentCategoriesByModule && this.incidentCategoriesByModule[mod]) || this.incidentCategories || [];
+            if (this.form?.incident && !list.some((c) => c.name === this.form.incident)) {
+                list = [{ id: 'custom', name: this.form.incident }, ...list];
+            }
+            return list;
+        },
+
+        get isCameraExtractSupported() {
+            return ['homeroom', 'exams'].includes(this.currentItemModule) || ['homeroom', 'exams'].includes(this.module);
+        },
+
+        get cameraModalTitle() {
+            return this.currentItemModule === 'exams'
+                ? 'Chụp ảnh phiếu ghi nhận phòng thi'
+                : 'Chụp ảnh phiếu sinh hoạt';
+        },
+
+        get cameraGuideText() {
+            return this.currentItemModule === 'exams'
+                ? 'Đưa phiếu vào giữa khung, đủ sáng, rõ mục "Vi phạm quy chế" hoặc "Tình hình phòng thi".'
+                : 'Đưa phiếu vào giữa khung, đủ sáng, rõ mục "Nội dung sinh hoạt (CVHT)".';
+        },
+
+        get isIncidentDetailRequired() {
+            return ['homeroom', 'external-practice'].includes(this.currentItemModule);
+        },
+
         get requiresIncident() {
-            return !!this.uiConfig.requiresIncident;
+            return !!this.uiConfig.requiresIncident || ['homeroom', 'external-practice'].includes(this.currentItemModule);
         },
 
         get hasActiveAdvancedFilters() {
@@ -1650,7 +1712,8 @@ export function monitoringSchedulesPage(config) {
             this.incidentDetailExtracting = true;
             this.toast = null;
             try {
-                const res = await fetch(`/monitoring/${this.module}/extract-incident-detail`, {
+                const targetModule = this.currentItemModule || this.module;
+                const res = await fetch(`/monitoring/${targetModule}/extract-incident-detail`, {
                     method: 'POST',
                     headers: {
                         Accept: 'application/json',

@@ -1,4 +1,4 @@
-@props(['items', 'module', 'date', 'title', 'cardTitle' => null, 'modalEntity' => null, 'uiConfig' => [], 'incidentCategories', 'masterData', 'employeeDefault' => null, 'dateNotice' => null])
+@props(['items', 'module', 'date', 'title', 'cardTitle' => null, 'modalEntity' => null, 'uiConfig' => [], 'incidentCategories', 'incidentCategoriesByModule' => [], 'masterData', 'employeeDefault' => null, 'dateNotice' => null])
 
 @php
     $cardTitle = $cardTitle ?? $title;
@@ -26,6 +26,7 @@
         items: @js($items->values()),
         masterData: @js($masterData),
         incidentCategories: @js($incidentCategories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])->values()),
+        incidentCategoriesByModule: @js($incidentCategoriesByModule ?? []),
         employeeDefault: @js($employeeDefault),
         todayDate: @js(date('d/m/Y')),
         modalEntity: @js($modalEntity),
@@ -780,9 +781,9 @@
                                     <select x-model="form.incident" :disabled="isViewMode" class="nttu-form-control" :required="requiresIncident && !isViewMode">
                                         <option value="" x-show="!requiresIncident">--- Không có ---</option>
                                         <option value="" x-show="requiresIncident" disabled hidden>— Chọn việc phát sinh —</option>
-                                        @foreach ($incidentCategories as $cat)
-                                            <option value="{{ $cat->name }}">{{ $cat->name }}</option>
-                                        @endforeach
+                                        <template x-for="cat in currentIncidentCategories" :key="cat.name">
+                                            <option :value="cat.name" x-text="cat.name" :selected="form.incident === cat.name"></option>
+                                        </template>
                                     </select>
                                 </div>
                                 <div class="flex items-end">
@@ -797,29 +798,27 @@
                                 <div class="md:col-span-3 space-y-1">
                                     <label class="text-gray-500 flex items-center gap-1.5">
                                         <svg class="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                        Chi tiết việc phát sinh @if (in_array($module, ['homeroom', 'external-practice']))<span class="text-red-600">*</span>@endif
+                                        Chi tiết việc phát sinh <span x-show="isIncidentDetailRequired" class="text-red-600">*</span>
                                     </label>
                                     <div class="relative">
                                         <input x-model="form.incident_detail" :readonly="isViewMode" class="nttu-form-control w-full"
-                                            @if (in_array($module, ['homeroom', 'external-practice'])) required @endif
-                                            @if (in_array($module, ['homeroom', 'exams'])) :class="!isViewMode && 'pr-20'" @endif
+                                            :required="isIncidentDetailRequired && !isViewMode"
+                                            :class="!isViewMode && isCameraExtractSupported && 'pr-20'"
                                             :placeholder="incidentDetailExtracting ? 'Đang đọc nội dung từ ảnh phiếu...' : ''">
                                         <div x-show="!isViewMode" class="absolute inset-y-0 right-2 flex items-center gap-1">
                                             <svg x-show="incidentDetailExtracting" x-cloak class="h-4 w-4 animate-spin text-orange-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                                            @if (in_array($module, ['homeroom', 'exams']))
-                                            <button type="button" x-show="!incidentDetailExtracting"
+                                            <button type="button" x-show="!incidentDetailExtracting && isCameraExtractSupported"
                                                 class="inline-flex h-7 w-7 items-center justify-center rounded text-orange-600 hover:bg-orange-100"
                                                 @click="openIncidentDetailCamera()"
                                                 title="Chụp ảnh phiếu để trích xuất nội dung">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                             </button>
-                                            <button type="button" x-show="!incidentDetailExtracting"
+                                            <button type="button" x-show="!incidentDetailExtracting && isCameraExtractSupported"
                                                 class="inline-flex h-7 w-7 items-center justify-center rounded text-orange-600 hover:bg-orange-100"
                                                 @click="$refs.incidentDetailPhotoInput.click()"
                                                 title="Tải ảnh phiếu từ máy để trích xuất nội dung">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                             </button>
-                                            @endif
                                         </div>
                                         <input type="file" x-ref="incidentDetailCameraInput" accept="image/*" capture="environment" class="hidden"
                                             @change="extractIncidentDetailFromPhoto($event)">
@@ -833,7 +832,7 @@
                                                 <div class="flex items-center justify-between border-b px-4 py-3">
                                                     <h3 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-orange-600">
                                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                                        Chụp ảnh phiếu sinh hoạt
+                                                        <span x-text="cameraModalTitle"></span>
                                                     </h3>
                                                     <button type="button" class="rounded p-1 text-gray-500 hover:bg-gray-100" @click="closeIncidentDetailCamera()">
                                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -859,7 +858,7 @@
                                                     <video x-ref="incidentDetailVideo" autoplay playsinline muted class="mx-auto max-h-[60vh] w-full object-contain"></video>
                                                 </div>
                                                 <div class="flex items-center justify-between gap-3 px-4 py-3">
-                                                    <p class="text-xs text-gray-500">Đưa phiếu vào giữa khung, đủ sáng, rõ mục "Nội dung sinh hoạt (CVHT)".</p>
+                                                    <p class="text-xs text-gray-500" x-text="cameraGuideText"></p>
                                                     <div class="flex shrink-0 gap-2">
                                                         <button type="button" class="rounded-md border px-3 py-2 text-sm hover:bg-gray-50" @click="closeIncidentDetailCamera()">Đóng</button>
                                                         <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700" @click="captureIncidentDetailPhoto()">

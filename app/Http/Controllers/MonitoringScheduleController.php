@@ -103,6 +103,7 @@ class MonitoringScheduleController extends Controller
             'module' => $module,
             'title' => DailySchedule::moduleTitle($module),
             'incidentCategories' => $this->incidentCategoriesForModule($module),
+            'incidentCategoriesByModule' => $this->allIncidentCategoriesByModule(),
         ]);
     }
 
@@ -441,6 +442,7 @@ class MonitoringScheduleController extends Controller
             'modalEntity' => DailySchedule::moduleModalEntity($module),
             'uiConfig' => DailySchedule::moduleUiConfig($module),
             'incidentCategories' => $this->incidentCategoriesForModule($module),
+            'incidentCategoriesByModule' => $this->allIncidentCategoriesByModule(),
             'masterData' => $this->masterDataService->all(),
             'employeeDefault' => $this->employeeDefault(),
         ]);
@@ -523,6 +525,20 @@ class MonitoringScheduleController extends Controller
         }
 
         return 0;
+    }
+
+    private function allIncidentCategoriesByModule(): array
+    {
+        $modules = ['in-person', 'exams', 'homeroom', 'online', 'external-practice'];
+        $result = [];
+        foreach ($modules as $mod) {
+            $result[$mod] = $this->incidentCategoriesForModule($mod)->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+            ])->values()->all();
+        }
+
+        return $result;
     }
 
     private function incidentCategoriesForModule(string $module)
