@@ -13,6 +13,7 @@
     :ui-config="$uiConfig ?? []"
     :incident-categories="$incidentCategories"
     :incident-categories-by-module="$incidentCategoriesByModule ?? []"
+    :incidentCategoriesByModule="$incidentCategoriesByModule ?? []"
     :master-data="$masterData"
     :employee-default="$employeeDefault ?? null"
 />

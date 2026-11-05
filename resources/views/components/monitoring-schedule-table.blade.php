@@ -1,10 +1,11 @@
-@props(['items', 'module', 'date', 'title', 'cardTitle' => null, 'modalEntity' => null, 'uiConfig' => [], 'incidentCategories', 'incidentCategoriesByModule' => [], 'masterData', 'employeeDefault' => null, 'dateNotice' => null])
+@props(['items', 'module', 'date', 'title', 'cardTitle' => null, 'modalEntity' => null, 'uiConfig' => [], 'incidentCategories', 'incidentCategoriesByModule' => [], 'masterData', 'employeeDefault' => null, 'dateNotice' => null, 'incident-categories-by-module' => null])
 
 @php
     $cardTitle = $cardTitle ?? $title;
     $modalEntity = $modalEntity ?? 'lớp học';
     $employeeDefault = $employeeDefault ?? auth()->user()->name;
     $showsAttendingStudents = \App\Models\DailySchedule::showsAttendingStudents($module);
+    $incidentCategoriesByModule = !empty($incidentCategoriesByModule) ? $incidentCategoriesByModule : (!empty(${'incident-categories-by-module'}) ? ${'incident-categories-by-module'} : ($__data['incidentCategoriesByModule'] ?? []));
     $uiConfig = array_merge([
         'recordingOnlyOnEdit' => false,
         'noteInClassSection' => false,
