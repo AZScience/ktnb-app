@@ -1262,11 +1262,11 @@ export function catalogTablePage(config) {
             if (badge) {
                 if (this.selectionFilter === 'selected') {
                     badge.textContent = `(${this.selectedIds.length})`;
-                    badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
+                    badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900';
                     badge.classList.remove('hidden');
                 } else if (this.selectionFilter === 'unselected') {
                     badge.textContent = '(Chưa)';
-                    badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-red-600 text-white';
+                    badge.className = 'selection-filter-badge text-[10px] font-bold px-1 rounded bg-yellow-400 text-blue-900';
                     badge.classList.remove('hidden');
                 } else {
                     badge.classList.add('hidden');
@@ -1274,10 +1274,10 @@ export function catalogTablePage(config) {
             }
             if (funnelSvg) {
                 if (this.selectionFilter !== 'all') {
-                    funnelSvg.classList.add('!text-red-400', 'font-bold');
+                    funnelSvg.classList.add('!text-yellow-300', 'font-bold');
                     funnelSvg.classList.remove('opacity-70');
                 } else {
-                    funnelSvg.classList.remove('!text-red-400', 'font-bold');
+                    funnelSvg.classList.remove('!text-yellow-300', 'font-bold');
                     funnelSvg.classList.add('opacity-70');
                 }
             }
@@ -1556,8 +1556,8 @@ export function catalogTablePage(config) {
         sortIconClass(key) {
             const hasSort = !!this.sortStateFor(key);
             const hasFilter = this.isFiltered(key);
-            if (hasSort) return 'nttu-sort-active text-red-500 font-bold';
-            if (hasFilter) return 'nttu-sort-filtered text-red-500 font-bold';
+            if (hasSort) return 'nttu-sort-active text-yellow-300 font-bold';
+            if (hasFilter) return 'nttu-sort-filtered text-yellow-300 font-bold';
             return '';
         },
 
