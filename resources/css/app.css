@@ -841,6 +841,19 @@
         min-width: 11rem;
         max-height: min(24rem, calc(100vh - 1rem));
         overflow-y: auto;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+    .selection-filter-popover {
+        z-index: 10060;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+    .nttu-report-settings-panel {
+        z-index: 10050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+    .nttu-report-header-popover {
+        z-index: 10050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     }
 
     /* Báo cáo tương tác — theme theo trang (giống app Next.js cũ) */

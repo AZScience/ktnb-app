@@ -192,6 +192,71 @@ function getTableContext(th) {
     return null;
 }
 
+function getHeaderSafeTop() {
+    const headerEl = document.querySelector('header.sticky, .nttu-header, header');
+    if (headerEl) {
+        const rect = headerEl.getBoundingClientRect();
+        return Math.max(64, Math.round(rect.bottom));
+    }
+    return 64;
+}
+
+function positionFixedPopover(popover, trigger) {
+    const PAD = 8;
+    const GAP = 4;
+    const safeTop = getHeaderSafeTop() + PAD;
+    const triggerRect = trigger.getBoundingClientRect();
+
+    popover.style.position = 'fixed';
+    popover.style.zIndex = '10060';
+    popover.style.margin = '0';
+    popover.style.right = 'auto';
+    popover.style.bottom = 'auto';
+    popover.style.visibility = 'hidden';
+    popover.classList.remove('hidden');
+
+    const popoverWidth = popover.offsetWidth || 224;
+    const popoverHeight = popover.offsetHeight || 230;
+
+    let left = triggerRect.left;
+    if (left + popoverWidth > window.innerWidth - PAD) {
+        left = window.innerWidth - popoverWidth - PAD;
+    }
+    if (left < PAD) left = PAD;
+
+    const availableBelow = window.innerHeight - (triggerRect.bottom + GAP) - PAD;
+    const availableAbove = triggerRect.top - GAP - safeTop;
+
+    let top;
+    let maxHeight;
+
+    if (availableBelow >= popoverHeight || (availableBelow >= availableAbove && availableBelow >= 120)) {
+        top = triggerRect.bottom + GAP;
+        maxHeight = Math.max(120, availableBelow);
+    } else {
+        maxHeight = Math.max(120, availableAbove);
+        const actualH = Math.min(popoverHeight, maxHeight);
+        top = Math.max(safeTop, triggerRect.top - GAP - actualH);
+    }
+
+    popover.style.top = `${Math.round(top)}px`;
+    popover.style.left = `${Math.round(left)}px`;
+    popover.style.maxHeight = `${Math.floor(maxHeight)}px`;
+    popover.style.overflowY = 'auto';
+    popover.style.visibility = 'visible';
+}
+
+function hideFixedPopover(popover) {
+    if (!popover) return;
+    popover.classList.add('hidden');
+    popover.style.position = '';
+    popover.style.top = '';
+    popover.style.left = '';
+    popover.style.maxHeight = '';
+    popover.style.overflowY = '';
+    popover.style.visibility = '';
+}
+
 export function enhanceTableHeader(th) {
     if (!th || th.querySelector('.btn-selection-filter')) return;
 
@@ -279,13 +344,13 @@ export function enhanceTableHeader(th) {
             if (!liveCtx) return;
 
             const isHidden = popover.classList.contains('hidden');
-            document.querySelectorAll('.selection-filter-popover').forEach((p) => p.classList.add('hidden'));
+            document.querySelectorAll('.selection-filter-popover').forEach(hideFixedPopover);
 
             if (isHidden) {
                 const selected = liveCtx.getSelected();
                 popover.querySelector('.sel-count').textContent = `Đã chọn: ${selected.length}`;
                 popover.querySelector('.sel-num').textContent = `(${selected.length})`;
-                popover.classList.remove('hidden');
+                positionFixedPopover(popover, btn);
             }
         };
 
@@ -294,7 +359,7 @@ export function enhanceTableHeader(th) {
             const liveCtx = getTableContext(th);
             liveCtx?.setSelectionFilter('all');
             syncBadge();
-            popover.classList.add('hidden');
+            hideFixedPopover(popover);
         };
 
         popover.querySelector('.btn-sel-selected').onclick = (e) => {
@@ -302,7 +367,7 @@ export function enhanceTableHeader(th) {
             const liveCtx = getTableContext(th);
             liveCtx?.setSelectionFilter('selected');
             syncBadge();
-            popover.classList.add('hidden');
+            hideFixedPopover(popover);
         };
 
         popover.querySelector('.btn-sel-unselected').onclick = (e) => {
@@ -310,7 +375,7 @@ export function enhanceTableHeader(th) {
             const liveCtx = getTableContext(th);
             liveCtx?.setSelectionFilter('unselected');
             syncBadge();
-            popover.classList.add('hidden');
+            hideFixedPopover(popover);
         };
 
         popover.querySelector('.btn-toggle-page').onclick = (e) => {
@@ -318,7 +383,7 @@ export function enhanceTableHeader(th) {
             const liveCtx = getTableContext(th);
             liveCtx?.toggleCurrentPage();
             syncBadge();
-            popover.classList.add('hidden');
+            hideFixedPopover(popover);
         };
 
         popover.querySelector('.btn-clear-sel').onclick = (e) => {
@@ -326,14 +391,20 @@ export function enhanceTableHeader(th) {
             const liveCtx = getTableContext(th);
             liveCtx?.clearAll();
             syncBadge();
-            popover.classList.add('hidden');
+            hideFixedPopover(popover);
         };
 
         document.addEventListener('click', (e) => {
-            if (!th.contains(e.target)) {
-                popover.classList.add('hidden');
+            if (!th.contains(e.target) && !popover.contains(e.target)) {
+                hideFixedPopover(popover);
             }
         });
+
+        window.addEventListener('scroll', () => {
+            if (!popover.classList.contains('hidden')) {
+                hideFixedPopover(popover);
+            }
+        }, true);
     }
 
     syncBadge();

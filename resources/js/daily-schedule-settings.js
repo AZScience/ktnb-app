@@ -984,48 +984,115 @@ export function registerDailyScheduleSettings(Alpine) {
                 const btn = th.querySelector('.btn-selection-filter');
                 const popover = th.querySelector('.selection-filter-popover');
                 if (btn && popover) {
+                    const getHeaderSafeTop = () => {
+                        const headerEl = document.querySelector('header.sticky, .nttu-header, header');
+                        return headerEl ? Math.max(64, Math.round(headerEl.getBoundingClientRect().bottom)) : 64;
+                    };
+
+                    const positionFixed = () => {
+                        const PAD = 8;
+                        const GAP = 4;
+                        const safeTop = getHeaderSafeTop() + PAD;
+                        const triggerRect = btn.getBoundingClientRect();
+
+                        popover.style.position = 'fixed';
+                        popover.style.zIndex = '10060';
+                        popover.style.margin = '0';
+                        popover.style.right = 'auto';
+                        popover.style.bottom = 'auto';
+                        popover.style.visibility = 'hidden';
+                        popover.classList.remove('hidden');
+
+                        const popoverWidth = popover.offsetWidth || 224;
+                        const popoverHeight = popover.offsetHeight || 230;
+
+                        let left = triggerRect.left;
+                        if (left + popoverWidth > window.innerWidth - PAD) {
+                            left = window.innerWidth - popoverWidth - PAD;
+                        }
+                        if (left < PAD) left = PAD;
+
+                        const availableBelow = window.innerHeight - (triggerRect.bottom + GAP) - PAD;
+                        const availableAbove = triggerRect.top - GAP - safeTop;
+
+                        let top;
+                        let maxHeight;
+
+                        if (availableBelow >= popoverHeight || (availableBelow >= availableAbove && availableBelow >= 120)) {
+                            top = triggerRect.bottom + GAP;
+                            maxHeight = Math.max(120, availableBelow);
+                        } else {
+                            maxHeight = Math.max(120, availableAbove);
+                            const actualH = Math.min(popoverHeight, maxHeight);
+                            top = Math.max(safeTop, triggerRect.top - GAP - actualH);
+                        }
+
+                        popover.style.top = `${Math.round(top)}px`;
+                        popover.style.left = `${Math.round(left)}px`;
+                        popover.style.maxHeight = `${Math.floor(maxHeight)}px`;
+                        popover.style.overflowY = 'auto';
+                        popover.style.visibility = 'visible';
+                    };
+
+                    const hideFixed = () => {
+                        popover.classList.add('hidden');
+                        popover.style.position = '';
+                        popover.style.top = '';
+                        popover.style.left = '';
+                        popover.style.maxHeight = '';
+                        popover.style.overflowY = '';
+                        popover.style.visibility = '';
+                    };
+
                     btn.onclick = (e) => {
                         e.stopPropagation();
                         const isHidden = popover.classList.contains('hidden');
-                        document.querySelectorAll('.selection-filter-popover').forEach((p) => p.classList.add('hidden'));
+                        document.querySelectorAll('.selection-filter-popover').forEach((p) => {
+                            p.classList.add('hidden');
+                            p.style.position = '';
+                        });
                         if (isHidden) {
                             popover.querySelector('.sel-count').textContent = `Đã chọn: ${this.selectedRowIds.length}`;
                             popover.querySelector('.sel-num').textContent = `(${this.selectedRowIds.length})`;
-                            popover.classList.remove('hidden');
+                            positionFixed();
                         }
                     };
 
                     popover.querySelector('.btn-sel-all').onclick = (e) => {
                         e.stopPropagation();
                         this.setSelectionFilter('all');
-                        popover.classList.add('hidden');
+                        hideFixed();
                     };
                     popover.querySelector('.btn-sel-selected').onclick = (e) => {
                         e.stopPropagation();
                         this.setSelectionFilter('selected');
-                        popover.classList.add('hidden');
+                        hideFixed();
                     };
                     popover.querySelector('.btn-sel-unselected').onclick = (e) => {
                         e.stopPropagation();
                         this.setSelectionFilter('unselected');
-                        popover.classList.add('hidden');
+                        hideFixed();
                     };
                     popover.querySelector('.btn-toggle-page').onclick = (e) => {
                         e.stopPropagation();
                         this.toggleSelectAllCurrentPage();
-                        popover.classList.add('hidden');
+                        hideFixed();
                     };
                     popover.querySelector('.btn-clear-sel').onclick = (e) => {
                         e.stopPropagation();
                         this.selectedRowIds = [];
                         localStorage.setItem(selKey, JSON.stringify([]));
                         this.setSelectionFilter('all');
-                        popover.classList.add('hidden');
+                        hideFixed();
                     };
 
                     document.addEventListener('click', (e) => {
-                        if (!th.contains(e.target)) popover.classList.add('hidden');
+                        if (!th.contains(e.target) && !popover.contains(e.target)) hideFixed();
                     });
+
+                    window.addEventListener('scroll', () => {
+                        if (!popover.classList.contains('hidden')) hideFixed();
+                    }, true);
                 }
             },
 

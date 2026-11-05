@@ -104,24 +104,45 @@ function clearFloatPosition(panel) {
     panel.style.zIndex = '';
     panel.style.margin = '';
     panel.style.width = '';
+    panel.style.maxHeight = '';
+    panel.style.overflowY = '';
     panel.style.removeProperty('pointer-events');
     panel.style.removeProperty('visibility');
     delete panel.dataset.nttuFloatOpen;
+}
+
+function getHeaderSafeTop() {
+    const headerEl = document.querySelector('header.sticky, .nttu-header, header');
+    if (headerEl) {
+        const rect = headerEl.getBoundingClientRect();
+        return Math.max(64, Math.round(rect.bottom));
+    }
+    return 64;
 }
 
 function positionPanel(panel, trigger, align = 'end') {
     const triggerRect = trigger.getBoundingClientRect();
     const { width: panelWidth, height: panelHeight } = measurePanel(panel);
 
-    let top = triggerRect.bottom + GAP;
-    let left = align === 'start' ? triggerRect.left : triggerRect.right - panelWidth;
+    const safeTop = getHeaderSafeTop() + PAD;
+    const availableBelow = window.innerHeight - (triggerRect.bottom + GAP) - PAD;
+    const availableAbove = triggerRect.top - GAP - safeTop;
 
-    if (top + panelHeight > window.innerHeight - PAD) {
-        const above = triggerRect.top - panelHeight - GAP;
-        if (above >= PAD || above > top) {
-            top = above;
-        }
+    let top;
+    let maxHeight;
+
+    // Prefer opening downwards if fits or if below has more room than above
+    if (availableBelow >= panelHeight || (availableBelow >= availableAbove && availableBelow >= 120)) {
+        top = triggerRect.bottom + GAP;
+        maxHeight = Math.max(120, availableBelow);
+    } else {
+        // Open upwards
+        maxHeight = Math.max(120, availableAbove);
+        const actualH = Math.min(panelHeight, maxHeight);
+        top = Math.max(safeTop, triggerRect.top - GAP - actualH);
     }
+
+    let left = align === 'start' ? triggerRect.left : triggerRect.right - panelWidth;
 
     if (left + panelWidth > window.innerWidth - PAD) {
         left = window.innerWidth - panelWidth - PAD;
@@ -129,8 +150,6 @@ function positionPanel(panel, trigger, align = 'end') {
     if (left < PAD) {
         left = PAD;
     }
-
-    top = Math.max(PAD, Math.min(top, window.innerHeight - panelHeight - PAD));
 
     const host = panel._floatPinnedHost?.isConnected ? panel._floatPinnedHost : null;
     if (host) {
@@ -145,6 +164,8 @@ function positionPanel(panel, trigger, align = 'end') {
     panel.style.right = 'auto';
     panel.style.bottom = 'auto';
     panel.style.margin = '0';
+    panel.style.maxHeight = `${Math.floor(maxHeight)}px`;
+    panel.style.overflowY = 'auto';
     panel.style.display = 'block';
     panel.style.visibility = 'visible';
     panel.style.pointerEvents = 'auto';
