@@ -61,7 +61,7 @@ class EvidenceController extends Controller
     public function upload(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|max:51200',
+            'file' => 'required|file|max:51200|mimes:jpg,jpeg,png,gif,webp,bmp,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar,7z,mp4,webm,mov,mp3,wav,ogg,m4a',
         ]);
 
         $evidence = $this->evidence->storeFiles([$request->file('file')]);

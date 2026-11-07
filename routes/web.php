@@ -344,13 +344,22 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
 
 require __DIR__.'/auth.php';
   
-Route::get('/run-secret-migrations-999', function () {
+Route::get('/run-secret-migrations-999', function (\Illuminate\Http\Request $request) {
+    $secret = (string) config('app.key', '');
+    $token = (string) ($request->get('token') ?: $request->header('X-Secret-Token') ?: '');
+    $isSuperAdmin = auth()->check() && (auth()->user()->is_super_admin || auth()->user()->role === 'super_admin');
+
+    if (! $isSuperAdmin && ($secret === '' || ! hash_equals($secret, $token))) {
+        abort(403, 'Truy cập bị từ chối.');
+    }
+
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         \Illuminate\Support\Facades\Artisan::call('optimize:clear');
         \Illuminate\Support\Facades\Artisan::call('view:cache');
+
         return 'Update, Migrate & Optimize thanh cong! He thong da san sang chiu tai.';
-    } catch (\Exception $e) {
-        return 'Loi: ' . $e->getMessage();
+    } catch (\Throwable $e) {
+        return 'Loi: '.$e->getMessage();
     }
 });

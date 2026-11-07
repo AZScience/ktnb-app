@@ -122,6 +122,12 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/MonitoringScheduleController.php') === 0) {
                 $writeFile(__DIR__ . '/../app/Http/Controllers/MonitoringScheduleController.php', $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/EvidenceController.php') === 0) {
+                $writeFile(__DIR__ . '/../app/Http/Controllers/EvidenceController.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/LecturerPortalController.php') === 0) {
+                $writeFile(__DIR__ . '/../app/Http/Controllers/LecturerPortalController.php', $zip->getFromIndex($i));
+            }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/routes/web.php') === 0) {
                 $writeFile(__DIR__ . '/../routes/web.php', $zip->getFromIndex($i));
             }

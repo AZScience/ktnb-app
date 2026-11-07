@@ -59,12 +59,18 @@ export function registerHeader(Alpine) {
                 } else {
                     window.setTimeout(loadNotifications, 1200);
                 }
+
+                // Poll ngầm định kỳ mỗi 45s để cập nhật số thông báo chưa đọc theo thời gian thực (realtime)
+                this.pollTimer = window.setInterval(() => {
+                    this.refreshNotifications();
+                }, 45000);
             }
         },
 
         destroy() {
             if (this.pollTimer) {
                 window.clearInterval(this.pollTimer);
+                this.pollTimer = null;
             }
         },
 
@@ -84,16 +90,6 @@ export function registerHeader(Alpine) {
             this.notifOpen = opening;
             if (opening) {
                 this.refreshNotifications();
-                if (!this.pollTimer) {
-                    this.pollTimer = window.setInterval(() => {
-                        if (this.notifOpen) {
-                            this.refreshNotifications();
-                        }
-                    }, 60000);
-                }
-            } else if (this.pollTimer) {
-                window.clearInterval(this.pollTimer);
-                this.pollTimer = null;
             }
         },
 
