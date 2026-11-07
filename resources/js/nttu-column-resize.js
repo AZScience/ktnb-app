@@ -8,7 +8,18 @@ const HEADER_MEASURE_PAD = 32;
 
 /** @type {Record<string, number>} */
 const DEFAULT_WIDTHS = {
+    date: 104,
+    building: 96,
+    room: 96,
     period: 88,
+    type: 80,
+    student_count: 80,
+    content: 220,
+    status: 110,
+    proctor1: 128,
+    proctor2: 128,
+    proctor3: 128,
+    lecturer: 140,
     avatar_url: 96,
     id: 128,
     employee_id: 104,
@@ -276,6 +287,11 @@ function fillRemainingWidthBeforeSettings(table) {
 
     if (colKey) {
         applyColumnWidth(table, colKey, next);
+        const storageKey = tableStorageKey(table);
+        if (storageKey) {
+            const widths = getTableWidths(table, storageKey);
+            widths[colKey] = next;
+        }
     } else {
         applyColumnWidthAtIndex(table, lastIdx, next);
     }
@@ -780,11 +796,11 @@ function mutationShouldSyncTable(mutation) {
         return false;
     }
 
+    // Chỉ đồng bộ khi cấu trúc thead đổi (ẩn/hiện cột), không chạy lại khi tbody cập nhật nội dung từng dòng để tránh giật lắc.
     if (target.tagName === 'TBODY' || target.closest('tbody') !== null) {
-        return hasSettingsColumn(table);
+        return false;
     }
 
-    // Chỉ đồng bộ khi cấu trúc thead đổi (ẩn/hiện cột), không phải khi tbody render lại từng dòng.
     return target.tagName === 'THEAD' || target.closest('thead') !== null;
 }
 

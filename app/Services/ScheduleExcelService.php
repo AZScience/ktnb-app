@@ -760,9 +760,23 @@ class ScheduleExcelService
             return true;
         }
 
-        return trim($row['Ngày'] ?? '') === ''
-            && trim($row['Lớp'] ?? '') === ''
-            && trim($row['Nội dung'] ?? '') === '';
+        $date = trim($row['Ngày'] ?? '');
+        if ($date === '') {
+            return true;
+        }
+
+        $class = trim($row['Lớp'] ?? '');
+        $content = trim($row['Nội dung'] ?? '');
+        $room = trim($row['Phòng'] ?? '');
+        $lecturer = trim($row['Giảng viên'] ?? '');
+        $period = trim($row['Tiết'] ?? '');
+
+        // Bỏ qua các dòng chỉ có ngày mặc định/công thức kéo xuống mà không có thông tin môn, lớp, phòng, GV, tiết
+        if ($class === '' && $content === '' && $room === '' && $lecturer === '' && $period === '') {
+            return true;
+        }
+
+        return false;
     }
 
     /** @param  array<string, string>  $row */
@@ -843,8 +857,17 @@ class ScheduleExcelService
 
         foreach ($rawRows as $row) {
             $item = $this->rawRowToSchedule($row);
-            $status = (string) ($item['status'] ?? 'Phòng học');
+            $class = trim((string) ($item['class'] ?? ''));
+            $content = trim((string) ($item['content'] ?? ''));
+            $room = trim((string) ($item['room'] ?? ''));
             $lecturer = (string) ($item['lecturer'] ?? '');
+            $period = trim((string) ($item['period'] ?? ''));
+
+            if ($class === '' && $content === '' && $room === '' && trim($lecturer) === '' && $period === '') {
+                continue;
+            }
+
+            $status = (string) ($item['status'] ?? 'Phòng học');
 
             if ($status === 'Phòng thi') {
                 $key = $this->normalizeImportKey(implode('', [

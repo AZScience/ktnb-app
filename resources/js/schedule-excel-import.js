@@ -70,7 +70,10 @@ function isScheduleDataRow(row) {
     const content = String(row['Nội dung'] || '').trim();
     const room = String(row['Phòng'] || '').trim();
 
-    return !!(className || content || room || String(row['Tiết'] || '').trim());
+    const lecturer = String(row['Giảng viên'] || '').trim();
+    const period = String(row['Tiết'] || '').trim();
+
+    return !!(className || content || room || lecturer || period);
 }
 
 function rawRowToData(row) {

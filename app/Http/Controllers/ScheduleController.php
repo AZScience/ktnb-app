@@ -231,7 +231,18 @@ class ScheduleController extends Controller
     public function importBatch(Request $request): JsonResponse
     {
         $items = collect($request->input('items', []))
-            ->filter(fn (mixed $item) => is_array($item) && trim((string) ($item['date'] ?? '')) !== '')
+            ->filter(function (mixed $item) {
+                if (!is_array($item) || trim((string) ($item['date'] ?? '')) === '') {
+                    return false;
+                }
+                $hasCore = trim((string) ($item['class'] ?? '')) !== ''
+                    || trim((string) ($item['content'] ?? '')) !== ''
+                    || trim((string) ($item['room'] ?? '')) !== ''
+                    || trim((string) ($item['lecturer'] ?? '')) !== ''
+                    || trim((string) ($item['period'] ?? '')) !== '';
+
+                return $hasCore;
+            })
             ->values()
             ->all();
 

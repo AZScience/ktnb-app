@@ -12,6 +12,17 @@ export function toImportPayload(row) {
         return null;
     }
 
+    const hasCoreData = !!(
+        String(row.class || '').trim() ||
+        String(row.content || '').trim() ||
+        String(row.room || '').trim() ||
+        String(row.lecturer || '').trim() ||
+        String(row.period || '').trim()
+    );
+    if (!hasCoreData) {
+        return null;
+    }
+
     const count = row.studentCount ?? row.student_count;
 
     return {
