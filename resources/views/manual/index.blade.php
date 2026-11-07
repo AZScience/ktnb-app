@@ -83,13 +83,11 @@
                 </div>
                 <div>
                     <h2 class="text-base sm:text-lg font-black uppercase tracking-wide text-slate-950">
-                        Chế độ Chỉnh sửa & Bổ sung Đang Bật
+                        Chế độ Chỉnh sửa & Bổ sung Vị trí Bất kỳ Đang Bật
                     </h2>
                     <ul class="text-xs sm:text-sm font-semibold text-slate-900 mt-1 space-y-0.5">
-                        <li>• <strong>Sửa chữ:</strong> Nhấp chuột thẳng vào bất kỳ dòng chữ nào bên dưới để gõ, xóa, sửa.</li>
-                        <li>• <strong>Thêm chữ & Thêm bước:</strong> Bấm nút <strong>`➕ Thêm chữ`</strong> hoặc <strong>`📋 Thêm bước mới`</strong> tại các khung viền nét đứt.</li>
-                        <li>• <strong>Thêm ảnh mới:</strong> Bấm nút <strong>`🖼️ + Thêm ảnh mới`</strong> để tải và chèn ảnh mới vào vị trí đó.</li>
-                        <li>• <strong>Thay ảnh có sẵn:</strong> Nhấp nút <strong>`📷 Thay ảnh này`</strong> trên từng bức ảnh (hoặc kéo thả ảnh từ máy tính vào).</li>
+                        <li>• <strong>Nhấp vào bất kỳ đoạn nào:</strong> Xuất hiện thanh công cụ nhỏ cho phép <strong>Thêm trước</strong>, <strong>Thêm sau</strong> hoặc <strong>Chèn ảnh tại vị trí đó</strong>!</li>
+                        <li>• <strong>Dán ảnh trực tiếp:</strong> Chụp màn hình (nhấn <code>Win + Shift + S</code>), nhấp vào vị trí bất kỳ rồi nhấn <strong>Ctrl + V</strong> để dán ảnh tức thì!</li>
                         <li>• <strong>Lưu lại:</strong> Nhấn <strong>"LƯU THAY ĐỔI NGAY"</strong> (hoặc nhấn <code>Ctrl + S</code>).</li>
                     </ul>
                 </div>
@@ -134,13 +132,81 @@
         @change="handleImageSelected($event)"
     >
 
+    <!-- THANH CÔNG CỤ NHỎ ĐI THEO KHỐI ĐANG CHỌN (MINI BLOCK TOOLBAR) -->
+    <div
+        id="block-toolbar"
+        x-show="editMode && activeBlockNode"
+        x-cloak
+        class="fixed z-[60] flex items-center gap-1 bg-slate-950 text-white p-1.5 rounded-lg shadow-2xl border border-amber-400 text-xs transition-all duration-150"
+        :style="blockToolbarStyle"
+    >
+        <span class="text-[11px] font-bold text-amber-300 px-1.5">Khối đang chọn:</span>
+        <button
+            type="button"
+            @click="insertRelative('before', 'text')"
+            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold"
+            title="Thêm đoạn văn bản mới vào ngay phía trên khối này"
+        >
+            ⬆️ Chèn chữ trước
+        </button>
+        <button
+            type="button"
+            @click="insertRelative('after', 'text')"
+            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold"
+            title="Thêm đoạn văn bản mới vào ngay phía dưới khối này"
+        >
+            ⬇️ Chèn chữ sau
+        </button>
+        <button
+            type="button"
+            @click="insertRelative('after', 'image')"
+            class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1 shadow-sm"
+            title="Tải ảnh từ máy tính chèn vào ngay sau khối này"
+        >
+            <svg style="width:13px;height:13px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span>🖼️ + Chèn ảnh tại đây</span>
+        </button>
+        <button
+            type="button"
+            @click="insertRelative('after', 'step')"
+            class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold"
+            title="Thêm một bước thực hiện mới (#### Bước ...)"
+        >
+            📋 + Bước mới
+        </button>
+        <button
+            type="button"
+            @click="insertRelative('after', 'note')"
+            class="px-2 py-1 rounded bg-amber-500/30 hover:bg-amber-500/50 text-amber-200 font-semibold"
+            title="Thêm một hộp lưu ý nghiệp vụ"
+        >
+            ⚠️ + Lưu ý
+        </button>
+        <button
+            type="button"
+            @click="deleteActiveBlock()"
+            class="px-2 py-1 rounded bg-red-600/80 hover:bg-red-600 text-white font-semibold"
+            title="Xóa khối nội dung này"
+        >
+            🗑️ Xóa
+        </button>
+        <button
+            type="button"
+            @click="activeBlockNode = null"
+            class="p-1 rounded text-slate-400 hover:text-white"
+            title="Đóng thanh công cụ"
+        >
+            ✕
+        </button>
+    </div>
+
     <!-- THANH NỔI LƯU THAY ĐỔI (CHỈ HIỆN KHI ĐANG BẬT SỬA) -->
     <div x-show="editMode" x-cloak class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slate-950/90 backdrop-blur-md text-white px-4 py-2.5 rounded-full shadow-2xl border border-amber-400/50">
         <span class="flex h-2.5 w-2.5 relative">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs sm:text-sm font-semibold text-emerald-300">Đang bật Sửa & Thêm nội dung</span>
+        <span class="text-xs sm:text-sm font-semibold text-emerald-300">Đang bật Sửa / Thêm</span>
         <button
             type="button"
             @click="saveFromContent()"
@@ -302,7 +368,8 @@ if (typeof TurndownService === 'undefined') {
     border-radius: 4px;
     background-color: rgba(239, 246, 255, 0.35);
 }
-.manual-editing-active [contenteditable="true"]:focus {
+.manual-editing-active [contenteditable="true"]:focus,
+.manual-editing-active .manual-active-block {
     outline: 2px solid #2563EB !important;
     border-radius: 4px;
     background-color: rgba(239, 246, 255, 0.65);
@@ -420,7 +487,7 @@ if (typeof TurndownService === 'undefined') {
     body {
         background: white !important;
     }
-    aside, header, button, .manual-img-overlay, .manual-insert-bar, .sticky, .fixed {
+    aside, header, button, .manual-img-overlay, .manual-insert-bar, #block-toolbar, .sticky, .fixed {
         display: none !important;
     }
     .nttu-card {
@@ -441,17 +508,30 @@ function manualApp() {
         updatedAtDisplay: '{{ $updatedAt }}',
         htmlContent: {!! json_encode($htmlContent) !!},
         targetOldSrc: null,
+        activeBlockNode: null,
+        blockToolbarStyle: 'display: none;',
+        insertDirection: 'after', // 'before' | 'after'
         insertTargetNode: null,
         isInsertingNewImage: false,
 
         init() {
             window.addEventListener('scroll', () => {
                 this.showBackToTop = window.scrollY > 400;
+                if (this.activeBlockNode) {
+                    this.updateToolbarPosition();
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                if (this.activeBlockNode) {
+                    this.updateToolbarPosition();
+                }
             });
 
             this.$nextTick(() => {
                 this.setupTableOfContents();
                 this.applyEditModeState();
+                this.setupBlockSelectionAndPaste();
             });
 
             // Lắng nghe phím tắt Ctrl + S để lưu nhanh
@@ -467,6 +547,7 @@ function manualApp() {
 
         toggleEditMode() {
             this.editMode = !this.editMode;
+            this.activeBlockNode = null;
             this.applyEditModeState();
         },
 
@@ -483,7 +564,6 @@ function manualApp() {
             // Bật/tắt contenteditable cho các thẻ văn bản
             const editableTags = container.querySelectorAll('h1, h2, h3, h4, h5, p, li, td, th');
             editableTags.forEach(el => {
-                // Không bật contenteditable cho các thẻ chứa mục lục link
                 if (el.closest('.manual-toc') || el.querySelector('a[href^="#"]')) {
                     el.removeAttribute('contenteditable');
                 } else {
@@ -496,16 +576,153 @@ function manualApp() {
                 }
             });
 
-            // Quản lý khung ảnh và thanh chèn nội dung
             this.enhanceImages();
             this.renderInsertBars();
+        },
+
+        setupBlockSelectionAndPaste() {
+            const container = document.getElementById('manual-content');
+            if (!container) return;
+
+            // 1. Nhấp chuột vào bất kỳ khối nào để chọn khối đó
+            container.addEventListener('click', (e) => {
+                if (!this.editMode) return;
+                if (e.target.closest('.manual-insert-bar') || e.target.closest('.manual-img-overlay')) return;
+
+                const block = e.target.closest('p, h1, h2, h3, h4, blockquote, .manual-img-container, table, li');
+                if (block && container.contains(block)) {
+                    this.setActiveBlock(block);
+                }
+            });
+
+            // 2. HỖ TRỢ DÁN ẢNH TRỰC TIẾP TỪ CLIPBOARD (Ctrl + V)
+            container.addEventListener('paste', async (e) => {
+                if (!this.editMode) return;
+                const items = (e.clipboardData || e.originalEvent.clipboardData)?.items;
+                if (!items) return;
+
+                for (const item of items) {
+                    if (item.type.indexOf('image') === 0) {
+                        e.preventDefault();
+                        const file = item.getAsFile();
+                        if (file) {
+                            const target = this.activeBlockNode || e.target.closest('p, h1, h2, h3, h4, blockquote, .manual-img-container') || container.lastElementChild;
+                            await this.uploadAndInsertNewImage(file, target, 'after');
+                            break;
+                        }
+                    }
+                }
+            });
+        },
+
+        setActiveBlock(block) {
+            if (this.activeBlockNode) {
+                this.activeBlockNode.classList.remove('manual-active-block');
+            }
+            this.activeBlockNode = block;
+            this.activeBlockNode.classList.add('manual-active-block');
+            this.updateToolbarPosition();
+        },
+
+        updateToolbarPosition() {
+            if (!this.activeBlockNode || !this.editMode) {
+                this.blockToolbarStyle = 'display: none;';
+                return;
+            }
+
+            const rect = this.activeBlockNode.getBoundingClientRect();
+            // Đặt thanh công cụ nổi ngay phía trên hoặc phía dưới khối đang chọn
+            let top = rect.top - 46;
+            if (top < 70) {
+                top = rect.bottom + 8;
+            }
+
+            let left = rect.left;
+            if (left + 500 > window.innerWidth) {
+                left = window.innerWidth - 520;
+            }
+            if (left < 10) left = 10;
+
+            this.blockToolbarStyle = `display: flex; top: ${top}px; left: ${left}px;`;
+        },
+
+        insertRelative(direction, type) {
+            const target = this.activeBlockNode;
+            if (!target) return;
+
+            if (type === 'text') {
+                const p = document.createElement('p');
+                p.setAttribute('contenteditable', 'true');
+                p.setAttribute('spellcheck', 'false');
+                p.innerText = 'Nhấp chuột vào đây để gõ văn bản mới...';
+
+                if (direction === 'before') {
+                    target.parentNode.insertBefore(p, target);
+                } else {
+                    target.parentNode.insertBefore(p, target.nextSibling);
+                }
+                this.setActiveBlock(p);
+                p.focus();
+            } else if (type === 'step') {
+                const h4 = document.createElement('h4');
+                h4.setAttribute('contenteditable', 'true');
+                h4.setAttribute('spellcheck', 'false');
+                h4.innerText = 'Bước mới: Tiêu đề bước thực hiện';
+
+                const p = document.createElement('p');
+                p.setAttribute('contenteditable', 'true');
+                p.setAttribute('spellcheck', 'false');
+                p.innerText = 'Mô tả chi tiết các thao tác thực hiện trong bước này...';
+
+                if (direction === 'before') {
+                    target.parentNode.insertBefore(h4, target);
+                    h4.parentNode.insertBefore(p, h4.nextSibling);
+                } else {
+                    target.parentNode.insertBefore(h4, target.nextSibling);
+                    h4.parentNode.insertBefore(p, h4.nextSibling);
+                }
+                this.setActiveBlock(h4);
+                h4.focus();
+            } else if (type === 'note') {
+                const bq = document.createElement('blockquote');
+                bq.setAttribute('contenteditable', 'true');
+                bq.setAttribute('spellcheck', 'false');
+                bq.innerHTML = '<strong>LƯU Ý NGHIỆP VỤ:</strong> Nhập nội dung lưu ý quan trọng tại đây...';
+
+                if (direction === 'before') {
+                    target.parentNode.insertBefore(bq, target);
+                } else {
+                    target.parentNode.insertBefore(bq, target.nextSibling);
+                }
+                this.setActiveBlock(bq);
+                bq.focus();
+            } else if (type === 'image') {
+                this.insertTargetNode = target;
+                this.insertDirection = direction;
+                this.isInsertingNewImage = true;
+                this.targetOldSrc = null;
+                const fileInput = document.getElementById('image-file-input');
+                if (fileInput) {
+                    fileInput.value = '';
+                    fileInput.click();
+                }
+            }
+        },
+
+        deleteActiveBlock() {
+            if (!this.activeBlockNode) return;
+            if (confirm('Thầy có chắc chắn muốn xóa khối nội dung đang chọn này?')) {
+                const prev = this.activeBlockNode.previousElementSibling;
+                this.activeBlockNode.remove();
+                this.activeBlockNode = prev || null;
+                this.updateToolbarPosition();
+            }
         },
 
         setupTableOfContents() {
             const container = document.getElementById('manual-content');
             if (!container) return;
 
-            // 1. Tự động gắn id chuẩn cho tất cả các heading h1, h2, h3, h4
             const headings = container.querySelectorAll('h1, h2, h3, h4');
             headings.forEach(h => {
                 const text = h.textContent.trim();
@@ -518,7 +735,6 @@ function manualApp() {
                 }
             });
 
-            // 2. Kích hoạt chuyển hướng cuộn mượt khi click vào các liên kết Mục Lục
             const links = container.querySelectorAll('a[href^="#"]');
             links.forEach(a => {
                 if (a.dataset.tocBound) return;
@@ -532,7 +748,6 @@ function manualApp() {
                     if (!href || href === '#') return;
                     const targetId = decodeURIComponent(href.substring(1)).toLowerCase().trim();
 
-                    // Tìm heading theo id
                     let targetEl = document.getElementById(targetId);
 
                     if (!targetEl) {
@@ -592,7 +807,6 @@ function manualApp() {
                     const overlay = document.createElement('div');
                     overlay.className = 'manual-img-overlay';
 
-                    // Nút thay ảnh
                     const replaceBtn = document.createElement('button');
                     replaceBtn.type = 'button';
                     replaceBtn.className = 'btn-replace-img';
@@ -605,7 +819,6 @@ function manualApp() {
                         this.triggerImageUpload(img);
                     };
 
-                    // Nút xóa ảnh
                     const deleteBtn = document.createElement('button');
                     deleteBtn.type = 'button';
                     deleteBtn.className = 'btn-delete-img';
@@ -620,7 +833,6 @@ function manualApp() {
                         }
                     };
 
-                    // Nút phóng to ảnh
                     const zoomBtn = document.createElement('button');
                     zoomBtn.type = 'button';
                     zoomBtn.className = 'btn-zoom-img';
@@ -673,12 +885,10 @@ function manualApp() {
             const container = document.getElementById('manual-content');
             if (!container) return;
 
-            // Xóa tất cả insert bar cũ
             container.querySelectorAll('.manual-insert-bar').forEach(el => el.remove());
 
             if (!this.editMode) return;
 
-            // Gắn insert bar sau các mốc quan trọng: sau các heading h2, sau các hình ảnh, sau blockquote, sau hr
             const anchors = container.querySelectorAll('h2, h3, .manual-img-container, blockquote, hr');
             anchors.forEach(node => {
                 const bar = document.createElement('div');
@@ -699,7 +909,6 @@ function manualApp() {
                     </div>
                 `;
 
-                // Xử lý nút Thêm chữ
                 bar.querySelector('.btn-insert-p').onclick = () => {
                     const p = document.createElement('p');
                     p.setAttribute('contenteditable', 'true');
@@ -707,14 +916,8 @@ function manualApp() {
                     p.innerText = 'Nhấp chuột vào đây để nhập nội dung chữ mới...';
                     bar.parentNode.insertBefore(p, bar.nextSibling);
                     p.focus();
-                    const range = document.createRange();
-                    range.selectNodeContents(p);
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
                 };
 
-                // Xử lý nút Thêm bước mới
                 bar.querySelector('.btn-insert-step').onclick = () => {
                     const h4 = document.createElement('h4');
                     h4.setAttribute('contenteditable', 'true');
@@ -731,7 +934,6 @@ function manualApp() {
                     h4.focus();
                 };
 
-                // Xử lý nút Thêm hộp lưu ý
                 bar.querySelector('.btn-insert-note').onclick = () => {
                     const bq = document.createElement('blockquote');
                     bq.setAttribute('contenteditable', 'true');
@@ -741,9 +943,9 @@ function manualApp() {
                     bq.focus();
                 };
 
-                // Xử lý nút Thêm ảnh mới
                 bar.querySelector('.btn-insert-img').onclick = () => {
                     this.insertTargetNode = bar;
+                    this.insertDirection = 'after';
                     this.isInsertingNewImage = true;
                     this.targetOldSrc = null;
                     const fileInput = document.getElementById('image-file-input');
@@ -774,13 +976,13 @@ function manualApp() {
             if (!file) return;
 
             if (this.isInsertingNewImage) {
-                this.uploadAndInsertNewImage(file, this.insertTargetNode);
+                this.uploadAndInsertNewImage(file, this.insertTargetNode, this.insertDirection);
             } else {
                 this.uploadImageFile(file, this.targetOldSrc, this.currentImgElement);
             }
         },
 
-        async uploadAndInsertNewImage(file, targetBar) {
+        async uploadAndInsertNewImage(file, targetNode, direction = 'after') {
             const formData = new FormData();
             formData.append('image', file);
             const token = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -802,13 +1004,16 @@ function manualApp() {
                     img.setAttribute('src', data.relative_path);
                     img.alt = 'Ảnh minh chứng';
 
-                    if (targetBar && targetBar.parentNode) {
-                        targetBar.parentNode.insertBefore(img, targetBar.nextSibling);
+                    if (targetNode && targetNode.parentNode) {
+                        if (direction === 'before') {
+                            targetNode.parentNode.insertBefore(img, targetNode);
+                        } else {
+                            targetNode.parentNode.insertBefore(img, targetNode.nextSibling);
+                        }
                     } else {
                         document.getElementById('manual-content')?.appendChild(img);
                     }
 
-                    // Tái thiết lập wrapper và nút thay ảnh
                     this.enhanceImages();
                     alert('✅ ĐÃ THÊM ẢNH MỚI THÀNH CÔNG!');
                 } else {
@@ -859,10 +1064,10 @@ function manualApp() {
             const container = document.getElementById('manual-content');
             if (!container) return;
 
-            // Nhân bản node để loại bỏ overlay và insert bar trước khi chuyển sang Markdown
             const clone = container.cloneNode(true);
             clone.querySelectorAll('.manual-img-overlay').forEach(el => el.remove());
             clone.querySelectorAll('.manual-insert-bar').forEach(el => el.remove());
+            clone.querySelectorAll('.manual-active-block').forEach(el => el.classList.remove('manual-active-block'));
 
             let markdown = '';
             if (typeof TurndownService !== 'undefined') {
@@ -879,7 +1084,7 @@ function manualApp() {
                 });
                 markdown = turndown.turndown(clone);
             } else {
-                alert('Đang tải bộ chuyển đổi, vui lòng thử lại sau 2 giây...');
+                alert('Đang nạp bộ chuyển đổi, vui lòng thử lại sau 2 giây...');
                 return;
             }
 
@@ -910,6 +1115,7 @@ function manualApp() {
                     this.htmlContent = data.html;
                     this.updatedAtDisplay = data.updatedAt;
                     this.editMode = false;
+                    this.activeBlockNode = null;
                     this.$nextTick(() => {
                         this.setupTableOfContents();
                         this.applyEditModeState();
