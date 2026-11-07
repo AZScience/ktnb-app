@@ -35,10 +35,7 @@
             if (window.innerWidth < 768) {
                 document.documentElement.dataset.sidebar = 'collapsed';
             } else {
-                const match = document.cookie.match(/(?:^|; )sidebar_state=(true|false)/);
-                if (match) {
-                    document.documentElement.dataset.sidebar = match[1] === 'true' ? 'expanded' : 'collapsed';
-                }
+                document.documentElement.dataset.sidebar = 'expanded';
             }
         } catch (e) {}
     </script>

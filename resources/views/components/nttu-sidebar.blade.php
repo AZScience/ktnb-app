@@ -1,6 +1,6 @@
 <aside
     class="nttu-sidebar fixed inset-y-0 left-0 z-40 flex h-screen shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white text-sm -translate-x-full md:translate-x-0 transition-[width,transform] duration-300 ease-in-out md:relative md:z-auto"
-    :class="sidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full md:w-[4.5rem] md:translate-x-0'"
+    :class="sidebarOpen ? 'w-64 translate-x-0' : '-translate-x-full md:w-[4.5rem] md:translate-x-0'"
     :data-collapsed="!sidebarOpen"
 >
     <div class="flex h-16 shrink-0 items-center justify-center overflow-hidden border-b px-2">
@@ -61,7 +61,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('catalog') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-cloak x-show="isMenuOpen('catalog')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="sidebarOpen && isMenuOpen('catalog')" class="nttu-sidebar-sub">
             @foreach ($catalogItems as [, $route, $label, $pattern, $iconColor, $path])
                 <a href="{{ route($route) }}" class="{{ $linkClass($active($pattern)) }} text-[13px] py-1.5 gap-2" title="{{ $label }}">
                     <svg class="h-4 w-4 {{ $iconColor }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $path }}"/></svg>
@@ -93,7 +93,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('monitor') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-cloak x-show="isMenuOpen('monitor')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="sidebarOpen && isMenuOpen('monitor')" class="nttu-sidebar-sub">
             @foreach ($monitorItems as [, $route, $label, $pattern, $mod, $iconColor, $path])
                 @php
                     $isActive = $active($pattern) || ($mod && request()->routeIs('monitoring.schedules.*') && request()->route('module') === $mod);
@@ -125,7 +125,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('reports') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-cloak x-show="isMenuOpen('reports')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="sidebarOpen && isMenuOpen('reports')" class="nttu-sidebar-sub">
             @foreach ($reportItems as [, $route, $label, $pattern, $iconColor, $path])
                 <a href="{{ route($route) }}" class="{{ $linkClass($active($pattern)) }} text-[13px] py-1.5 gap-2" title="{{ $label }}">
                     <svg class="h-4 w-4 {{ $iconColor }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $path }}"/></svg>
@@ -152,7 +152,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('system') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-cloak x-show="isMenuOpen('system')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="sidebarOpen && isMenuOpen('system')" class="nttu-sidebar-sub">
             @foreach ($systemItems as [, $route, $label, $pattern, $iconColor, $path])
                 <a href="{{ route($route) }}" class="{{ $linkClass($active($pattern)) }} text-[13px] py-1.5 gap-2" title="{{ $label }}">
                     <svg class="h-4 w-4 {{ $iconColor }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $path }}"/></svg>
@@ -186,7 +186,7 @@
             </span>
             <svg class="sidebar-chevron h-4 w-4 transition-transform" :class="isMenuOpen('tools') && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div x-cloak x-show="isMenuOpen('tools')" class="nttu-sidebar-sub">
+        <div x-cloak x-show="sidebarOpen && isMenuOpen('tools')" class="nttu-sidebar-sub">
             @foreach ($toolItems as [, $route, $label, $pattern, $iconColor, $path])
                 <a href="{{ route($route) }}"
                     @if (in_array($route, $toolItemsNewTab, true)) target="_blank" rel="noopener noreferrer" @endif

@@ -570,7 +570,7 @@
     .nttu-sidebar[data-collapsed="true"] .sidebar-chevron,
     .nttu-sidebar[data-collapsed="true"] .nttu-sidebar-sub,
     .nttu-sidebar[data-collapsed="true"] .sidebar-footer-text {
-        @apply hidden;
+        display: none !important;
     }
     .nttu-sidebar[data-collapsed="true"] .nttu-sidebar-footer-inner {
         @apply w-auto justify-center;

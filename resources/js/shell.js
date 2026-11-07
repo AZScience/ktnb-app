@@ -9,19 +9,6 @@ function readSidebarOpen() {
     if (isMobile()) {
         return false;
     }
-    try {
-        const fromStorage = localStorage.getItem(SIDEBAR_COOKIE);
-        if (fromStorage === 'true' || fromStorage === 'false') {
-            return fromStorage === 'true';
-        }
-        const match = document.cookie.match(new RegExp(`(?:^|; )${SIDEBAR_COOKIE}=(true|false)`));
-        if (match) {
-            return match[1] === 'true';
-        }
-    } catch {
-        // ignore
-    }
-
     return true;
 }
 
@@ -47,7 +34,8 @@ export function registerNttuShell(Alpine) {
             if (isMobile()) {
                 this.sidebarOpen = false;
             } else {
-                persistSidebarOpen(this.sidebarOpen);
+                this.sidebarOpen = true;
+                persistSidebarOpen(true);
             }
 
             if (initialOpenMenu) {
