@@ -410,7 +410,7 @@ class MonitoringScheduleController extends Controller
 
         return $this->roomChecklistExport->download(
             $request,
-            fn ($query) => $query->where('date', $date)->forModule($module, $request->boolean('include_exams'), $request->boolean('include_homeroom')),
+            fn ($query) => $query->where('date', $date)->forModule($module, $request->boolean('include_exams'), $request->boolean('include_homeroom', true)),
             'LichHoc_'.$slug.'_'.$safeDate.'_'.date('H-i').'.xlsx',
         );
     }

@@ -246,6 +246,12 @@ class ScheduleExcelService
                 if ($field === 'student_count' && $value !== '') {
                     $value = (int) $value;
                 }
+                if ($field === 'note') {
+                    $incidentDetail = trim((string) ($item->incident_detail ?? ''));
+                    if ($incidentDetail !== '') {
+                        $value = $incidentDetail;
+                    }
+                }
                 $sheet->setCellValue($col.$rowNum, $value);
                 $col++;
             }
@@ -297,14 +303,8 @@ class ScheduleExcelService
 
         foreach ($items as $item) {
             $studentCount = $item->student_count;
-            $note = (string) ($item->note ?? '');
-
-            if (\App\Models\DailySchedule::isRecorded($item)) {
-                $incidentDetail = trim((string) ($item->incident_detail ?? ''));
-                if ($incidentDetail !== '') {
-                    $note = $incidentDetail;
-                }
-            }
+            $incidentDetail = trim((string) ($item->incident_detail ?? ''));
+            $note = $incidentDetail !== '' ? $incidentDetail : (string) ($item->note ?? '');
 
             $rows[] = [
                 $stt++,
