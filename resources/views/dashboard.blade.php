@@ -711,9 +711,12 @@
 
 <script>
 function mobilePdfViewer(pdfUrl) {
+    // Biến lưu trữ PDFDocumentProxy thô nằm ngoài Reactivity Proxy của Alpine.js
+    // Ngăn chặn lỗi ES2022: 'Cannot read private member #d from an object whose class did not declare it'
+    let _rawPdfDoc = null;
+
     return {
         url: pdfUrl,
-        pdfDoc: null,
         pageNum: 1,
         totalPages: 1,
         scale: 1.0,
@@ -747,7 +750,7 @@ function mobilePdfViewer(pdfUrl) {
             }
 
             window.addEventListener('resize', () => {
-                if (this.pdfDoc && !this.loading && !this.useNativeViewer) {
+                if (_rawPdfDoc && !this.loading && !this.useNativeViewer) {
                     this.renderCurrentPage();
                 }
             });
@@ -755,7 +758,7 @@ function mobilePdfViewer(pdfUrl) {
 
         toggleViewerMode() {
             this.useNativeViewer = !this.useNativeViewer;
-            if (!this.useNativeViewer && this.pdfDoc) {
+            if (!this.useNativeViewer && _rawPdfDoc) {
                 this.$nextTick(() => {
                     this.renderCurrentPage();
                 });
@@ -815,8 +818,10 @@ function mobilePdfViewer(pdfUrl) {
                 };
 
                 const task = pdfjsLib.getDocument(docOptions);
-                this.pdfDoc = await task.promise;
-                this.totalPages = this.pdfDoc.numPages || 1;
+                const loadedDoc = await task.promise;
+                _rawPdfDoc = (window.Alpine && Alpine.raw) ? Alpine.raw(loadedDoc) : loadedDoc;
+
+                this.totalPages = _rawPdfDoc.numPages || 1;
                 this.pageNum = 1;
                 this.loading = false;
                 this.$nextTick(() => {
@@ -833,7 +838,11 @@ function mobilePdfViewer(pdfUrl) {
         },
 
         async renderPageToCanvas(canvas, pageNum, zoomScale = 1.0, isFitWidth = true) {
-            if (!this.pdfDoc || !canvas) return;
+            let doc = _rawPdfDoc;
+            if (!doc || !canvas) return;
+            if (window.Alpine && Alpine.raw) {
+                doc = Alpine.raw(doc);
+            }
 
             if (canvas._renderTask) {
                 try {
@@ -843,7 +852,10 @@ function mobilePdfViewer(pdfUrl) {
             }
 
             try {
-                const page = await this.pdfDoc.getPage(pageNum);
+                let page = await doc.getPage(pageNum);
+                if (window.Alpine && Alpine.raw) {
+                    page = Alpine.raw(page);
+                }
                 const ctx = canvas.getContext('2d');
 
                 let targetWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
