@@ -96,6 +96,15 @@
             <div class="flex items-center gap-2 shrink-0">
                 <button
                     type="button"
+                    @click="openVideoModal('add', 'after', null)"
+                    class="px-3.5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-1.5 transition"
+                    title="Chèn thêm video hướng dẫn mới vào tài liệu"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    <span>🎥 Thêm video mới</span>
+                </button>
+                <button
+                    type="button"
                     @click="saveFromContent()"
                     :disabled="isSaving"
                     class="px-5 py-3 rounded-xl bg-slate-950 hover:bg-slate-900 disabled:opacity-50 text-amber-300 font-black text-sm shadow-xl flex items-center gap-2 transform active:scale-95 transition"
@@ -164,7 +173,16 @@
             title="Tải ảnh từ máy tính chèn vào ngay sau khối này"
         >
             <svg style="width:13px;height:13px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <span>🖼️ + Chèn ảnh tại đây</span>
+            <span>🖼️ + Chèn ảnh</span>
+        </button>
+        <button
+            type="button"
+            @click="insertRelative('after', 'video')"
+            class="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold flex items-center gap-1 shadow-sm"
+            title="Chèn video hướng dẫn mới (YouTube/MP4/Drive) vào sau khối này"
+        >
+            <svg style="width:13px;height:13px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>🎥 + Chèn video</span>
         </button>
         <button
             type="button"
@@ -231,6 +249,129 @@
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
             <img :src="zoomImg" alt="Phóng to minh chứng" class="max-h-[90vh] w-auto rounded object-contain">
+        </div>
+    </div>
+
+    <!-- Modal Thêm / Sửa Video Hướng Dẫn -->
+    <div x-show="videoModalOpen" x-cloak class="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" @keydown.escape.window="if (!videoIsUploading) videoModalOpen = false">
+        <div class="relative w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden" @click.outside="if (!videoIsUploading) videoModalOpen = false">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800" x-text="videoModalMode === 'add' ? 'Thêm Video Hướng Dẫn' : 'Chỉnh Sửa Video Hướng Dẫn'"></h3>
+                        <p class="text-xs text-slate-500">Hỗ trợ dán link YouTube, Google Drive hoặc tải tệp video MP4/WebM từ máy tính</p>
+                    </div>
+                </div>
+                <button type="button" @click="videoModalOpen = false" class="text-slate-400 hover:text-slate-600 rounded-lg p-1.5 transition">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-4">
+                <!-- Tabs chuyển đổi nguồn video -->
+                <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+                    <button
+                        type="button"
+                        @click="videoSourceType = 'url'"
+                        :class="videoSourceType === 'url' ? 'bg-white text-indigo-700 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="py-2 text-xs sm:text-sm rounded-lg transition flex items-center justify-center gap-2"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                        <span>Dán Link (YouTube/Drive)</span>
+                    </button>
+                    <button
+                        type="button"
+                        @click="videoSourceType = 'upload'"
+                        :class="videoSourceType === 'upload' ? 'bg-white text-indigo-700 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
+                        class="py-2 text-xs sm:text-sm rounded-lg transition flex items-center justify-center gap-2"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        <span>Tải Tệp Video Lên</span>
+                    </button>
+                </div>
+
+                <!-- Form nhập URL -->
+                <div x-show="videoSourceType === 'url'" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Đường dẫn liên kết Video (URL) <span class="text-rose-500">*</span></label>
+                        <input
+                            type="url"
+                            x-model="videoUrl"
+                            placeholder="VD: https://www.youtube.com/watch?v=... hoặc https://youtu.be/..."
+                            class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition"
+                        >
+                    </div>
+                    <div class="rounded-lg bg-indigo-50/70 p-3 text-xs text-indigo-900 leading-relaxed border border-indigo-100">
+                        💡 <strong>Tự động nhận diện:</strong> Hỗ trợ link xem <strong>YouTube</strong>, <strong>YouTube Shorts</strong>, <strong>Google Drive</strong> hoặc đường dẫn tệp video trực tiếp (.mp4, .webm).
+                    </div>
+                </div>
+
+                <!-- Form tải tệp lên -->
+                <div x-show="videoSourceType === 'upload'" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Chọn tệp video từ máy tính
+                            <span x-show="videoModalMode === 'add'" class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-xl p-5 text-center cursor-pointer transition bg-slate-50 hover:bg-indigo-50/30">
+                            <input
+                                type="file"
+                                id="video-modal-file-input"
+                                accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-m4v"
+                                @change="handleVideoFilePicked($event)"
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            >
+                            <div class="flex flex-col items-center justify-center gap-1.5 pointer-events-none">
+                                <div class="p-2.5 rounded-full bg-indigo-100 text-indigo-600">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                </div>
+                                <p class="text-xs sm:text-sm font-semibold text-slate-700" x-text="videoSelectedFileName || 'Nhấp chuột hoặc kéo thả video vào đây'"></p>
+                                <p class="text-[11px] text-slate-400">Hỗ trợ MP4, WebM, MOV. Tối đa 100MB</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div x-show="videoModalMode === 'edit' && !videoSelectedFileName" class="text-xs text-amber-700 bg-amber-50 rounded-lg p-2.5 border border-amber-200">
+                        ℹ️ Đang giữ video hiện tại. Nếu chỉ muốn sửa tiêu đề / chú thích, Thầy/Cô không cần chọn lại file video.
+                    </div>
+                </div>
+
+                <!-- Trường nhập chú thích Video (Caption) -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tiêu đề / Chú thích Video (Caption)</label>
+                    <input
+                        type="text"
+                        x-model="videoCaption"
+                        placeholder="VD: Video hướng dẫn quy trình lập biên bản vi phạm..."
+                        class="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 transition"
+                    >
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-end gap-2 border-t border-slate-200 px-6 py-3.5 bg-slate-50">
+                <button
+                    type="button"
+                    @click="videoModalOpen = false"
+                    :disabled="videoIsUploading"
+                    class="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 transition"
+                >
+                    Hủy
+                </button>
+                <button
+                    type="button"
+                    @click="submitVideoModal()"
+                    :disabled="videoIsUploading"
+                    class="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow transition flex items-center gap-2 disabled:opacity-50"
+                >
+                    <svg x-show="videoIsUploading" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    <span x-text="videoIsUploading ? 'Đang tải lên...' : (videoModalMode === 'add' ? 'Thêm Video' : 'Cập nhật Video')"></span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -482,6 +623,77 @@ if (typeof TurndownService === 'undefined') {
 .manual-insert-bar .btn-insert-img:hover {
     background-color: #10B981;
 }
+.manual-insert-bar .btn-insert-video {
+    background-color: #4F46E5;
+    color: white;
+    border-color: #4338CA;
+}
+.manual-insert-bar .btn-insert-video:hover {
+    background-color: #6366F1;
+}
+
+/* Khối Video hướng dẫn */
+.manual-video-block {
+    position: relative;
+    margin: 1.75rem auto;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #E2E8F0;
+    background-color: #0F172A;
+    transition: all 0.25s ease;
+}
+.manual-video-block.is-wide {
+    max-width: 95% !important;
+}
+.manual-video-overlay {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(6px);
+    padding: 6px 12px;
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    z-index: 25;
+}
+.manual-video-overlay button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.manual-video-overlay .btn-edit-video {
+    background-color: #4F46E5;
+    color: white;
+}
+.manual-video-overlay .btn-edit-video:hover {
+    background-color: #4338CA;
+    transform: scale(1.05);
+}
+.manual-video-overlay .btn-delete-video {
+    background-color: #EF4444;
+    color: white;
+}
+.manual-video-overlay .btn-delete-video:hover {
+    background-color: #DC2626;
+    transform: scale(1.05);
+}
+.manual-video-overlay .btn-toggle-size {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+.manual-video-overlay .btn-toggle-size:hover {
+    background-color: rgba(255, 255, 255, 0.35);
+}
 
 @media print {
     body {
@@ -513,6 +725,17 @@ function manualApp() {
         insertDirection: 'after', // 'before' | 'after'
         insertTargetNode: null,
         isInsertingNewImage: false,
+        videoModalOpen: false,
+        videoModalMode: 'add',
+        videoSourceType: 'url',
+        videoUrl: '',
+        videoCaption: '',
+        videoSelectedFile: null,
+        videoSelectedFileName: '',
+        videoIsUploading: false,
+        targetVideoBlock: null,
+        videoInsertDirection: 'after',
+        videoInsertTargetNode: null,
 
         scrollToTop() {
             const mainContainer = document.querySelector('main');
@@ -592,6 +815,7 @@ function manualApp() {
             });
 
             this.enhanceImages();
+            this.enhanceVideos();
             this.renderInsertBars();
         },
 
@@ -721,6 +945,8 @@ function manualApp() {
                     fileInput.value = '';
                     fileInput.click();
                 }
+            } else if (type === 'video') {
+                this.openVideoModal('add', direction, target);
             }
         },
 
@@ -956,7 +1182,11 @@ function manualApp() {
                         <button type="button" class="btn-insert-note">⚠️ Thêm hộp lưu ý</button>
                         <button type="button" class="btn-insert-img">
                             <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            <span>🖼️ + Thêm ảnh mới</span>
+                            <span>🖼️ + Thêm ảnh</span>
+                        </button>
+                        <button type="button" class="btn-insert-video">
+                            <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span>🎥 + Thêm video</span>
                         </button>
                     </div>
                 `;
@@ -1005,6 +1235,10 @@ function manualApp() {
                         fileInput.value = '';
                         fileInput.click();
                     }
+                };
+
+                bar.querySelector('.btn-insert-video').onclick = () => {
+                    this.openVideoModal('add', 'after', bar);
                 };
 
                 node.parentNode.insertBefore(bar, node.nextSibling);
@@ -1133,51 +1367,410 @@ function manualApp() {
             }
         },
 
-        saveFromContent() {
-            const container = document.getElementById('manual-content');
-            if (!container) return;
+        openVideoModal(mode = 'add', direction = 'after', targetNode = null, videoBlock = null) {
+            this.videoModalMode = mode;
+            this.videoInsertDirection = direction || 'after';
+            this.videoInsertTargetNode = targetNode || this.activeBlockNode || null;
+            this.targetVideoBlock = videoBlock || null;
+            this.videoSelectedFile = null;
+            this.videoSelectedFileName = '';
+            this.videoIsUploading = false;
 
-            const clone = container.cloneNode(true);
-            clone.querySelectorAll('.manual-img-overlay').forEach(el => el.remove());
-            clone.querySelectorAll('.manual-insert-bar').forEach(el => el.remove());
-            clone.querySelectorAll('.manual-active-block').forEach(el => el.classList.remove('manual-active-block'));
+            const fileInput = document.getElementById('video-modal-file-input');
+            if (fileInput) fileInput.value = '';
 
-            let markdown = '';
-            if (typeof TurndownService !== 'undefined') {
-                const turndown = new TurndownService({
-                    headingStyle: 'atx',
-                    codeBlockStyle: 'fenced',
-                    bulletListMarker: '-',
-                });
-                turndown.addRule('tables', {
-                    filter: ['table'],
-                    replacement: function (content, node) {
-                        return '\n\n' + node.outerHTML + '\n\n';
-                    }
-                });
-                turndown.addRule('images', {
-                    filter: 'img',
-                    replacement: function (content, node) {
-                        let src = node.getAttribute('src') || '';
-                        src = src.replace(/\?v=\d+.*$/, '');
-                        try {
-                            const url = new URL(src, window.location.origin);
-                            if (url.origin === window.location.origin) {
-                                src = url.pathname.replace(/^\/+/, '');
-                            }
-                        } catch (e) {}
-                        const alt = node.getAttribute('alt') || 'Ảnh minh chứng';
-                        return `\n\n![${alt}](${src})\n\n`;
-                    }
-                });
-                markdown = turndown.turndown(clone);
+            if (mode === 'edit' && videoBlock) {
+                const type = videoBlock.dataset.videoType || 'upload';
+                const src = videoBlock.dataset.videoSrc || '';
+                const caption = videoBlock.dataset.caption || '';
+                this.videoSourceType = (type === 'youtube' || type === 'drive' || type === 'url') ? 'url' : 'upload';
+                this.videoUrl = src;
+                this.videoCaption = caption;
             } else {
-                alert('Đang nạp bộ chuyển đổi, vui lòng thử lại sau 2 giây...');
-                return;
+                this.videoSourceType = 'url';
+                this.videoUrl = '';
+                this.videoCaption = '';
+            }
+            this.videoModalOpen = true;
+        },
+
+        handleVideoFilePicked(e) {
+            const file = e.target.files[0];
+            if (file) {
+                this.videoSelectedFile = file;
+                const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+                this.videoSelectedFileName = `${file.name} (${sizeMb} MB)`;
+            }
+        },
+
+        normalizeVideoUrl(rawUrl) {
+            if (!rawUrl) return { type: 'unknown', url: '' };
+            const trimmed = rawUrl.trim();
+
+            // 1. YouTube link
+            const ytMatch = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_\-]{11})/i);
+            if (ytMatch) {
+                return {
+                    type: 'youtube',
+                    url: 'https://www.youtube.com/embed/' + ytMatch[1] + '?rel=0&modestbranding=1',
+                    original: trimmed
+                };
             }
 
-            this.saveManual(markdown);
+            // 2. Google Drive video preview link
+            const gdMatch = trimmed.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_\-]+)/i);
+            if (gdMatch) {
+                return {
+                    type: 'drive',
+                    url: 'https://drive.google.com/file/d/' + gdMatch[1] + '/preview',
+                    original: trimmed
+                };
+            }
+
+            // 3. Direct video file
+            if (trimmed.match(/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i)) {
+                return {
+                    type: 'upload',
+                    url: trimmed,
+                    original: trimmed
+                };
+            }
+
+            return {
+                type: 'url',
+                url: trimmed,
+                original: trimmed
+            };
         },
+
+        buildVideoBlockElement(type, src, caption) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'manual-video-block my-6 max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-lg border border-slate-200 bg-slate-900';
+            wrapper.dataset.videoType = type;
+            wrapper.dataset.videoSrc = src;
+            wrapper.dataset.caption = caption || '';
+
+            let playerHtml = '';
+            if (type === 'youtube' || type === 'drive') {
+                playerHtml = `
+                    <div class="video-player-wrapper aspect-video w-full bg-black relative flex items-center justify-center">
+                        <iframe src="${src}" class="w-full h-full" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                    </div>
+                `;
+            } else {
+                playerHtml = `
+                    <div class="video-player-wrapper w-full bg-black">
+                        <video controls preload="metadata" class="w-full max-h-[550px] mx-auto block" src="${src}">
+                            Trình duyệt không hỗ trợ thẻ video HTML5.
+                        </video>
+                    </div>
+                `;
+            }
+
+            const captionText = caption ? caption : 'Video minh họa nghiệp vụ';
+            const captionHtml = `
+                <div class="video-caption-bar px-4 py-2.5 bg-slate-100 text-slate-700 text-center text-xs sm:text-sm font-medium border-t border-slate-200 flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="video-caption-text">${captionText}</span>
+                </div>
+            `;
+
+            wrapper.innerHTML = playerHtml + captionHtml;
+            return wrapper;
+        },
+
+        async submitVideoModal() {
+            if (this.videoSourceType === 'url') {
+                const url = (this.videoUrl || '').trim();
+                if (!url) {
+                    alert('Vui lòng nhập đường dẫn video (URL)!');
+                    return;
+                }
+
+                const norm = this.normalizeVideoUrl(url);
+                const caption = (this.videoCaption || '').trim();
+
+                if (this.videoModalMode === 'add') {
+                    const block = this.buildVideoBlockElement(norm.type, norm.url, caption);
+                    const target = this.videoInsertTargetNode;
+                    const direction = this.videoInsertDirection;
+
+                    if (target && target.parentNode) {
+                        if (direction === 'before') {
+                            target.parentNode.insertBefore(block, target);
+                        } else {
+                            target.parentNode.insertBefore(block, target.nextSibling);
+                        }
+                    } else {
+                        document.getElementById('manual-content')?.appendChild(block);
+                    }
+                    this.enhanceVideos();
+                    this.videoModalOpen = false;
+                    alert('✅ ĐÃ CHÈN VIDEO HƯỚNG DẪN THÀNH CÔNG!');
+                } else if (this.videoModalMode === 'edit' && this.targetVideoBlock) {
+                    const block = this.targetVideoBlock;
+                    block.dataset.videoType = norm.type;
+                    block.dataset.videoSrc = norm.url;
+                    block.dataset.caption = caption;
+
+                    const playerWrapper = block.querySelector('.video-player-wrapper');
+                    if (playerWrapper) {
+                        if (norm.type === 'youtube' || norm.type === 'drive') {
+                            playerWrapper.className = 'video-player-wrapper aspect-video w-full bg-black relative flex items-center justify-center';
+                            playerWrapper.innerHTML = `<iframe src="${norm.url}" class="w-full h-full" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+                        } else {
+                            playerWrapper.className = 'video-player-wrapper w-full bg-black';
+                            playerWrapper.innerHTML = `<video controls preload="metadata" class="w-full max-h-[550px] mx-auto block" src="${norm.url}">Trình duyệt không hỗ trợ thẻ video HTML5.</video>`;
+                        }
+                    }
+
+                    const captionSpan = block.querySelector('.video-caption-text');
+                    if (captionSpan) {
+                        captionSpan.textContent = caption || 'Video minh họa nghiệp vụ';
+                    }
+
+                    this.videoModalOpen = false;
+                    alert('✅ ĐÃ CẬP NHẬT VIDEO THÀNH CÔNG!');
+                }
+            } else if (this.videoSourceType === 'upload') {
+                const file = this.videoSelectedFile;
+                const caption = (this.videoCaption || '').trim();
+
+                if (this.videoModalMode === 'add') {
+                    if (!file) {
+                        alert('Vui lòng chọn tệp video từ máy tính của bạn!');
+                        return;
+                    }
+
+                    this.videoIsUploading = true;
+                    try {
+                        const formData = new FormData();
+                        formData.append('video', file);
+                        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+                        const response = await fetch('{{ route("manual.upload_video") }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': token,
+                                'Accept': 'application/json',
+                            },
+                            body: formData,
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            const block = this.buildVideoBlockElement('upload', data.relative_path, caption);
+                            const target = this.videoInsertTargetNode;
+                            const direction = this.videoInsertDirection;
+
+                            if (target && target.parentNode) {
+                                if (direction === 'before') {
+                                    target.parentNode.insertBefore(block, target);
+                                } else {
+                                    target.parentNode.insertBefore(block, target.nextSibling);
+                                }
+                            } else {
+                                document.getElementById('manual-content')?.appendChild(block);
+                            }
+                            this.enhanceVideos();
+                            this.videoModalOpen = false;
+                            alert('✅ ĐÃ TẢI LÊN VÀ CHÈN VIDEO THÀNH CÔNG!');
+                        } else {
+                            alert('❌ Lỗi tải video: ' + (data.message || 'Không thể upload video'));
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('❌ Lỗi kết nối khi tải video lên máy chủ!');
+                    } finally {
+                        this.videoIsUploading = false;
+                    }
+                } else if (this.videoModalMode === 'edit' && this.targetVideoBlock) {
+                    const block = this.targetVideoBlock;
+
+                    // Nếu có file video mới thì tải lên thay thế
+                    if (file) {
+                        this.videoIsUploading = true;
+                        try {
+                            const formData = new FormData();
+                            formData.append('video', file);
+                            if (block.dataset.videoSrc) {
+                                formData.append('old_src', block.dataset.videoSrc);
+                            }
+                            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+                            const response = await fetch('{{ route("manual.upload_video") }}', {
+                                method: 'POST',
+                                headers: {
+                                'X-CSRF-TOKEN': token,
+                                'Accept': 'application/json',
+                            },
+                            body: formData,
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            block.dataset.videoType = 'upload';
+                            block.dataset.videoSrc = data.relative_path;
+                            block.dataset.caption = caption;
+
+                            const playerWrapper = block.querySelector('.video-player-wrapper');
+                            if (playerWrapper) {
+                                playerWrapper.className = 'video-player-wrapper w-full bg-black';
+                                playerWrapper.innerHTML = `<video controls preload="metadata" class="w-full max-h-[550px] mx-auto block" src="${data.url}">Trình duyệt không hỗ trợ thẻ video HTML5.</video>`;
+                            }
+
+                            const captionSpan = block.querySelector('.video-caption-text');
+                            if (captionSpan) {
+                                captionSpan.textContent = caption || 'Video minh họa nghiệp vụ';
+                            }
+
+                            this.videoModalOpen = false;
+                            alert('✅ ' + data.message);
+                        } else {
+                            alert('❌ Lỗi cập nhật video: ' + (data.message || 'Không thể upload video'));
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('❌ Lỗi kết nối khi tải video lên máy chủ!');
+                    } finally {
+                        this.videoIsUploading = false;
+                    }
+                } else {
+                    // Chỉ sửa caption
+                    block.dataset.caption = caption;
+                    const captionSpan = block.querySelector('.video-caption-text');
+                    if (captionSpan) {
+                        captionSpan.textContent = caption || 'Video minh họa nghiệp vụ';
+                    }
+                    this.videoModalOpen = false;
+                    alert('✅ ĐÃ CẬP NHẬT CHÚ THÍCH VIDEO THÀNH CÔNG!');
+                }
+            }
+        }
+    },
+
+    enhanceVideos() {
+        const container = document.getElementById('manual-content');
+        if (!container) return;
+
+        const videos = container.querySelectorAll('.manual-video-block');
+        videos.forEach(wrapper => {
+            let overlay = wrapper.querySelector('.manual-video-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'manual-video-overlay';
+
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'btn-edit-video';
+                editBtn.innerHTML = `
+                    <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span>✏️ Sửa video</span>
+                `;
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.openVideoModal('edit', null, null, wrapper);
+                };
+
+                const sizeBtn = document.createElement('button');
+                sizeBtn.type = 'button';
+                sizeBtn.className = 'btn-toggle-size';
+                sizeBtn.innerHTML = `
+                    <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                    <span>↔️ Đổi cỡ</span>
+                `;
+                sizeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    wrapper.classList.toggle('is-wide');
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'btn-delete-video';
+                deleteBtn.innerHTML = `
+                    <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Xóa</span>
+                `;
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('Thầy có chắc chắn muốn xóa video hướng dẫn này khỏi tài liệu?')) {
+                        wrapper.remove();
+                    }
+                };
+
+                overlay.appendChild(editBtn);
+                overlay.appendChild(sizeBtn);
+                overlay.appendChild(deleteBtn);
+                wrapper.appendChild(overlay);
+
+                wrapper.addEventListener('click', (e) => {
+                    if (this.editMode) {
+                        this.setActiveBlock(wrapper);
+                    }
+                });
+            }
+
+            overlay.style.display = this.editMode ? 'flex' : 'none';
+        });
+    },
+
+    saveFromContent() {
+        const container = document.getElementById('manual-content');
+        if (!container) return;
+
+        const clone = container.cloneNode(true);
+        clone.querySelectorAll('.manual-img-overlay').forEach(el => el.remove());
+        clone.querySelectorAll('.manual-video-overlay').forEach(el => el.remove());
+        clone.querySelectorAll('.manual-insert-bar').forEach(el => el.remove());
+        clone.querySelectorAll('.manual-active-block').forEach(el => el.classList.remove('manual-active-block'));
+
+        let markdown = '';
+        if (typeof TurndownService !== 'undefined') {
+            const turndown = new TurndownService({
+                headingStyle: 'atx',
+                codeBlockStyle: 'fenced',
+                bulletListMarker: '-',
+            });
+            turndown.addRule('tables', {
+                filter: ['table'],
+                replacement: function (content, node) {
+                    return '\n\n' + node.outerHTML + '\n\n';
+                }
+            });
+            turndown.addRule('manualVideos', {
+                filter: function (node) {
+                    return node.classList && node.classList.contains('manual-video-block');
+                },
+                replacement: function (content, node) {
+                    const videoClone = node.cloneNode(true);
+                    videoClone.querySelectorAll('.manual-video-overlay').forEach(el => el.remove());
+                    videoClone.classList.remove('manual-active-block');
+                    return '\n\n' + videoClone.outerHTML.trim() + '\n\n';
+                }
+            });
+            turndown.addRule('images', {
+                filter: 'img',
+                replacement: function (content, node) {
+                    let src = node.getAttribute('src') || '';
+                    src = src.replace(/\?v=\d+.*$/, '');
+                    try {
+                        const url = new URL(src, window.location.origin);
+                        if (url.origin === window.location.origin) {
+                            src = url.pathname.replace(/^\/+/, '');
+                        }
+                    } catch (e) {}
+                    const alt = node.getAttribute('alt') || 'Ảnh minh chứng';
+                    return `\n\n![${alt}](${src})\n\n`;
+                }
+            });
+            markdown = turndown.turndown(clone);
+        } else {
+            alert('Đang nạp bộ chuyển đổi, vui lòng thử lại sau 2 giây...');
+            return;
+        }
+
+        this.saveManual(markdown);
+    },
 
         async saveManual(content) {
             if (this.isSaving) return;

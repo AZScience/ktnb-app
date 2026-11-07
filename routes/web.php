@@ -370,6 +370,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/huong-dan-su-dung', [\App\Http\Controllers\ManualController::class, 'index'])->name('manual.view');
     Route::post('/huong-dan-su-dung/save', [\App\Http\Controllers\ManualController::class, 'save'])->name('manual.save');
     Route::post('/huong-dan-su-dung/upload-image', [\App\Http\Controllers\ManualController::class, 'uploadImage'])->name('manual.upload_image');
+    Route::post('/huong-dan-su-dung/upload-video', [\App\Http\Controllers\ManualController::class, 'uploadVideo'])->name('manual.upload_video');
 });
 
 Route::get('/screenshots/{path}', function ($path) {
@@ -382,4 +383,15 @@ Route::get('/screenshots/{path}', function ($path) {
     }
     abort(404);
 })->where('path', '.*')->name('screenshots.file');
+
+Route::get('/videos/{path}', function ($path) {
+    $fullPath = base_path('videos/' . $path);
+    if (! file_exists($fullPath)) {
+        $fullPath = public_path('videos/' . $path);
+    }
+    if (file_exists($fullPath) && is_file($fullPath)) {
+        return response()->file($fullPath);
+    }
+    abort(404);
+})->where('path', '.*')->name('videos.file');
 

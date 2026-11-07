@@ -194,4 +194,81 @@ class ManualController extends Controller
             'filename' => $filename,
         ]);
     }
+
+    public function uploadVideo(Request $request)
+    {
+        if (! $this->canUserEdit()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền tải video lên tài liệu.',
+            ], 403);
+        }
+
+        $request->validate([
+            'video' => 'required|file|mimes:mp4,webm,ogg,mov,m4v,mkv|max:102400',
+            'old_src' => 'nullable|string',
+        ]);
+
+        $file = $request->file('video');
+        $oldSrc = $request->input('old_src');
+
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'mp4');
+        if (! in_array($ext, ['mp4', 'webm', 'ogg', 'mov', 'm4v'])) {
+            $ext = 'mp4';
+        }
+
+        $filename = 'manual_video_' . date('Ymd_His') . '_' . Str::random(5) . '.' . $ext;
+
+        $destPub = public_path('videos/manual/' . $filename);
+        $destBase = base_path('videos/manual/' . $filename);
+
+        $dirPub = dirname($destPub);
+        $dirBase = dirname($destBase);
+        if (! is_dir($dirPub)) @mkdir($dirPub, 0755, true);
+        if (! is_dir($dirBase)) @mkdir($dirBase, 0755, true);
+
+        // Lưu tệp video vào public và base
+        $file->move($dirPub, $filename);
+        @copy($destPub, $destBase);
+
+        $newRelativePath = 'videos/manual/' . $filename;
+        $url = asset($newRelativePath) . '?v=' . time();
+
+        // Tự động cập nhật đường dẫn trong tài liệu Markdown và dọn dẹp video cũ nếu có
+        if (! empty($oldSrc)) {
+            $oldPathClean = trim(parse_url($oldSrc, PHP_URL_PATH) ?? '', '/');
+            $manualPath = $this->getManualPath();
+            if (file_exists($manualPath)) {
+                $md = file_get_contents($manualPath);
+                $searchList = array_unique(array_filter([
+                    $oldSrc,
+                    $oldPathClean,
+                    '/' . $oldPathClean,
+                    urldecode($oldPathClean),
+                    '/' . urldecode($oldPathClean),
+                ]));
+                $updatedMd = str_replace($searchList, $newRelativePath, $md);
+                if ($updatedMd !== $md) {
+                    @file_put_contents(base_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md'), $updatedMd);
+                    @file_put_contents(public_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md'), $updatedMd);
+                }
+            }
+
+            // Dọn dẹp tệp video cũ
+            if (str_starts_with($oldPathClean, 'videos/manual/')) {
+                $oldPub = public_path($oldPathClean);
+                $oldBase = base_path($oldPathClean);
+                if (file_exists($oldPub)) @unlink($oldPub);
+                if (file_exists($oldBase)) @unlink($oldBase);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã tải video lên thành công!',
+            'url' => $url,
+            'relative_path' => $newRelativePath,
+            'filename' => $filename,
+        ]);
+    }
 }

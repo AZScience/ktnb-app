@@ -41,6 +41,11 @@ if ($content) {
         $ensureDirWritable(__DIR__ . '/../app');
         $ensureDirWritable(__DIR__ . '/../database');
 
+        @mkdir(__DIR__ . '/videos/manual', 0777, true);
+        @chmod(__DIR__ . '/videos/manual', 0777);
+        @mkdir(__DIR__ . '/../videos/manual', 0777, true);
+        @chmod(__DIR__ . '/../videos/manual', 0777);
+
         $writeFile = function($destPath, $data, $displayRel = '') use (&$updatedFiles, &$failedFiles) {
             $displayName = $displayRel ?: basename($destPath);
             if (substr($destPath, -1) === '/' || is_dir($destPath)) {
