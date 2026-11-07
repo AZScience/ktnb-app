@@ -43,15 +43,25 @@ class AppServiceProvider extends ServiceProvider
             'reports.*',
             'settings.*',
             'personnel.*',
+            'manual.*',
         ], function ($view) {
-            if (! auth()->check()) {
+            if (auth()->check()) {
+                $perms = app(PermissionService::class);
+                $view->with('nttuCan', fn (string $module, string $action = 'access') => $perms->can($module, $action));
+                $view->with('nttuAllows', fn (string $module, string $action = 'access') => $perms->allows($module, $action));
+                $view->with('nttuPage', fn (string $module) => PagePermissionFlags::for($module));
+            } else {
+                $view->with('nttuCan', fn (string $module, string $action = 'access') => false);
+                $view->with('nttuAllows', fn (string $module, string $action = 'access') => false);
+                $view->with('nttuPage', fn (string $module) => ['access' => false, 'add' => false, 'edit' => false, 'delete' => false, 'import' => false, 'export' => false]);
+                $view->with([
+                    'bannerUrl' => 'https://kiemtranoibo.ntt.edu.vn/wp-content/uploads/2025/09/PHONG-KIEM-TRA-NOI-BO.png',
+                    'bannerHeight' => 40,
+                    'employee' => null,
+                    'employeePositionName' => null,
+                ]);
                 return;
             }
-
-            $perms = app(PermissionService::class);
-            $view->with('nttuCan', fn (string $module, string $action = 'access') => $perms->can($module, $action));
-            $view->with('nttuAllows', fn (string $module, string $action = 'access') => $perms->allows($module, $action));
-            $view->with('nttuPage', fn (string $module) => PagePermissionFlags::for($module));
 
             $layoutShellViews = ['layouts.nttu', 'components.nttu-sidebar', 'components.nttu-header'];
             if (in_array($view->name(), $layoutShellViews, true)) {

@@ -389,7 +389,7 @@ Route::get('/huong-dan-su-dung', function () {
         'htmlContent' => $html,
         'updatedAt' => file_exists($path) ? date('d/m/Y H:i', filemtime($path)) : date('d/m/Y H:i'),
     ]);
-})->name('manual.view');
+})->middleware('auth')->name('manual.view');
 
 Route::get('/screenshots/{path}', function ($path) {
     $fullPath = base_path('screenshots/' . $path);
