@@ -26,7 +26,7 @@
         @elseif (View::hasSection('page-section'))
             @yield('page-section')
         @else
-            Công cụ Kiểm soát
+            {{ $headerTitleText ?? 'Công cụ Kiểm soát' }}
         @endif
     </title>
 

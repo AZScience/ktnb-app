@@ -54,9 +54,17 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('nttuCan', fn (string $module, string $action = 'access') => false);
                 $view->with('nttuAllows', fn (string $module, string $action = 'access') => false);
                 $view->with('nttuPage', fn (string $module) => ['access' => false, 'add' => false, 'edit' => false, 'delete' => false, 'import' => false, 'export' => false]);
+                $params = app(SystemParameterService::class)->all();
                 $view->with([
-                    'bannerUrl' => 'https://kiemtranoibo.ntt.edu.vn/wp-content/uploads/2025/09/PHONG-KIEM-TRA-NOI-BO.png',
-                    'bannerHeight' => 40,
+                    'bannerUrl' => $params['bannerUrl'] ?: 'https://kiemtranoibo.ntt.edu.vn/wp-content/uploads/2025/09/PHONG-KIEM-TRA-NOI-BO.png',
+                    'bannerHeight' => (int) ($params['bannerHeight'] ?: 40),
+                    'headerTitleText' => !empty($params['headerTitleText']) ? $params['headerTitleText'] : 'CÔNG CỤ KIỂM SOÁT',
+                    'headerTitleColor' => !empty($params['headerTitleColor']) ? $params['headerTitleColor'] : '#111827',
+                    'headerTitleFontSize' => !empty($params['headerTitleFontSize']) ? $params['headerTitleFontSize'] : '20',
+                    'headerTitleFontWeight' => !empty($params['headerTitleFontWeight']) ? $params['headerTitleFontWeight'] : '700',
+                    'headerTitleTransform' => !empty($params['headerTitleTransform']) ? $params['headerTitleTransform'] : 'uppercase',
+                    'headerTitleLetterSpacing' => !empty($params['headerTitleLetterSpacing']) ? $params['headerTitleLetterSpacing'] : '0.05em',
+                    'headerTitleStyle' => !empty($params['headerTitleStyle']) ? $params['headerTitleStyle'] : 'normal',
                     'employee' => null,
                     'employeePositionName' => null,
                 ]);
@@ -69,6 +77,14 @@ class AppServiceProvider extends ServiceProvider
                 $bannerUrl = $params['bannerUrl'] ?: 'https://kiemtranoibo.ntt.edu.vn/wp-content/uploads/2025/09/PHONG-KIEM-TRA-NOI-BO.png';
                 $bannerHeight = (int) ($params['bannerHeight'] ?: 40);
 
+                $headerTitleText = !empty($params['headerTitleText']) ? $params['headerTitleText'] : 'CÔNG CỤ KIỂM SOÁT';
+                $headerTitleColor = !empty($params['headerTitleColor']) ? $params['headerTitleColor'] : '#111827';
+                $headerTitleFontSize = !empty($params['headerTitleFontSize']) ? $params['headerTitleFontSize'] : '20';
+                $headerTitleFontWeight = !empty($params['headerTitleFontWeight']) ? $params['headerTitleFontWeight'] : '700';
+                $headerTitleTransform = !empty($params['headerTitleTransform']) ? $params['headerTitleTransform'] : 'uppercase';
+                $headerTitleLetterSpacing = !empty($params['headerTitleLetterSpacing']) ? $params['headerTitleLetterSpacing'] : '0.05em';
+                $headerTitleStyle = !empty($params['headerTitleStyle']) ? $params['headerTitleStyle'] : 'normal';
+
                 $employee = Employee::query()->where('user_id', auth()->id())->first()
                     ?? Employee::query()->where('email', auth()->user()->email)->first();
 
@@ -77,7 +93,19 @@ class AppServiceProvider extends ServiceProvider
                     $employeePositionName = Position::query()->find($employee->position)?->name ?? $employee->position;
                 }
 
-                $view->with(compact('bannerUrl', 'bannerHeight', 'employee', 'employeePositionName'));
+                $view->with(compact(
+                    'bannerUrl',
+                    'bannerHeight',
+                    'headerTitleText',
+                    'headerTitleColor',
+                    'headerTitleFontSize',
+                    'headerTitleFontWeight',
+                    'headerTitleTransform',
+                    'headerTitleLetterSpacing',
+                    'headerTitleStyle',
+                    'employee',
+                    'employeePositionName'
+                ));
             }
 
             if (in_array($view->name(), ['layouts.nttu', 'components.nttu-header'], true)) {

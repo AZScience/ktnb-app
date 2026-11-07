@@ -49,8 +49,15 @@
         </svg>
     </button>
 
-    <div class="flex flex-1 items-center justify-center gap-3">
-        <h1 class="text-base font-bold uppercase tracking-wider text-gray-900 sm:text-xl" data-i18n="CÔNG CỤ KIỂM SOÁT">CÔNG CỤ KIỂM SOÁT</h1>
+    <div class="flex flex-1 items-center justify-center gap-3 overflow-hidden px-2">
+        @php
+            $displayFontSize = is_numeric($headerTitleFontSize ?? 20) ? ($headerTitleFontSize . 'px') : ($headerTitleFontSize ?? '20px');
+        @endphp
+        <h1
+            class="text-center transition-all truncate"
+            style="color: {{ $headerTitleColor ?? '#111827' }}; font-size: clamp(14px, 4vw, {{ $displayFontSize }}); font-weight: {{ $headerTitleFontWeight ?? '700' }}; text-transform: {{ $headerTitleTransform ?? 'uppercase' }}; letter-spacing: {{ $headerTitleLetterSpacing ?? '0.05em' }}; font-style: {{ $headerTitleStyle ?? 'normal' }};"
+            data-i18n="{{ $headerTitleText ?? 'CÔNG CỤ KIỂM SOÁT' }}"
+        >{{ $headerTitleText ?? 'CÔNG CỤ KIỂM SOÁT' }}</h1>
     </div>
 
     <div

@@ -43,6 +43,13 @@ class SystemParameterService
         'evidencePrivateKey',
         'googleClientId',
         'lecturerPortalEmailDomains',
+        'headerTitleText',
+        'headerTitleColor',
+        'headerTitleFontSize',
+        'headerTitleFontWeight',
+        'headerTitleTransform',
+        'headerTitleLetterSpacing',
+        'headerTitleStyle',
     ];
 
     private const IMAGE_KEYS = ['bannerUrl', 'loginImageUrl'];
@@ -89,6 +96,13 @@ class SystemParameterService
             'evidencePrivateKey' => '',
             'googleClientId' => '',
             'lecturerPortalEmailDomains' => 'nttu.edu.vn,ntt.edu.vn,gmail.com',
+            'headerTitleText' => 'CÔNG CỤ KIỂM SOÁT',
+            'headerTitleColor' => '#111827',
+            'headerTitleFontSize' => '20',
+            'headerTitleFontWeight' => '700',
+            'headerTitleTransform' => 'uppercase',
+            'headerTitleLetterSpacing' => '0.05em',
+            'headerTitleStyle' => 'normal',
         ];
     }
 

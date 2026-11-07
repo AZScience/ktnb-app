@@ -114,7 +114,7 @@
                         <div class="w-48 shrink-0 border-r bg-white flex flex-col">
                             <div class="flex h-16 shrink-0 items-center justify-center overflow-hidden border-b px-2">
                                 <template x-if="hasBanner()">
-                                    <img :src="localParams.bannerUrl" alt="Logo" class="w-full object-contain" :style="height:px; max-height:px">
+                                    <img :src="localParams.bannerUrl" alt="Logo" class="w-full object-contain" :style="`height: ${bannerPreviewHeight()}px; max-height: ${bannerPreviewHeight()}px`">
                                 </template>
                                 <template x-if="!hasBanner()">
                                     <span class="text-xl font-bold text-[var(--nttu-primary)]">N</span>
@@ -150,10 +150,196 @@
                 </div>
             </section>
 
-            {{-- 2. Trang đăng nhập --}}
+            {{-- 2. Tiêu đề thanh tiêu đề (Header Title) --}}
             <section class="overflow-hidden rounded-xl border border-slate-200">
                 <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/80 px-5 py-3">
-                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">2</span>
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">2</span>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900">Tiêu đề thanh tiêu đề (Header Title)</h4>
+                        <p class="text-xs text-gray-500">Tùy chỉnh nội dung chữ, màu sắc, cỡ chữ, độ đậm và định dạng tiêu đề trên thanh điều hướng hệ thống.</p>
+                    </div>
+                </div>
+                <div class="grid gap-6 p-5 lg:grid-cols-12">
+                    {{-- Cột cài đặt (7 cols) --}}
+                    <div class="space-y-4 lg:col-span-7">
+                        {{-- Nội dung tiêu đề --}}
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <x-form-label icon="edit" tone="indigo">Nội dung tiêu đề</x-form-label>
+                                <button type="button" 
+                                    @click="localParams.headerTitleText = 'CÔNG CỤ KIỂM SOÁT'" 
+                                    class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline">
+                                    Khôi phục mặc định
+                                </button>
+                            </div>
+                            <input type="text" class="nttu-form-control w-full font-medium" 
+                                placeholder="CÔNG CỤ KIỂM SOÁT"
+                                x-model="localParams.headerTitleText">
+                            <p class="text-xs text-gray-500">Tiêu đề xuất hiện ở chính giữa thanh trên cùng (Header) của ứng dụng.</p>
+                        </div>
+
+                        {{-- Màu chữ & Bảng màu nhanh --}}
+                        <div class="space-y-2">
+                            <x-form-label icon="sparkles" tone="rose">Màu sắc tiêu đề</x-form-label>
+                            <div class="flex items-center gap-3">
+                                <input type="color" class="h-10 w-12 cursor-pointer rounded-lg border border-slate-300 p-1 bg-white shadow-sm"
+                                    x-model="localParams.headerTitleColor">
+                                <input type="text" class="nttu-form-control w-32 uppercase font-mono text-sm"
+                                    placeholder="#111827"
+                                    x-model="localParams.headerTitleColor">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <button type="button" @click="localParams.headerTitleColor = '#111827'" title="Đen xám (Mặc định)"
+                                        class="h-7 w-7 rounded-full border border-slate-300 transition hover:scale-110 active:scale-95 shadow-sm"
+                                        :class="localParams.headerTitleColor === '#111827' ? 'ring-2 ring-indigo-500 ring-offset-2' : ''"
+                                        style="background-color: #111827;"></button>
+                                    <button type="button" @click="localParams.headerTitleColor = '#0054a6'" title="Xanh NTTU"
+                                        class="h-7 w-7 rounded-full border border-slate-300 transition hover:scale-110 active:scale-95 shadow-sm"
+                                        :class="localParams.headerTitleColor === '#0054a6' ? 'ring-2 ring-indigo-500 ring-offset-2' : ''"
+                                        style="background-color: #0054a6;"></button>
+                                    <button type="button" @click="localParams.headerTitleColor = '#1d4ed8'" title="Xanh dương"
+                                        class="h-7 w-7 rounded-full border border-slate-300 transition hover:scale-110 active:scale-95 shadow-sm"
+                                        :class="localParams.headerTitleColor === '#1d4ed8' ? 'ring-2 ring-indigo-500 ring-offset-2' : ''"
+                                        style="background-color: #1d4ed8;"></button>
+                                    <button type="button" @click="localParams.headerTitleColor = '#b91c1c'" title="Đỏ đô"
+                                        class="h-7 w-7 rounded-full border border-slate-300 transition hover:scale-110 active:scale-95 shadow-sm"
+                                        :class="localParams.headerTitleColor === '#b91c1c' ? 'ring-2 ring-indigo-500 ring-offset-2' : ''"
+                                        style="background-color: #b91c1c;"></button>
+                                    <button type="button" @click="localParams.headerTitleColor = '#047857'" title="Xanh ngọc"
+                                        class="h-7 w-7 rounded-full border border-slate-300 transition hover:scale-110 active:scale-95 shadow-sm"
+                                        :class="localParams.headerTitleColor === '#047857' ? 'ring-2 ring-indigo-500 ring-offset-2' : ''"
+                                        style="background-color: #047857;"></button>
+                                    <button type="button" @click="localParams.headerTitleColor = '#d97706'" title="Vàng hổ phách"
+                                        class="h-7 w-7 rounded-full border border-slate-300 transition hover:scale-110 active:scale-95 shadow-sm"
+                                        :class="localParams.headerTitleColor === '#d97706' ? 'ring-2 ring-indigo-500 ring-offset-2' : ''"
+                                        style="background-color: #d97706;"></button>
+                                    <button type="button" @click="localParams.headerTitleColor = '#7c3aed'" title="Tím"
+                                        class="h-7 w-7 rounded-full border border-slate-300 transition hover:scale-110 active:scale-95 shadow-sm"
+                                        :class="localParams.headerTitleColor === '#7c3aed' ? 'ring-2 ring-indigo-500 ring-offset-2' : ''"
+                                        style="background-color: #7c3aed;"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Cỡ chữ & Độ đậm --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <x-form-label icon="tag" tone="blue">Cỡ chữ (Font Size)</x-form-label>
+                                <div class="flex items-center gap-2">
+                                    <select class="nttu-form-control flex-1" x-model="localParams.headerTitleFontSize">
+                                        <option value="14">14px - Rất nhỏ</option>
+                                        <option value="16">16px - Nhỏ</option>
+                                        <option value="18">18px - Vừa</option>
+                                        <option value="20">20px - Tiêu chuẩn (Mặc định)</option>
+                                        <option value="22">22px - Lớn</option>
+                                        <option value="24">24px - Rất lớn</option>
+                                        <option value="28">28px - Cực lớn</option>
+                                    </select>
+                                    <div class="flex items-center gap-1 w-20 shrink-0">
+                                        <input type="number" min="12" max="36" step="1" class="nttu-form-control w-full text-center" x-model="localParams.headerTitleFontSize">
+                                        <span class="text-xs text-gray-500 font-medium">px</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <x-form-label icon="activity" tone="amber">Độ đậm (Font Weight)</x-form-label>
+                                <select class="nttu-form-control w-full" x-model="localParams.headerTitleFontWeight">
+                                    <option value="400">400 - Thường (Normal)</option>
+                                    <option value="500">500 - Vừa (Medium)</option>
+                                    <option value="600">600 - Bán đậm (Semi-Bold)</option>
+                                    <option value="700">700 - Đậm (Bold - Mặc định)</option>
+                                    <option value="800">800 - Rất đậm (Extra-Bold)</option>
+                                    <option value="900">900 - Siêu đậm (Black)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Định dạng chữ: Kiểu chữ, In hoa, Khoảng cách ký tự --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="space-y-1.5">
+                                <x-form-label icon="layout" tone="purple">Kiểu viết hoa</x-form-label>
+                                <select class="nttu-form-control w-full" x-model="localParams.headerTitleTransform">
+                                    <option value="uppercase">IN HOA (Mặc định)</option>
+                                    <option value="none">Bình thường (như nhập)</option>
+                                    <option value="capitalize">Viết Hoa Chữ Đầu Từ</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <x-form-label icon="note" tone="teal">Kiểu dáng (Style)</x-form-label>
+                                <select class="nttu-form-control w-full" x-model="localParams.headerTitleStyle">
+                                    <option value="normal">Thẳng đứng (Mặc định)</option>
+                                    <option value="italic">Chữ in nghiêng</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <x-form-label icon="activity" tone="lime">Khoảng cách ký tự</x-form-label>
+                                <select class="nttu-form-control w-full" x-model="localParams.headerTitleLetterSpacing">
+                                    <option value="0">Bình thường (0)</option>
+                                    <option value="0.025em">Rộng nhẹ (0.025em)</option>
+                                    <option value="0.05em">Rộng vừa (0.05em - Mặc định)</option>
+                                    <option value="0.1em">Rất rộng (0.1em)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Cột xem trước trực tiếp (5 cols) --}}
+                    <div class="lg:col-span-5 flex flex-col justify-start">
+                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Xem trước thanh điều hướng (Live Preview)</p>
+                        
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-inner space-y-3">
+                            {{-- Header bar mô phỏng thật --}}
+                            <div class="flex h-16 items-center justify-between rounded-lg border border-slate-200 bg-white px-4 shadow-sm overflow-hidden">
+                                {{-- Nút hamburger mô phỏng --}}
+                                <div class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[var(--nttu-primary)] hover:bg-slate-100">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                                    </svg>
+                                </div>
+
+                                {{-- Title preview --}}
+                                <div class="flex flex-1 items-center justify-center px-2 text-center overflow-hidden">
+                                    <span
+                                        class="truncate transition-all duration-150"
+                                        :style="{
+                                            color: localParams.headerTitleColor || '#111827',
+                                            fontSize: (localParams.headerTitleFontSize ? (String(localParams.headerTitleFontSize).includes('px') ? localParams.headerTitleFontSize : localParams.headerTitleFontSize + 'px') : '20px'),
+                                            fontWeight: localParams.headerTitleFontWeight || '700',
+                                            textTransform: localParams.headerTitleTransform || 'uppercase',
+                                            letterSpacing: localParams.headerTitleLetterSpacing || '0.05em',
+                                            fontStyle: localParams.headerTitleStyle || 'normal',
+                                        }"
+                                        x-text="localParams.headerTitleText || 'CÔNG CỤ KIỂM SOÁT'"
+                                    ></span>
+                                </div>
+
+                                {{-- Icon chuông & User mô phỏng --}}
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <div class="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-slate-100">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                    </div>
+                                    <div class="h-8 w-8 rounded-full border border-slate-200 bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-700">
+                                        VP
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-xs text-gray-500 text-center italic">
+                                Xem thử giao diện thanh Header cập nhật tức thì theo các tùy chọn trên.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {{-- 3. Trang đăng nhập --}}
+            <section class="overflow-hidden rounded-xl border border-slate-200">
+                <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/80 px-5 py-3">
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">3</span>
                     <div>
                         <h4 class="text-sm font-bold text-gray-900">Trang đăng nhập</h4>
                         <p class="text-xs text-gray-500">Hình nền và câu trích dẫn ở màn hình đăng nhập.</p>
@@ -214,10 +400,10 @@
                 </div>
             </section>
 
-            {{-- 3. Liên hệ & hỗ trợ --}}
+            {{-- 4. Liên hệ & hỗ trợ --}}
             <section class="overflow-hidden rounded-xl border border-slate-200">
                 <div class="flex items-center gap-3 border-b border-slate-200 bg-slate-50/80 px-5 py-3">
-                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">3</span>
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">4</span>
                     <div>
                         <h4 class="text-sm font-bold text-gray-900">Liên hệ &amp; hỗ trợ</h4>
                         <p class="text-xs text-gray-500">Thông tin hiển thị khi người dùng cần trợ giúp hoặc liên hệ quản trị.</p>
