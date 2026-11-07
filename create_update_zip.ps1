@@ -1,16 +1,21 @@
 $ErrorActionPreference = "Stop"
+$ProgressPreference = 'SilentlyContinue'
 
-# Get all modified, added, or untracked files from git
+# Get all modified, added, or untracked files from git status AND recent commits (HEAD~2..HEAD)
 $changedFiles = git status --porcelain | ForEach-Object {
     if ($_ -match '^(M | M|A |\?\?)\s+(.*)$') {
         $matches[2].Trim('"')
     }
 }
 
+$commitFiles = git diff --name-only HEAD~2 HEAD | ForEach-Object { $_.Trim() }
+
+$allFiles = @() + $changedFiles + $commitFiles
+
 # Add public/build to the list since it's generated
 $filesToZip = @()
-foreach ($file in $changedFiles) {
-    if (Test-Path $file) {
+foreach ($file in $allFiles) {
+    if ($file -and (Test-Path $file)) {
         $filesToZip += $file
     }
 }
@@ -38,6 +43,11 @@ foreach ($file in $filesToZip) {
         New-Item -ItemType Directory -Path $destDir | Out-Null
     }
     Copy-Item -Path $file -Destination $dest -Recurse -Force
+}
+
+# Ensure deploy directory exists
+if (!(Test-Path "deploy")) {
+    New-Item -ItemType Directory -Path "deploy" | Out-Null
 }
 
 # Zip the temp folder
