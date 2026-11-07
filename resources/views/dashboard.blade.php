@@ -254,76 +254,95 @@
                                     </div>
                                 </div>
                             @elseif(($shiftSchedule['preview_kind'] ?? '') === 'pdf')
-                                {{-- Giao diện trên điện thoại / Mobile: Nhúng trình xem PDF.js Canvas trực quan, responsive 100% --}}
+                                {{-- Giao diện trên điện thoại / Mobile: Trình xem PDF đa năng (PDF.js Canvas + Chế độ nhúng dự phòng) --}}
                                 <div class="block md:hidden w-full bg-slate-50 border-b border-slate-200" x-data="mobilePdfViewer('{{ $shiftSchedulePreviewUrl }}')">
                                     <!-- Thanh điều khiển PDF trên Mobile -->
                                     <div class="flex items-center justify-between px-3 py-2 bg-slate-800 text-white text-xs select-none shadow-sm">
                                         <div class="flex items-center gap-1.5">
-                                            <button
-                                                type="button"
-                                                @click="prevPage()"
-                                                :disabled="pageNum <= 1 || loading"
-                                                class="p-1.5 rounded hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition"
-                                                title="Trang trước"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                                            </button>
-                                            <span class="font-semibold text-slate-200 min-w-[55px] text-center">
-                                                <span x-text="pageNum">1</span> / <span x-text="totalPages || 1">1</span>
-                                            </span>
-                                            <button
-                                                type="button"
-                                                @click="nextPage()"
-                                                :disabled="pageNum >= totalPages || loading"
-                                                class="p-1.5 rounded hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition"
-                                                title="Trang kế"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                            </button>
+                                            <template x-if="!useNativeViewer">
+                                                <div class="flex items-center gap-1">
+                                                    <button
+                                                        type="button"
+                                                        @click="prevPage()"
+                                                        :disabled="pageNum <= 1 || loading"
+                                                        class="p-1.5 rounded hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition"
+                                                        title="Trang trước"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                                    </button>
+                                                    <span class="font-semibold text-slate-200 min-w-[50px] text-center">
+                                                        <span x-text="pageNum">1</span> / <span x-text="totalPages || 1">1</span>
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        @click="nextPage()"
+                                                        :disabled="pageNum >= totalPages || loading"
+                                                        class="p-1.5 rounded hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition"
+                                                        title="Trang kế"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                            <template x-if="useNativeViewer">
+                                                <span class="font-semibold text-slate-200">Khung xem nhúng</span>
+                                            </template>
                                         </div>
 
                                         <div class="flex items-center gap-1">
+                                            <template x-if="!useNativeViewer">
+                                                <div class="flex items-center gap-1">
+                                                    <button
+                                                        type="button"
+                                                        @click="zoomOut()"
+                                                        :disabled="scale <= 0.6 || loading"
+                                                        class="p-1.5 rounded hover:bg-slate-700 disabled:opacity-30 transition"
+                                                        title="Thu nhỏ"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        @click="fitWidth()"
+                                                        class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-[11px] font-bold text-amber-300 transition"
+                                                        title="Vừa màn hình"
+                                                    >
+                                                        Vừa khung
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        @click="zoomIn()"
+                                                        :disabled="scale >= 2.5 || loading"
+                                                        class="p-1.5 rounded hover:bg-slate-700 disabled:opacity-30 transition"
+                                                        title="Phóng to"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        @click="openFullscreen()"
+                                                        class="p-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white transition ml-1"
+                                                        title="Xem toàn màn hình"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                                    </button>
+                                                </div>
+                                            </template>
                                             <button
                                                 type="button"
-                                                @click="zoomOut()"
-                                                :disabled="scale <= 0.6 || loading"
-                                                class="p-1.5 rounded hover:bg-slate-700 disabled:opacity-30 transition"
-                                                title="Thu nhỏ"
+                                                @click="toggleViewerMode()"
+                                                class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-[11px] text-slate-200 transition ml-1 border border-slate-600"
+                                                :title="useNativeViewer ? 'Chuyển sang xem Canvas' : 'Chuyển sang khung nhúng'"
                                             >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                @click="fitWidth()"
-                                                class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-[11px] font-bold text-amber-300 transition"
-                                                title="Vừa màn hình"
-                                            >
-                                                Vừa khung
-                                            </button>
-                                            <button
-                                                type="button"
-                                                @click="zoomIn()"
-                                                :disabled="scale >= 2.5 || loading"
-                                                class="p-1.5 rounded hover:bg-slate-700 disabled:opacity-30 transition"
-                                                title="Phóng to"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                @click="openFullscreen()"
-                                                class="p-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white transition ml-1"
-                                                title="Xem toàn màn hình"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                                <span x-text="useNativeViewer ? 'Dùng Canvas' : 'Dùng Khung'"></span>
                                             </button>
                                         </div>
                                     </div>
 
-                                    <!-- Khung hiển thị Canvas PDF -->
-                                    <div class="p-2 sm:p-3 overflow-x-auto min-h-[350px] flex items-center justify-center relative bg-slate-200/60">
+                                    <!-- Khung hiển thị PDF trên Mobile -->
+                                    <div class="p-2 sm:p-3 overflow-x-auto min-h-[360px] flex flex-col items-center justify-center relative bg-slate-200/60">
                                         <!-- Loading spinner lớp phủ tuyệt đối -->
-                                        <div x-show="loading" class="absolute inset-0 bg-slate-100/90 z-10 flex flex-col items-center justify-center text-slate-600">
+                                        <div x-show="loading" class="absolute inset-0 bg-slate-100/90 z-20 flex flex-col items-center justify-center text-slate-600">
                                             <svg class="animate-spin h-8 w-8 text-blue-600 mb-2" fill="none" viewBox="0 0 24 24">
                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -331,32 +350,57 @@
                                             <span class="text-xs font-semibold">Đang nạp dữ liệu lịch trực...</span>
                                         </div>
 
-                                        <!-- Lỗi fallback -->
+                                        <!-- Lỗi tải PDF -->
                                         <div x-show="error && !loading" x-cloak class="p-4 text-center max-w-sm z-10">
                                             <div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600">
                                                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                             </div>
                                             <p class="text-xs text-slate-700 font-medium mb-3" x-text="error"></p>
-                                            <a href="{{ $shiftSchedulePreviewUrl }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow">
-                                                Mở file PDF trực tiếp
-                                            </a>
+                                            <div class="flex items-center justify-center gap-2">
+                                                <a href="{{ $shiftSchedulePreviewUrl }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold shadow">
+                                                    Mở file PDF trực tiếp
+                                                </a>
+                                                <button type="button" @click="useNativeViewer = true" class="px-3 py-1.5 bg-slate-700 text-white rounded-lg text-xs font-bold shadow">
+                                                    Dùng khung nhúng
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        <!-- Canvas chứa trang PDF (Luôn hiện diện trong DOM, không display:none) -->
-                                        <div class="w-full flex justify-center cursor-pointer" @click="openFullscreen()" title="Chạm để phóng to toàn màn hình">
+                                        <!-- Cảnh báo nếu render canvas gặp lỗi -->
+                                        <div x-show="renderError && !loading && !useNativeViewer" x-cloak class="w-full max-w-md p-3 mb-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs z-10">
+                                            <p class="font-bold mb-1" x-text="renderError"></p>
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <button type="button" @click="renderCurrentPage()" class="px-2.5 py-1 bg-amber-600 text-white font-bold rounded">Thử lại</button>
+                                                <button type="button" @click="useNativeViewer = true" class="px-2.5 py-1 bg-slate-700 text-white font-bold rounded">Đổi sang khung nhúng</button>
+                                                <a href="{{ $shiftSchedulePreviewUrl }}" target="_blank" class="px-2.5 py-1 bg-blue-600 text-white font-bold rounded">Mở file riêng</a>
+                                            </div>
+                                        </div>
+
+                                        <!-- Chế độ 1: Canvas PDF.js -->
+                                        <div x-show="!useNativeViewer" class="w-full flex justify-center cursor-pointer" @click="openFullscreen()" title="Chạm để phóng to toàn màn hình">
                                             <canvas x-ref="pdfCanvas" class="shadow-lg rounded-lg bg-white border border-slate-300 max-w-full transition-transform"></canvas>
+                                        </div>
+
+                                        <!-- Chế độ 2: Khung nhúng trực tiếp (iframe / object fallback) -->
+                                        <div x-show="useNativeViewer" x-cloak class="w-full h-[480px] bg-white rounded border border-slate-300 overflow-hidden">
+                                            <iframe
+                                                src="{{ $shiftSchedulePreviewUrl }}#view=FitH"
+                                                title="{{ $shiftSchedule['name'] }}"
+                                                class="w-full h-full border-0"
+                                            ></iframe>
                                         </div>
                                     </div>
 
                                     <!-- Hướng dẫn & Nút tải về phía dưới -->
                                     <div class="flex items-center justify-between px-3 py-2 bg-slate-100 border-t border-slate-200 text-xs text-slate-500">
                                         <span class="flex items-center gap-1 text-[11px] text-blue-600 font-medium">
-                                            💡 Chạm vào để xem toàn màn hình
+                                            💡 Chạm vào trang để xem toàn màn hình
                                         </span>
                                         <div class="flex items-center gap-2">
-                                            <a href="{{ $shiftSchedulePreviewUrl }}" target="_blank" class="text-slate-600 hover:text-blue-600 underline text-[11px]">
-                                                Mở link PDF
+                                            <a href="{{ $shiftSchedulePreviewUrl }}" target="_blank" class="text-blue-600 hover:underline font-bold text-[11px]">
+                                                Mở toàn màn hình
                                             </a>
+                                            <span class="text-slate-300">|</span>
                                             <a href="{{ route('dashboard.shift-schedule.file', ['download' => 1]) }}" class="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-800">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                                 Tải về
@@ -676,9 +720,12 @@ function mobilePdfViewer(pdfUrl) {
         modalScale: 1.5,
         loading: true,
         error: null,
+        renderError: null,
         fullscreenModal: false,
         rendering: false,
         pendingPage: null,
+        useNativeViewer: false,
+        cachedBytes: null,
 
         async init() {
             if (!this.url) {
@@ -696,14 +743,23 @@ function mobilePdfViewer(pdfUrl) {
                 this.loadDocument();
             } else {
                 this.loading = false;
-                this.error = 'Không thể nạp thư viện xem PDF.';
+                this.useNativeViewer = true;
             }
 
             window.addEventListener('resize', () => {
-                if (this.pdfDoc && !this.loading) {
+                if (this.pdfDoc && !this.loading && !this.useNativeViewer) {
                     this.renderCurrentPage();
                 }
             });
+        },
+
+        toggleViewerMode() {
+            this.useNativeViewer = !this.useNativeViewer;
+            if (!this.useNativeViewer && this.pdfDoc) {
+                this.$nextTick(() => {
+                    this.renderCurrentPage();
+                });
+            }
         },
 
         loadScript(src, fallbackCdn) {
@@ -730,11 +786,35 @@ function mobilePdfViewer(pdfUrl) {
             try {
                 this.loading = true;
                 this.error = null;
-                const task = pdfjsLib.getDocument({
-                    url: this.url,
+                this.renderError = null;
+
+                let uint8Data = null;
+                try {
+                    const resp = await fetch(this.url, {
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    if (resp.ok) {
+                        const buffer = await resp.arrayBuffer();
+                        uint8Data = new Uint8Array(buffer);
+                        this.cachedBytes = uint8Data;
+                    }
+                } catch (fetchErr) {
+                    console.warn('Lấy dữ liệu nhị phân PDF qua fetch không thành công, thử dùng URL trực tiếp:', fetchErr);
+                }
+
+                const docOptions = uint8Data ? {
+                    data: uint8Data,
                     cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
                     cMapPacked: true,
-                });
+                } : {
+                    url: this.url,
+                    withCredentials: true,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                    cMapPacked: true,
+                };
+
+                const task = pdfjsLib.getDocument(docOptions);
                 this.pdfDoc = await task.promise;
                 this.totalPages = this.pdfDoc.numPages || 1;
                 this.pageNum = 1;
@@ -747,7 +827,8 @@ function mobilePdfViewer(pdfUrl) {
             } catch (err) {
                 console.error('Lỗi khi nạp PDF:', err);
                 this.loading = false;
-                this.error = 'Không thể xem trực tiếp tệp PDF trên trình duyệt này.';
+                this.error = 'Không thể xem trực tiếp tệp PDF bằng Canvas: ' + (err.message || 'Lỗi không xác định.');
+                this.useNativeViewer = true;
             }
         },
 
@@ -774,34 +855,39 @@ function mobilePdfViewer(pdfUrl) {
                 const baseViewport = page.getViewport({ scale: 1.0 });
                 let finalScale = zoomScale;
 
-                if (isFitWidth) {
+                if (isFitWidth && baseViewport.width > 0) {
                     finalScale = (targetWidth / baseViewport.width) * zoomScale;
                 }
 
-                finalScale = Math.max(0.3, Math.min(finalScale, 4.0));
+                finalScale = Math.max(0.35, Math.min(finalScale, 3.5));
                 const viewport = page.getViewport({ scale: finalScale });
 
-                canvas.width = Math.floor(viewport.width);
-                canvas.height = Math.floor(viewport.height);
-                canvas.style.width = '100%';
-                canvas.style.maxWidth = Math.floor(viewport.width) + 'px';
-                canvas.style.height = 'auto';
+                const outputScale = Math.min(window.devicePixelRatio || 1, 2.5);
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = Math.floor(viewport.width * outputScale);
+                canvas.height = Math.floor(viewport.height * outputScale);
+                canvas.style.width = Math.floor(viewport.width) + 'px';
+                canvas.style.height = Math.floor(viewport.height) + 'px';
+                canvas.style.maxWidth = '100%';
+
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
 
                 const renderContext = {
                     canvasContext: ctx,
+                    transform: transform,
                     viewport: viewport,
                 };
                 const renderTask = page.render(renderContext);
                 canvas._renderTask = renderTask;
                 await renderTask.promise;
                 canvas._renderTask = null;
+                this.renderError = null;
             } catch (e) {
                 if (e && e.name === 'RenderingCancelledException') {
                     return;
                 }
                 console.error('Lỗi render trang PDF:', e);
+                this.renderError = 'Lỗi vẽ trang PDF: ' + (e.message || String(e));
             }
         },
 
