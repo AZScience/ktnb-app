@@ -167,6 +167,12 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/DailyReportService.php') === 0) {
                 $writeFile(__DIR__ . '/../app/Services/DailyReportService.php', $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/database/migrations/') === 0) {
+                $rel = str_replace('ktnb-app-kiemtranoibo/database/migrations/', '', $filename);
+                if (substr($rel, -1) !== '/') {
+                    $writeFile(__DIR__ . '/../database/migrations/' . $rel, $zip->getFromIndex($i));
+                }
+            }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/routes/web.php') === 0) {
                 $writeFile(__DIR__ . '/../routes/web.php', $zip->getFromIndex($i));
             }
@@ -194,6 +200,7 @@ if ($content) {
                 $app = require_once __DIR__.'/../bootstrap/app.php';
                 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
                 $kernel->bootstrap();
+                \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
                 \Illuminate\Support\Facades\Artisan::call('view:clear');
                 \Illuminate\Support\Facades\Artisan::call('cache:clear');
                 \Illuminate\Support\Facades\Artisan::call('route:clear');
