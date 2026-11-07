@@ -31,17 +31,17 @@
             <button
                 type="button"
                 @click="toggleEditMode()"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm shadow-md transition transform active:scale-95"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-bold text-xs sm:text-sm shadow-md transition transform active:scale-95"
                 :class="editMode ? 'bg-emerald-500 hover:bg-emerald-400 text-white ring-2 ring-emerald-300' : 'bg-amber-500 hover:bg-amber-400 text-slate-950 ring-1 ring-amber-300'"
-                :title="editMode ? 'Bấm để tắt chế độ chỉnh sửa (trở về chế độ xem)' : 'Bấm để bật chế độ chỉnh sửa chữ và thay hình trực tiếp'"
+                :title="editMode ? 'Bấm để tắt chế độ chỉnh sửa (trở về chế độ xem)' : 'Bấm để bật chế độ chỉnh sửa: thêm chữ, sửa chữ, thêm ảnh, thay ảnh'"
             >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
-                <span x-text="editMode ? 'Đang bật Sửa (Bấm để Tắt)' : '✏️ Bật Sửa Trực Tiếp'"></span>
+                <span x-text="editMode ? 'Đang bật Sửa (Bấm để Tắt)' : '✏️ Bật Chế Độ Sửa / Thêm'"></span>
             </button>
 
-            <!-- Nút Lưu khi đang sửa (chỉ hiện khi editMode = true) -->
+            <!-- Nút Lưu khi đang sửa (hiện khi editMode = true) -->
             <button
                 type="button"
                 x-show="editMode"
@@ -49,7 +49,7 @@
                 @click="saveFromContent()"
                 :disabled="isSaving"
                 class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-md transition"
-                title="Lưu tất cả nội dung vừa sửa trực tiếp trên trang"
+                title="Lưu tất cả nội dung vừa sửa, thêm chữ, thêm ảnh trực tiếp"
             >
                 <svg x-show="!isSaving" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                 <svg x-show="isSaving" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -83,12 +83,14 @@
                 </div>
                 <div>
                     <h2 class="text-base sm:text-lg font-black uppercase tracking-wide text-slate-950">
-                        Chế độ Chỉnh sửa Đang Bật
+                        Chế độ Chỉnh sửa & Bổ sung Đang Bật
                     </h2>
                     <ul class="text-xs sm:text-sm font-semibold text-slate-900 mt-1 space-y-0.5">
-                        <li>• <strong>Sửa chữ trực tiếp:</strong> Nhấp chuột thẳng vào bất kỳ dòng chữ nào bên dưới để gõ, xóa, viết thêm nội dung.</li>
-                        <li>• <strong>Thay hình trực tiếp:</strong> Nhấp nút <strong>"📷 Thay ảnh này"</strong> trên mỗi hình để chọn ảnh thật (hoặc kéo thả ảnh từ máy tính vào).</li>
-                        <li>• <strong>Lưu lại:</strong> Nhấn <strong>"LƯU THAY ĐỔI NGAY"</strong> (hoặc nhấn <code>Ctrl + S</code>) để hệ thống lưu vào máy chủ.</li>
+                        <li>• <strong>Sửa chữ:</strong> Nhấp chuột thẳng vào bất kỳ dòng chữ nào bên dưới để gõ, xóa, sửa.</li>
+                        <li>• <strong>Thêm chữ & Thêm bước:</strong> Bấm nút <strong>`➕ Thêm chữ`</strong> hoặc <strong>`📋 Thêm bước mới`</strong> tại các khung viền nét đứt.</li>
+                        <li>• <strong>Thêm ảnh mới:</strong> Bấm nút <strong>`🖼️ + Thêm ảnh mới`</strong> để tải và chèn ảnh mới vào vị trí đó.</li>
+                        <li>• <strong>Thay ảnh có sẵn:</strong> Nhấp nút <strong>`📷 Thay ảnh này`</strong> trên từng bức ảnh (hoặc kéo thả ảnh từ máy tính vào).</li>
+                        <li>• <strong>Lưu lại:</strong> Nhấn <strong>"LƯU THAY ĐỔI NGAY"</strong> (hoặc nhấn <code>Ctrl + S</code>).</li>
                     </ul>
                 </div>
             </div>
@@ -123,7 +125,7 @@
         ></div>
     </div>
 
-    <!-- Input tệp ẩn để tải ảnh thay thế -->
+    <!-- Input tệp ẩn để tải ảnh thay thế hoặc chèn mới -->
     <input
         type="file"
         id="image-file-input"
@@ -138,14 +140,14 @@
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs sm:text-sm font-semibold text-emerald-300">Đang bật Sửa trực tiếp</span>
+        <span class="text-xs sm:text-sm font-semibold text-emerald-300">Đang bật Sửa & Thêm nội dung</span>
         <button
             type="button"
             @click="saveFromContent()"
             :disabled="isSaving"
             class="ml-2 px-3.5 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-black text-xs shadow transition flex items-center gap-1.5"
         >
-            <span x-text="isSaving ? 'Đang lưu...' : '💾 Lưu thay đổi'"></span>
+            <span x-text="isSaving ? 'Đang lưu...' : '💾 Lưu thay đổi (Ctrl+S)'"></span>
         </button>
         <button
             type="button"
@@ -298,15 +300,15 @@ if (typeof TurndownService === 'undefined') {
 .manual-editing-active [contenteditable="true"]:hover {
     outline: 1px dashed #93C5FD;
     border-radius: 4px;
-    background-color: rgba(239, 246, 255, 0.3);
+    background-color: rgba(239, 246, 255, 0.35);
 }
 .manual-editing-active [contenteditable="true"]:focus {
     outline: 2px solid #2563EB !important;
     border-radius: 4px;
-    background-color: rgba(239, 246, 255, 0.6);
+    background-color: rgba(239, 246, 255, 0.65);
 }
 
-/* Khung bọc ảnh kèm nút Thay ảnh trực tiếp */
+/* Khung bọc ảnh kèm nút Thay ảnh & Xóa ảnh trực tiếp */
 .manual-img-container {
     position: relative;
     display: block;
@@ -349,6 +351,14 @@ if (typeof TurndownService === 'undefined') {
     background-color: #FBBF24;
     transform: scale(1.05);
 }
+.manual-img-overlay .btn-delete-img {
+    background-color: #EF4444;
+    color: white;
+}
+.manual-img-overlay .btn-delete-img:hover {
+    background-color: #DC2626;
+    transform: scale(1.05);
+}
 .manual-img-overlay .btn-zoom-img {
     background-color: rgba(255, 255, 255, 0.2);
     color: white;
@@ -361,11 +371,56 @@ if (typeof TurndownService === 'undefined') {
     opacity: 0.6;
 }
 
+/* Khung Chèn Thêm Chữ & Thêm Ảnh Nhanh Giữa Các Phần */
+.manual-insert-bar {
+    margin: 1.25rem 0;
+    padding: 0.6rem 0.85rem;
+    border-radius: 0.6rem;
+    border: 2px dashed #CBD5E1;
+    background-color: #F8FAFC;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+}
+.manual-insert-bar:hover {
+    border-color: #F59E0B;
+    background-color: #FFFBEB;
+}
+.manual-insert-bar button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid #CBD5E1;
+    background-color: white;
+    color: #1E293B;
+    transition: all 0.15s ease;
+}
+.manual-insert-bar button:hover {
+    background-color: #F1F5F9;
+    border-color: #94A3B8;
+}
+.manual-insert-bar .btn-insert-img {
+    background-color: #059669;
+    color: white;
+    border-color: #047857;
+}
+.manual-insert-bar .btn-insert-img:hover {
+    background-color: #10B981;
+}
+
 @media print {
     body {
         background: white !important;
     }
-    aside, header, button, .manual-img-overlay, .sticky, .fixed {
+    aside, header, button, .manual-img-overlay, .manual-insert-bar, .sticky, .fixed {
         display: none !important;
     }
     .nttu-card {
@@ -386,6 +441,8 @@ function manualApp() {
         updatedAtDisplay: '{{ $updatedAt }}',
         htmlContent: {!! json_encode($htmlContent) !!},
         targetOldSrc: null,
+        insertTargetNode: null,
+        isInsertingNewImage: false,
 
         init() {
             window.addEventListener('scroll', () => {
@@ -426,7 +483,7 @@ function manualApp() {
             // Bật/tắt contenteditable cho các thẻ văn bản
             const editableTags = container.querySelectorAll('h1, h2, h3, h4, h5, p, li, td, th');
             editableTags.forEach(el => {
-                // Không bật contenteditable cho các thẻ chứa mục lục links để tránh cản trở việc click link
+                // Không bật contenteditable cho các thẻ chứa mục lục link
                 if (el.closest('.manual-toc') || el.querySelector('a[href^="#"]')) {
                     el.removeAttribute('contenteditable');
                 } else {
@@ -439,8 +496,9 @@ function manualApp() {
                 }
             });
 
-            // Bật/tắt overlay thay ảnh
+            // Quản lý khung ảnh và thanh chèn nội dung
             this.enhanceImages();
+            this.renderInsertBars();
         },
 
         setupTableOfContents() {
@@ -534,18 +592,35 @@ function manualApp() {
                     const overlay = document.createElement('div');
                     overlay.className = 'manual-img-overlay';
 
+                    // Nút thay ảnh
                     const replaceBtn = document.createElement('button');
                     replaceBtn.type = 'button';
                     replaceBtn.className = 'btn-replace-img';
                     replaceBtn.innerHTML = `
                         <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        <span>📷 Thay ảnh này</span>
+                        <span>📷 Thay ảnh</span>
                     `;
                     replaceBtn.onclick = (e) => {
                         e.stopPropagation();
                         this.triggerImageUpload(img);
                     };
 
+                    // Nút xóa ảnh
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'btn-delete-img';
+                    deleteBtn.innerHTML = `
+                        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <span>Xóa</span>
+                    `;
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (confirm('Thầy có chắc chắn muốn xóa bức ảnh minh họa này khỏi tài liệu?')) {
+                            wrapper.remove();
+                        }
+                    };
+
+                    // Nút phóng to ảnh
                     const zoomBtn = document.createElement('button');
                     zoomBtn.type = 'button';
                     zoomBtn.className = 'btn-zoom-img';
@@ -559,6 +634,7 @@ function manualApp() {
                     };
 
                     overlay.appendChild(replaceBtn);
+                    overlay.appendChild(deleteBtn);
                     overlay.appendChild(zoomBtn);
                     wrapper.appendChild(overlay);
 
@@ -593,9 +669,99 @@ function manualApp() {
             });
         },
 
+        renderInsertBars() {
+            const container = document.getElementById('manual-content');
+            if (!container) return;
+
+            // Xóa tất cả insert bar cũ
+            container.querySelectorAll('.manual-insert-bar').forEach(el => el.remove());
+
+            if (!this.editMode) return;
+
+            // Gắn insert bar sau các mốc quan trọng: sau các heading h2, sau các hình ảnh, sau blockquote, sau hr
+            const anchors = container.querySelectorAll('h2, h3, .manual-img-container, blockquote, hr');
+            anchors.forEach(node => {
+                const bar = document.createElement('div');
+                bar.className = 'manual-insert-bar';
+                bar.innerHTML = `
+                    <span class="font-bold text-amber-950 flex items-center gap-1">
+                        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Chèn vào đây:
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" class="btn-insert-p">➕ Thêm chữ</button>
+                        <button type="button" class="btn-insert-step">📋 Thêm bước mới</button>
+                        <button type="button" class="btn-insert-note">⚠️ Thêm hộp lưu ý</button>
+                        <button type="button" class="btn-insert-img">
+                            <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span>🖼️ + Thêm ảnh mới</span>
+                        </button>
+                    </div>
+                `;
+
+                // Xử lý nút Thêm chữ
+                bar.querySelector('.btn-insert-p').onclick = () => {
+                    const p = document.createElement('p');
+                    p.setAttribute('contenteditable', 'true');
+                    p.setAttribute('spellcheck', 'false');
+                    p.innerText = 'Nhấp chuột vào đây để nhập nội dung chữ mới...';
+                    bar.parentNode.insertBefore(p, bar.nextSibling);
+                    p.focus();
+                    const range = document.createRange();
+                    range.selectNodeContents(p);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                };
+
+                // Xử lý nút Thêm bước mới
+                bar.querySelector('.btn-insert-step').onclick = () => {
+                    const h4 = document.createElement('h4');
+                    h4.setAttribute('contenteditable', 'true');
+                    h4.setAttribute('spellcheck', 'false');
+                    h4.innerText = 'Bước mới: Tiêu đề bước thực hiện';
+
+                    const p = document.createElement('p');
+                    p.setAttribute('contenteditable', 'true');
+                    p.setAttribute('spellcheck', 'false');
+                    p.innerText = 'Mô tả chi tiết các thao tác thực hiện trong bước này...';
+
+                    bar.parentNode.insertBefore(h4, bar.nextSibling);
+                    h4.parentNode.insertBefore(p, h4.nextSibling);
+                    h4.focus();
+                };
+
+                // Xử lý nút Thêm hộp lưu ý
+                bar.querySelector('.btn-insert-note').onclick = () => {
+                    const bq = document.createElement('blockquote');
+                    bq.setAttribute('contenteditable', 'true');
+                    bq.setAttribute('spellcheck', 'false');
+                    bq.innerHTML = '<strong>LƯU Ý NGHIỆP VỤ:</strong> Nhập nội dung lưu ý quan trọng tại đây...';
+                    bar.parentNode.insertBefore(bq, bar.nextSibling);
+                    bq.focus();
+                };
+
+                // Xử lý nút Thêm ảnh mới
+                bar.querySelector('.btn-insert-img').onclick = () => {
+                    this.insertTargetNode = bar;
+                    this.isInsertingNewImage = true;
+                    this.targetOldSrc = null;
+                    const fileInput = document.getElementById('image-file-input');
+                    if (fileInput) {
+                        fileInput.value = '';
+                        fileInput.click();
+                    }
+                };
+
+                node.parentNode.insertBefore(bar, node.nextSibling);
+            });
+        },
+
         triggerImageUpload(imgElement) {
             this.targetOldSrc = imgElement.getAttribute('src');
             this.currentImgElement = imgElement;
+            this.isInsertingNewImage = false;
+            this.insertTargetNode = null;
             const fileInput = document.getElementById('image-file-input');
             if (fileInput) {
                 fileInput.value = '';
@@ -606,7 +772,52 @@ function manualApp() {
         handleImageSelected(event) {
             const file = event.target.files[0];
             if (!file) return;
-            this.uploadImageFile(file, this.targetOldSrc, this.currentImgElement);
+
+            if (this.isInsertingNewImage) {
+                this.uploadAndInsertNewImage(file, this.insertTargetNode);
+            } else {
+                this.uploadImageFile(file, this.targetOldSrc, this.currentImgElement);
+            }
+        },
+
+        async uploadAndInsertNewImage(file, targetBar) {
+            const formData = new FormData();
+            formData.append('image', file);
+            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+            try {
+                const response = await fetch('{{ route("manual.upload_image") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const img = document.createElement('img');
+                    img.src = data.url;
+                    img.setAttribute('src', data.relative_path);
+                    img.alt = 'Ảnh minh chứng';
+
+                    if (targetBar && targetBar.parentNode) {
+                        targetBar.parentNode.insertBefore(img, targetBar.nextSibling);
+                    } else {
+                        document.getElementById('manual-content')?.appendChild(img);
+                    }
+
+                    // Tái thiết lập wrapper và nút thay ảnh
+                    this.enhanceImages();
+                    alert('✅ ĐÃ THÊM ẢNH MỚI THÀNH CÔNG!');
+                } else {
+                    alert('❌ Lỗi: ' + (data.message || 'Không thể upload ảnh'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('❌ Lỗi kết nối khi tải ảnh!');
+            }
         },
 
         async uploadImageFile(file, oldSrc, imgElement) {
@@ -648,8 +859,10 @@ function manualApp() {
             const container = document.getElementById('manual-content');
             if (!container) return;
 
+            // Nhân bản node để loại bỏ overlay và insert bar trước khi chuyển sang Markdown
             const clone = container.cloneNode(true);
             clone.querySelectorAll('.manual-img-overlay').forEach(el => el.remove());
+            clone.querySelectorAll('.manual-insert-bar').forEach(el => el.remove());
 
             let markdown = '';
             if (typeof TurndownService !== 'undefined') {
