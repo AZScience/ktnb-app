@@ -108,7 +108,7 @@ Trước khi có phần mềm KTNB, công tác thanh tra kiểm tra gặp nhiề
 
 ![Nhóm Nút Thao Tác Trên Thanh Công Cụ](screenshots/crops/btn_add.png)
 
-1. **Nút Thêm mới (+):** Màu xanh dương hoặc đỏ nổi bật $ightarrow$ Mở popup thêm mới bản ghi.
+1. **Nút Thêm mới (+):** Màu xanh dương hoặc đỏ nổi bật → Mở popup thêm mới bản ghi.
 2. **Nút Tải mẫu file (Template):** Tải file Excel mẫu đúng định dạng cột quy định.
 3. **Nút Tải lên (Import):** Chọn file Excel từ máy tính nạp dữ liệu hàng loạt.
 4. **Nút Tải xuống (Export):** Xuất bảng dữ liệu ra file Excel.
@@ -118,15 +118,15 @@ Trước khi có phần mềm KTNB, công tác thanh tra kiểm tra gặp nhiề
 ![Quy Chuẩn Nút Sắp Xếp Trên Header](screenshots/crops/btn_actions.png)
 
 Trên mỗi tiêu đề cột của bảng:
-- **Nút 1 `(^) `:** Sắp xếp **Tăng dần** (A $ightarrow$ Z, hoặc số nhỏ $ightarrow$ lớn).
-- **Nút 2 `(v)`:** Sắp xếp **Giảm dần** (Z $ightarrow$ A, hoặc số lớn $ightarrow$ nhỏ).
+- **Nút 1 `(^) `:** Sắp xếp **Tăng dần** (A → Z, hoặc số nhỏ → lớn).
+- **Nút 2 `(v)`:** Sắp xếp **Giảm dần** (Z → A, hoặc số lớn → nhỏ).
 - **Nút 3 `(⇅)`:** **Hủy sắp xếp** (trả về thứ tự mặc định).
 
 ---
 # PHẦN V: HƯỚNG DẪN CHI TIẾT TỪNG PHÂN HỆ NGHIỆP VỤ (ĐÚNG TRÌNH TỰ - 100% CÓ ẢNH)
 
 ## 5.2. Giám sát Sinh hoạt Chủ nhiệm & Cố vấn Học tập (Homeroom)
-- **Đường dẫn truy cập:** `/monitoring/homeroom` hoặc Menu: **Công cụ kiểm tra** $ightarrow$ **Cố vấn học tập**.
+- **Đường dẫn truy cập:** `/monitoring/homeroom` hoặc Menu: **Công cụ kiểm tra** → **Cố vấn học tập**.
 - **Đối tượng sử dụng chính:** Thanh tra viên ca trực, Lãnh đạo Phòng KTNB, Cố vấn học tập (CVHT).
 - **Ý nghĩa nghiệp vụ:** Giám sát các buổi sinh hoạt lớp định kỳ giữa Giảng viên Cố vấn học tập và tập thể sinh viên (các lớp có mã học phần bắt đầu bằng `SHCN`). Đảm bảo buổi sinh hoạt diễn ra đúng giờ, đúng phòng, đủ quân số và ghi nhận kịp thời các nguyện vọng, kiến nghị của sinh viên gửi về Nhà trường.
 
@@ -199,7 +199,7 @@ Khi cần tìm kiếm một lớp sinh hoạt cụ thể hoặc lọc theo tiêu
 ![Thanh Công Cụ Nhập Xuất Excel](screenshots/annotated/homeroom_5_import_export.png)
 
 1. **Tải file mẫu Excel (Import Template):** Bấm nút biểu tượng mũi tên tải xuống có khay để tải về file Excel mẫu chuẩn cột quy định của Nhà trường.
-2. **Nhập dữ liệu hàng loạt từ Excel (Import):** Bấm nút **Tải lên**, chọn file Excel thời khóa biểu sinh hoạt lớp được Phòng Đào tạo cấp $ightarrow$ Hệ thống sẽ nạp hàng trăm buổi sinh hoạt vào lịch kiểm tra trong 5 giây.
+2. **Nhập dữ liệu hàng loạt từ Excel (Import):** Bấm nút **Tải lên**, chọn file Excel thời khóa biểu sinh hoạt lớp được Phòng Đào tạo cấp → Hệ thống sẽ nạp hàng trăm buổi sinh hoạt vào lịch kiểm tra trong 5 giây.
 3. **Xuất bảng dữ liệu ra Excel (Export):** Bấm nút **Xuất Excel** để tải về danh sách các lớp sinh hoạt đã lọc kèm đầy đủ kết quả ghi nhận phục vụ báo cáo.
 
 ---
@@ -222,7 +222,7 @@ Trường hợp lớp sinh hoạt đột xuất hoặc dạy bù chưa có trên
 
 #### Bước 6: GHI NHẬN SINH HOẠT TẠI LỚP (TRỌNG TÂM NGHIỆP VỤ)
 Khi thanh tra viên đến trước cửa phòng học sinh hoạt chủ nhiệm:
-Quan sát thực tế $ightarrow$ Nhấp vào nút **Ghi nhận sinh hoạt** ở cột Hành động cuối dòng của lớp đó. Cửa sổ form ghi nhận chuyên sâu sẽ hiển thị:
+Quan sát thực tế → Nhấp vào nút **Ghi nhận sinh hoạt** ở cột Hành động cuối dòng của lớp đó. Cửa sổ form ghi nhận chuyên sâu sẽ hiển thị:
 
 ![Form Ghi Nhận Sinh Hoạt Chủ Nhiệm](screenshots/annotated/homeroom_7_record.png)
 
@@ -263,7 +263,7 @@ Trường hợp cần đính chính lại số lượng sinh viên tham gia ho�
 
 ![Hộp thoại Xác nhận Xóa Ghi nhận](screenshots/annotated/homeroom_8_delete.png)
 
-1. **Chỉnh sửa:** Bấm vào nút hình cây bút $ightarrow$ Form ghi nhận mở lại $ightarrow$ Điều chỉnh số liệu $ightarrow$ Bấm Lưu.
+1. **Chỉnh sửa:** Bấm vào nút hình cây bút → Form ghi nhận mở lại → Điều chỉnh số liệu → Bấm Lưu.
 2. **Xóa bản ghi:**
    - Bấm nút hình thùng rác ở dòng cần xóa.
    - Hộp thoại cảnh báo màu đỏ sẽ hiển thị: *"Bạn có chắc chắn muốn xóa bản ghi sinh hoạt lớp này không?"*.
@@ -271,7 +271,7 @@ Trường hợp cần đính chính lại số lượng sinh viên tham gia ho�
 
 ---
 ## 5.4. Giám sát Lớp học Trực tuyến (Online Classes)
-- **Đường dẫn truy cập:** `/monitoring/online` hoặc Menu: **Công cụ kiểm tra** $ightarrow$ **Lớp học online**.
+- **Đường dẫn truy cập:** `/monitoring/online` hoặc Menu: **Công cụ kiểm tra** → **Lớp học online**.
 - **Đối tượng sử dụng chính:** Thanh tra viên kiểm tra ca trực, Lãnh đạo phòng KTNB.
 - **Ý nghĩa nghiệp vụ:** Giám sát nề nếp các lớp học từ xa qua các nền tảng Internet (MS Teams, Zoom, Google Meet). Đảm bảo giảng viên mở phòng đúng giờ, bật camera, chia sẻ slide bài giảng và sinh viên tham gia đầy đủ theo thời khóa biểu.
 
@@ -338,7 +338,7 @@ Trường hợp cần đính chính lại số lượng sinh viên tham gia ho�
 
 ![Form Ghi Nhận Lớp Học Online](screenshots/annotated/online_6_record.png)
 
-Quay lại tab phần mềm KTNB $ightarrow$ Nhấp nút **Ghi nhận kiểm tra** trên dòng của lớp đó:
+Quay lại tab phần mềm KTNB → Nhấp nút **Ghi nhận kiểm tra** trên dòng của lớp đó:
 1. **Cán bộ giám sát:** Hệ thống tự điền tên cán bộ.
 2. **SV tham gia online:** Điền số lượng sinh viên đang trực tuyến trong phòng họp (ví dụ: `58/65`).
 3. **Việc phát sinh:**
@@ -382,8 +382,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Mã lớp học phần / Môn học**: Hiển thị mã số lớp và tên học phần đang giảng dạy.\n- **Giảng viên giảng dạy**: Hiển thị họ và tên giảng viên được phân công trên thời khóa biểu.\n- **Sĩ số sinh viên**: Hiển thị sĩ số đăng ký và sĩ số sinh viên có mặt thực tế.\n- **Tình trạng lớp học**: Hiển thị nhãn trạng thái: Đang học, Vào trễ, Nghỉ, Đổi phòng...\n- **Việc phát sinh / Ghi chú**: Hiển thị nội dung sự cố hoặc việc bất thường phát hiện tại phòng.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -458,8 +458,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Quản lý Lịch học theo ngày & Xuất Excel In ấn chuẩn A4 (Schedule)](screenshots/annotated/schedule_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Mã môn & Tên lớp**: Hiển thị thông tin lớp học phần.\n- **Thứ & Ngày học**: Hiển thị ngày tháng diễn ra tiết học.\n- **Phòng học & Dãy nhà**: Hiển thị phòng học và cơ sở đào tạo.\n- **Tiết bắt đầu - Tiết kết thúc**: Hiển thị khung giờ học.\n- **Ghi chú / Việc phát sinh**: Hiển thị các ghi chú theo dõi đặc biệt.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -530,8 +530,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Lập biên bản Sinh viên Vi phạm (Quét Barcode & Chụp ảnh)](screenshots/annotated/violations_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Mã số sinh viên (MSSV)**: Hiển thị mã số sinh viên NTTU.\n- **Họ và tên sinh viên**: Họ tên đầy đủ của sinh viên vi phạm.\n- **Lớp & Khoa đào tạo**: Lớp danh nghĩa và khoa chủ quản.\n- **Hành vi vi phạm**: Tên lỗi vi phạm quy chế.\n- **Địa điểm vi phạm**: Phòng học, dãy nhà hoặc khu vực sân trường.\n- **Ảnh minh chứng**: Biểu tượng hình ảnh chụp hiện trường vi phạm.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -602,8 +602,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Giám sát Thi Kết thúc học phần (Exams)](screenshots/annotated/exams_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Môn thi & Ca thi**: Hiển thị tên học phần thi và ca thi (Ca 1, Ca 2, Ca 3...).\n- **Phòng thi & Điểm thi**: Hiển thị số phòng và cơ sở tổ chức thi.\n- **Cán bộ coi thi 1 & 2**: Hiển thị họ tên 2 giám thị được phân công coi thi.\n- **Sĩ số dự thi**: Hiển thị số lượng thí sinh có mặt và vắng mặt.\n- **Tình trạng phòng thi**: Hiển thị trạng thái: Đang thi nghiêm túc, Giám thị trễ, Có vi phạm quy chế...\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -674,8 +674,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Giám sát Thực hành Ngoài trường (External Practice)](screenshots/annotated/external_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Đơn vị tiếp nhận thực tập**: Tên bệnh viện, doanh nghiệp, cơ sở đối tác.\n- **Khoa & Ngành đào tạo**: Khoa Y, Dược, Điều dưỡng, Kỹ thuật...\n- **Giảng viên hướng dẫn**: Cán bộ giảng viên phụ trách dẫn đoàn.\n- **Quân số thực tế**: Số lượng sinh viên có mặt thực tế tại cơ sở ngoài trường.\n- **Tọa độ GPS kiểm tra**: Vị trí địa lý xác nhận thanh tra viên có mặt tại hiện trường.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -746,8 +746,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Quản lý Nhận - Trả tài sản & Báo hỏng CSVC phòng học (Asset Check)](screenshots/annotated/asset_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Giảng viên mượn thiết bị**: Họ tên giảng viên sử dụng thiết bị.\n- **Loại thiết bị mượn**: Micro không dây, Remote điều khiển máy chiếu, Cáp chuyển đổi...\n- **Phòng học sử dụng**: Mã phòng học giảng viên đang dạy (VD: A.205).\n- **Thời gian mượn - trả**: Giờ nhận thiết bị và giờ trả thiết bị.\n- **Trạng thái**: Đang mượn / Đã hoàn trả / Hư hỏng báo sửa chữa.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -779,7 +779,7 @@ Khi cần điều chỉnh thông tin, nhấp vào nút **Chỉnh sửa (Hình c�
 ![Form Chỉnh Sửa Quản lý Nhận - Trả tài sản & Báo hỏng CSVC phòng học (Asset Check)](screenshots/annotated/asset_5_edit.png)
 
 #### 📋 Hướng dẫn thao tác chỉnh sửa:
-- Khi giảng viên mang trả thiết bị: Mở giao dịch mượn $ightarrow$ Kiểm tra thiết bị hoạt động tốt $ightarrow$ Đổi trạng thái sang *Đã hoàn trả*.
+- Khi giảng viên mang trả thiết bị: Mở giao dịch mượn → Kiểm tra thiết bị hoạt động tốt → Đổi trạng thái sang *Đã hoàn trả*.
 - Nếu phát hiện thiết bị hư hỏng: Tích chọn *Báo hỏng* kèm mô tả lỗi để chuyển sang kỹ thuật sửa chữa.
 - Nhấp nút **Cập nhật** để lưu lại thông tin mới.
 
@@ -818,8 +818,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Tiếp nhận & Xử lý Yêu cầu kiểm tra đột xuất (Requests)](screenshots/annotated/requests_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Đơn vị / Người yêu cầu**: Ban Giám hiệu, Phòng Đào tạo, Khoa CNTT...\n- **Nội dung yêu cầu**: Trích yếu nhiệm vụ kiểm tra đột xuất.\n- **Mức độ ưu tiên**: Khẩn cấp / Cao / Bình thường.\n- **Cán bộ thụ lý**: Tên thanh tra viên được phân công thực hiện.\n- **Trạng thái tiến độ**: Chờ tiếp nhận / Đang xử lý / Đã có kết luận.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -889,8 +889,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Tiếp nhận & Xử lý Đơn thư Khiếu nại (Petitions)](screenshots/annotated/petitions_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Số hiệu đơn thư**: Mã số vào sổ công văn đến (VD: ĐT-2026-045).\n- **Người làm đơn**: Họ tên sinh viên, phụ huynh hoặc giảng viên.\n- **Nội dung trích yếu**: Tóm tắt nội dung khiếu nại về điểm thi, quy chế...\n- **Hạn chót giải quyết**: Thời hạn luật định phải có văn bản trả lời.\n- **Tình trạng xử lý**: Đang thụ lý / Đã có kết luận giải quyết.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -960,8 +960,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Quản lý Hồ sơ & Minh chứng kiểm tra lưu trữ (Document Records)](screenshots/annotated/documents_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Số hiệu văn bản**: Số công văn, quyết định (VD: 125/QĐ-ĐHNTT).\n- **Trích yếu nội dung**: Tóm tắt nội dung văn bản chỉ đạo hoặc kết luận thanh tra.\n- **Loại văn bản**: Biên bản, Quyết định, Tờ trình, Báo cáo...\n- **Ngày ban hành**: Ngày ký duyệt văn bản.\n- **Tệp đính kèm**: File scan PDF hoặc file Word để tải về.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -1031,8 +1031,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Quản lý Danh mục Đơn vị / Khoa / Phòng ban (Departments)](screenshots/annotated/departments_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Mã đơn vị**: Mã viết tắt chuẩn hóa (VD: CNTT, YHOA, DUOC, TCKT).\n- **Tên đầy đủ đơn vị**: Tên chính thức của Khoa / Phòng / Viện.\n- **Phân loại đơn vị**: Khoa đào tạo / Phòng ban chức năng / Viện nghiên cứu.\n- **Trưởng đơn vị**: Họ tên Thầy/Cô Trưởng khoa hoặc Trưởng phòng.\n- **Email liên hệ**: Địa chỉ email chính thức dùng để nhận thông báo vi phạm.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -1103,8 +1103,8 @@ Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt t
 ![Cài đặt Hiển thị Cột Quản trị Phân quyền Người dùng & Nhóm quyền (Permissions)](screenshots/annotated/permissions_2_columns.png)
 
 #### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh $\rightarrow$ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
 - **Tên quyền hạn**: Mã định danh kỹ thuật của quyền.\n- **Nhóm chức năng**: Nhóm Lịch học, Nhóm Vi phạm, Nhóm Báo cáo...\n- **Mô tả quyền**: Diễn giải ý nghĩa nghiệp vụ của quyền hạn bằng tiếng Việt.\n- **Các vai trò được gán**: Danh sách các vai trò đang sở hữu quyền này.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
 Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
@@ -1317,7 +1317,7 @@ Nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 ![Bảng điều khiển Dashboard](screenshots/dashboard.png)
 
 #### 📋 Các bước theo dõi trên Dashboard:
-1. **Bước 1:** Đăng nhập hệ thống $ightarrow$ Màn hình Dashboard tự động hiển thị đầu tiên.
+1. **Bước 1:** Đăng nhập hệ thống → Màn hình Dashboard tự động hiển thị đầu tiên.
 2. **Bước 2: Xem các chỉ số KPI nhanh:** Kiểm tra tổng số tiết học trong ngày, tỷ lệ hoàn thành ca trực, số ca phát sinh KPH và số sinh viên vi phạm.
 3. **Bước 3: Xem Lịch trực thanh tra viên:** Nắm rõ cán bộ nào đang trực tại Cơ sở Q.12, Cơ sở Q.4 và số điện thoại liên hệ.
 4. **Bước 4: Theo dõi thời khóa biểu realtime:** Xem dòng thời gian các phòng học đang học tiết hiện tại, nhận diện nhanh các phòng chớp vàng (vào trễ) hoặc đỏ (nghỉ).
@@ -1345,7 +1345,7 @@ Nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 #### 📋 Các bước thao tác:
 1. **Bước 1:** Nhấp nút **Ghi nhận việc tốt**.
 2. **Bước 2:** Nhập MSSV hoặc họ tên người thực hiện việc tốt, mô tả hành động đẹp.
-3. **Bước 3:** Chọn phần quà khen thưởng từ kho quà tặng $ightarrow$ Nhấn **Lưu và Tuyên dương**.
+3. **Bước 3:** Chọn phần quà khen thưởng từ kho quà tặng → Nhấn **Lưu và Tuyên dương**.
 
 ---
 

@@ -364,32 +364,13 @@ Route::get('/run-secret-migrations-999', function (\Illuminate\Http\Request $req
     }
 });
 
-Route::get('/tai-lieu-ktnb', function () {
-    $path = base_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
-    if (! file_exists($path)) {
-        $path = public_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
-    }
-    if (file_exists($path)) {
-        return response()->download($path, 'TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md', [
-            'Content-Type' => 'text/markdown; charset=UTF-8',
-        ]);
-    }
-    abort(404, 'File tài liệu không tồn tại.');
-})->name('manual.download');
+Route::get('/tai-lieu-ktnb', [\App\Http\Controllers\ManualController::class, 'download'])->name('manual.download');
 
-Route::get('/huong-dan-su-dung', function () {
-    $path = base_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
-    if (! file_exists($path)) {
-        $path = public_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
-    }
-    $markdown = file_exists($path) ? file_get_contents($path) : '# Tài liệu không tồn tại';
-    $html = \Illuminate\Support\Str::markdown($markdown);
-
-    return view('manual.index', [
-        'htmlContent' => $html,
-        'updatedAt' => file_exists($path) ? date('d/m/Y H:i', filemtime($path)) : date('d/m/Y H:i'),
-    ]);
-})->middleware('auth')->name('manual.view');
+Route::middleware('auth')->group(function () {
+    Route::get('/huong-dan-su-dung', [\App\Http\Controllers\ManualController::class, 'index'])->name('manual.view');
+    Route::post('/huong-dan-su-dung/save', [\App\Http\Controllers\ManualController::class, 'save'])->name('manual.save');
+    Route::post('/huong-dan-su-dung/upload-image', [\App\Http\Controllers\ManualController::class, 'uploadImage'])->name('manual.upload_image');
+});
 
 Route::get('/screenshots/{path}', function ($path) {
     $fullPath = base_path('screenshots/' . $path);

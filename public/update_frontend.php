@@ -141,6 +141,9 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/LecturerPortalController.php') === 0) {
                 $writeFile(__DIR__ . '/../app/Http/Controllers/LecturerPortalController.php', $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/ManualController.php') === 0) {
+                $writeFile(__DIR__ . '/../app/Http/Controllers/ManualController.php', $zip->getFromIndex($i));
+            }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Providers/AppServiceProvider.php') === 0) {
                 $writeFile(__DIR__ . '/../app/Providers/AppServiceProvider.php', $zip->getFromIndex($i));
             }
