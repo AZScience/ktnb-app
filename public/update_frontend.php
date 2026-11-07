@@ -102,6 +102,20 @@ if ($content) {
                 }
             }
 
+            // 1.2. Giải nén public/js
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/public/js/') === 0) {
+                $rel = str_replace('ktnb-app-kiemtranoibo/public/js/', '', $filename);
+                $dest = __DIR__ . '/js/' . $rel;
+                if (substr($filename, -1) == '/') {
+                    if (!is_dir($dest)) @mkdir($dest, 0755, true);
+                } else {
+                    $d = dirname($dest);
+                    if (!is_dir($d)) @mkdir($d, 0755, true);
+                    @file_put_contents($dest, $zip->getFromIndex($i));
+                    $extracted++;
+                }
+            }
+
             // 2. Cập nhật tất cả Blade views, layouts, components & partials
             if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/') === 0) {
                 $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/', '', $filename);

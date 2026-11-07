@@ -23,15 +23,7 @@ class ManualController extends Controller
 
     private function canUserEdit(): bool
     {
-        if (! auth()->check()) {
-            return false;
-        }
-
-        $perms = app(PermissionService::class);
-
-        return $perms->isSuperAdmin()
-            || $perms->employee()?->role_id === 'system'
-            || $perms->can('system.manage', 'edit');
+        return auth()->check();
     }
 
     public function index()
