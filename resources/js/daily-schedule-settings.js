@@ -526,45 +526,37 @@ export function registerDailyScheduleSettings(Alpine) {
                     }
                 }
 
-                const isCustomFiltered = this.selectionFilter === 'selected' || (this.items && this.filteredItems.length < this.items.length);
-                if (isCustomFiltered) {
-                    const ids = this.filteredItems.map((item) => item.id).filter(Boolean);
-                    if (ids.length > 0 && ids.length <= 100) {
-                        params.set('ids', ids.join(','));
-                    }
-                }
-
                 const qs = params.toString();
                 return qs ? `${this.exportUrl}?${qs}` : this.exportUrl;
             },
 
             exportExcel(event) {
                 if (!this.exportUrl) return;
+                if (event) event.preventDefault();
 
                 const isCustomFiltered = this.selectionFilter === 'selected' || (this.items && this.filteredItems.length < this.items.length);
                 const ids = isCustomFiltered ? this.filteredItems.map((item) => item.id).filter(Boolean) : [];
 
-                if (isCustomFiltered && ids.length > 100) {
-                    if (event) event.preventDefault();
-                    const f = this.advancedFilters;
-                    const from = toDisplayDate(f.fromDate || f.date);
-                    const to = toDisplayDate(f.toDate || f.fromDate || f.date);
-                    const payload = {
-                        from: from || '',
-                        to: to || from || '',
-                        date: from || '',
-                        buildings: f.buildings || [],
-                        ids: ids.join(','),
-                    };
-                    if (f.periodSession && f.periodSession !== 'all') {
-                        payload.period_session = f.periodSession;
-                        if (f.periodSession === 'custom') {
-                            if (f.periodStart !== '' && f.periodStart != null) payload.period_start = String(f.periodStart);
-                            if (f.periodEnd !== '' && f.periodEnd != null) payload.period_end = String(f.periodEnd);
-                        }
-                    }
-                    submitExportPost(this.exportUrl, payload);
+                const f = this.advancedFilters;
+                const from = toDisplayDate(f.fromDate || f.date);
+                const to = toDisplayDate(f.toDate || f.fromDate || f.date);
+                const payload = {
+                    from: from || '',
+                    to: to || from || '',
+                    date: from || '',
+                    buildings: f.buildings || [],
+                };
+                if (ids.length > 0) {
+                    payload.ids = ids.join(',');
                 }
+                if (f.periodSession && f.periodSession !== 'all') {
+                    payload.period_session = f.periodSession;
+                    if (f.periodSession === 'custom') {
+                        if (f.periodStart !== '' && f.periodStart != null) payload.period_start = String(f.periodStart);
+                        if (f.periodEnd !== '' && f.periodEnd != null) payload.period_end = String(f.periodEnd);
+                    }
+                }
+                submitExportPost(this.exportUrl, payload);
             },
 
             columnIcon(key) {

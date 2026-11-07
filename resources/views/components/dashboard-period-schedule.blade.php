@@ -16,10 +16,10 @@
 
 <div
     class="nttu-card overflow-hidden border border-cyan-200 shadow-md"
-    x-data="periodScheduleWidget({
+    x-data="Object.assign(periodScheduleWidget({
         uploadUrl: @js(route('dashboard.period-schedule.store')),
         canEdit: @js($canEdit),
-    })"
+    }), { lightbox: false })"
 >
     <div class="flex flex-col gap-3 border-b border-cyan-100 bg-gradient-to-r from-cyan-50/90 to-sky-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2 min-w-0">
@@ -47,6 +47,16 @@
                 @change="onFileSelected($event)"
             >
 
+            <button
+                type="button"
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50"
+                title="Phóng to xem rõ"
+                aria-label="Phóng to xem rõ"
+                @click="lightbox = true"
+            >
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
+            </button>
+
             @if($canEdit)
             <button
                 type="button"
@@ -73,12 +83,33 @@
         </div>
     </div>
 
-    <div class="overflow-hidden bg-slate-50/60 p-2 sm:p-4 min-w-0 w-full max-w-full">
+    <div class="overflow-x-auto bg-slate-50/60 p-2 sm:p-4 min-w-0 w-full max-w-full">
         <img
             src="{{ $previewUrl }}"
             alt="Bảng tiết học theo giờ"
-            class="mx-auto w-full max-w-full h-auto rounded-lg border border-cyan-100 bg-white shadow-sm"
+            class="mx-auto w-full max-w-full h-auto rounded-lg border border-cyan-100 bg-white shadow-sm cursor-zoom-in hover:opacity-95 transition"
             loading="lazy"
+            @click="lightbox = true"
         >
+        <p class="text-center text-[11px] text-gray-500 mt-1 md:hidden">Chạm vào hình để xem phóng to</p>
+    </div>
+
+    {{-- Lightbox phóng to --}}
+    <div
+        x-show="lightbox"
+        x-cloak
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-2 sm:p-4 backdrop-blur-sm"
+        @click="lightbox = false"
+        @keydown.escape.window="lightbox = false"
+    >
+        <div class="relative max-h-[92vh] max-w-[96vw] overflow-auto rounded-xl bg-white p-2 shadow-2xl" @click.stop>
+            <div class="flex items-center justify-between border-b pb-2 mb-2 px-2">
+                <span class="font-semibold text-sm text-gray-800">Bảng tiết học theo giờ</span>
+                <button type="button" @click="lightbox = false" class="rounded-full bg-gray-100 p-1.5 text-gray-600 hover:bg-gray-200 transition" title="Đóng">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <img src="{{ $previewUrl }}" alt="Bảng tiết học theo giờ" class="max-h-[82vh] max-w-full w-auto object-contain mx-auto rounded">
+        </div>
     </div>
 </div>

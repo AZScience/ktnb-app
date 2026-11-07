@@ -165,12 +165,12 @@
             @endphp
             <div
                 class="nttu-card overflow-hidden border border-blue-200 shadow-md transition-all duration-300"
-                x-data="shiftScheduleWidget({
+                x-data="Object.assign(shiftScheduleWidget({
                     uploadUrl: @js(route('dashboard.shift-schedule.store')),
                     downloadUrl: @js($shiftSchedule ? route('dashboard.shift-schedule.file', ['download' => 1]) : null),
                     hasSchedule: @js((bool) $shiftSchedule),
                     canEdit: @js($dashPerms['edit']),
-                })"
+                }), { imageModal: false })"
             >
                 <div
                     class="flex flex-col gap-3 border-b border-blue-100 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between cursor-pointer hover:bg-slate-100/80 transition-colors"
@@ -228,11 +228,31 @@
                     @if($shiftSchedule)
                         <div class="relative flex min-h-[300px] md:min-h-[650px] items-center justify-center bg-slate-50/60 overflow-hidden min-w-0 w-full max-w-full">
                             @if(($shiftSchedule['preview_kind'] ?? '') === 'image')
-                                <img
-                                    src="{{ $shiftSchedulePreviewUrl }}"
-                                    alt="{{ $shiftSchedule['name'] }}"
-                                    class="max-h-[800px] w-auto max-w-full object-contain mx-auto p-2"
+                                <div class="w-full text-center p-2 cursor-pointer overflow-x-auto" @click="imageModal = true">
+                                    <img
+                                        src="{{ $shiftSchedulePreviewUrl }}"
+                                        alt="{{ $shiftSchedule['name'] }}"
+                                        class="max-h-[800px] w-auto max-w-full object-contain mx-auto p-2 rounded cursor-zoom-in hover:opacity-95 transition"
+                                    >
+                                    <p class="text-xs text-blue-600 mt-1 md:hidden">Chạm vào hình để xem phóng to</p>
+                                </div>
+                                <div
+                                    x-show="imageModal"
+                                    x-cloak
+                                    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-2 sm:p-4 backdrop-blur-sm"
+                                    @click="imageModal = false"
+                                    @keydown.escape.window="imageModal = false"
                                 >
+                                    <div class="relative max-h-[92vh] max-w-[96vw] overflow-auto rounded-xl bg-white p-2 shadow-2xl" @click.stop>
+                                        <div class="flex items-center justify-between border-b pb-2 mb-2 px-2">
+                                            <span class="font-semibold text-sm text-gray-800">{{ $shiftSchedule['name'] }}</span>
+                                            <button type="button" @click="imageModal = false" class="rounded-full bg-gray-100 p-1.5 text-gray-600 hover:bg-gray-200 transition" title="Đóng">
+                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                        <img src="{{ $shiftSchedulePreviewUrl }}" alt="{{ $shiftSchedule['name'] }}" class="max-h-[82vh] max-w-full w-auto object-contain mx-auto rounded">
+                                    </div>
+                                </div>
                             @elseif(($shiftSchedule['preview_kind'] ?? '') === 'pdf')
                                 {{-- Giao diện trên điện thoại / Mobile: hiển thị thẻ xem PDF chuyên dụng, không nhúng iframe 1800px làm vỡ layout --}}
                                 <div class="block md:hidden w-full p-6 text-center">

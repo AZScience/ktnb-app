@@ -1043,14 +1043,6 @@ export function monitoringSchedulesPage(config) {
                 if (this.includeHomeroom) params.set('include_homeroom', '1');
             }
 
-            const isCustomFiltered = this.selectionFilter === 'selected' || (this.items && this.filteredItems.length < this.items.length);
-            if (isCustomFiltered) {
-                const ids = this.filteredItems.map((item) => item.id).filter(Boolean);
-                if (ids.length > 0 && ids.length <= 100) {
-                    params.set('ids', ids.join(','));
-                }
-            }
-
             const qs = params.toString();
 
             return qs ? `${base}?${qs}` : base;
@@ -1059,31 +1051,31 @@ export function monitoringSchedulesPage(config) {
         exportExcel(event) {
             const base = this.exportUrlBase || (this.dataUrl ? this.dataUrl.replace(/\/data$/, '/export') : '');
             if (!base) return;
+            if (event) event.preventDefault();
 
             const isCustomFiltered = this.selectionFilter === 'selected' || (this.items && this.filteredItems.length < this.items.length);
             const ids = isCustomFiltered ? this.filteredItems.map((item) => item.id).filter(Boolean) : [];
 
-            if (isCustomFiltered && ids.length > 100) {
-                if (event) event.preventDefault();
-                const f = this.advancedFilters;
-                const payload = {
-                    date: this.currentDate || '',
-                    buildings: f.buildings || [],
-                    ids: ids.join(','),
-                };
-                if (f.periodSession && f.periodSession !== 'all') {
-                    payload.period_session = f.periodSession;
-                    if (f.periodSession === 'custom') {
-                        if (f.periodStart !== '' && f.periodStart != null) payload.period_start = String(f.periodStart);
-                        if (f.periodEnd !== '' && f.periodEnd != null) payload.period_end = String(f.periodEnd);
-                    }
-                }
-                if (this.module === 'in-person' || this.module === 'online') {
-                    if (this.includeExams) payload.include_exams = '1';
-                    if (this.includeHomeroom) payload.include_homeroom = '1';
-                }
-                submitExportPost(base, payload);
+            const f = this.advancedFilters;
+            const payload = {
+                date: this.currentDate || '',
+                buildings: f.buildings || [],
+            };
+            if (ids.length > 0) {
+                payload.ids = ids.join(',');
             }
+            if (f.periodSession && f.periodSession !== 'all') {
+                payload.period_session = f.periodSession;
+                if (f.periodSession === 'custom') {
+                    if (f.periodStart !== '' && f.periodStart != null) payload.period_start = String(f.periodStart);
+                    if (f.periodEnd !== '' && f.periodEnd != null) payload.period_end = String(f.periodEnd);
+                }
+            }
+            if (this.module === 'in-person' || this.module === 'online') {
+                if (this.includeExams) payload.include_exams = '1';
+                if (this.includeHomeroom) payload.include_homeroom = '1';
+            }
+            submitExportPost(base, payload);
         },
 
         columnIcon(key) {

@@ -376,3 +376,29 @@ Route::get('/tai-lieu-ktnb', function () {
     }
     abort(404, 'File tài liệu không tồn tại.');
 })->name('manual.download');
+
+Route::get('/huong-dan-su-dung', function () {
+    $path = base_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
+    if (! file_exists($path)) {
+        $path = public_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
+    }
+    $markdown = file_exists($path) ? file_get_contents($path) : '# Tài liệu không tồn tại';
+    $html = \Illuminate\Support\Str::markdown($markdown);
+
+    return view('manual.index', [
+        'htmlContent' => $html,
+        'updatedAt' => file_exists($path) ? date('d/m/Y H:i', filemtime($path)) : date('d/m/Y H:i'),
+    ]);
+})->name('manual.view');
+
+Route::get('/screenshots/{path}', function ($path) {
+    $fullPath = base_path('screenshots/' . $path);
+    if (! file_exists($fullPath)) {
+        $fullPath = public_path('screenshots/' . $path);
+    }
+    if (file_exists($fullPath) && is_file($fullPath)) {
+        return response()->file($fullPath);
+    }
+    abort(404);
+})->where('path', '.*')->name('screenshots.file');
+

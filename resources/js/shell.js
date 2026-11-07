@@ -1,7 +1,14 @@
 const SIDEBAR_COOKIE = 'sidebar_state';
 const SIDEBAR_MAX_AGE = 60 * 60 * 24 * 7;
 
+function isMobile() {
+    return typeof window !== 'undefined' && window.innerWidth < 768;
+}
+
 function readSidebarOpen() {
+    if (isMobile()) {
+        return false;
+    }
     try {
         const fromStorage = localStorage.getItem(SIDEBAR_COOKIE);
         if (fromStorage === 'true' || fromStorage === 'false') {
@@ -19,6 +26,9 @@ function readSidebarOpen() {
 }
 
 function persistSidebarOpen(open) {
+    if (isMobile()) {
+        return;
+    }
     try {
         localStorage.setItem(SIDEBAR_COOKIE, String(open));
         document.cookie = `${SIDEBAR_COOKIE}=${open}; path=/; max-age=${SIDEBAR_MAX_AGE}`;
@@ -34,10 +44,21 @@ export function registerNttuShell(Alpine) {
         openMenuSection: initialOpenMenu || null,
 
         init() {
-            persistSidebarOpen(this.sidebarOpen);
+            if (isMobile()) {
+                this.sidebarOpen = false;
+            } else {
+                persistSidebarOpen(this.sidebarOpen);
+            }
+
             if (initialOpenMenu) {
                 this.openMenuSection = initialOpenMenu;
             }
+
+            window.addEventListener('resize', () => {
+                if (isMobile() && this.sidebarOpen) {
+                    this.sidebarOpen = false;
+                }
+            });
 
             window.addEventListener('keydown', (event) => {
                 if (event.key === 'b' && (event.metaKey || event.ctrlKey)) {
@@ -49,13 +70,24 @@ export function registerNttuShell(Alpine) {
 
         toggleSidebar() {
             this.sidebarOpen = !this.sidebarOpen;
-            persistSidebarOpen(this.sidebarOpen);
+            if (!isMobile()) {
+                persistSidebarOpen(this.sidebarOpen);
+            }
         },
 
         expandSidebar() {
             if (!this.sidebarOpen) {
                 this.sidebarOpen = true;
-                persistSidebarOpen(true);
+                if (!isMobile()) {
+                    persistSidebarOpen(true);
+                }
+            }
+        },
+
+        closeSidebar() {
+            this.sidebarOpen = false;
+            if (!isMobile()) {
+                persistSidebarOpen(false);
             }
         },
 

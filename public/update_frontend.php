@@ -83,6 +83,25 @@ if ($content) {
                 }
             }
 
+            // 1.1. Giải nén thư mục screenshots sang public/screenshots & screenshots
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/screenshots/') === 0) {
+                $rel = str_replace('ktnb-app-kiemtranoibo/screenshots/', '', $filename);
+                $dest1 = __DIR__ . '/screenshots/' . $rel;
+                $dest2 = __DIR__ . '/../screenshots/' . $rel;
+                if (substr($filename, -1) == '/') {
+                    if (!is_dir($dest1)) @mkdir($dest1, 0755, true);
+                    if (!is_dir($dest2)) @mkdir($dest2, 0755, true);
+                } else {
+                    $d1 = dirname($dest1);
+                    if (!is_dir($d1)) @mkdir($d1, 0755, true);
+                    $d2 = dirname($dest2);
+                    if (!is_dir($d2)) @mkdir($d2, 0755, true);
+                    @file_put_contents($dest1, $zip->getFromIndex($i));
+                    @file_put_contents($dest2, $zip->getFromIndex($i));
+                    $extracted++;
+                }
+            }
+
             // 2. Cập nhật tất cả Blade views, layouts, components & partials
             if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/') === 0) {
                 $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/', '', $filename);

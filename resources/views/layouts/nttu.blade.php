@@ -31,19 +31,16 @@
     </title>
 
     <script>
-
         try {
-
-            const match = document.cookie.match(/(?:^|; )sidebar_state=(true|false)/);
-
-            if (match) {
-
-                document.documentElement.dataset.sidebar = match[1] === 'true' ? 'expanded' : 'collapsed';
-
+            if (window.innerWidth < 768) {
+                document.documentElement.dataset.sidebar = 'collapsed';
+            } else {
+                const match = document.cookie.match(/(?:^|; )sidebar_state=(true|false)/);
+                if (match) {
+                    document.documentElement.dataset.sidebar = match[1] === 'true' ? 'expanded' : 'collapsed';
+                }
             }
-
         } catch (e) {}
-
     </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -56,7 +53,7 @@
             x-show="sidebarOpen"
             x-cloak
             class="fixed inset-0 z-30 bg-black/50 md:hidden"
-            @click="toggleSidebar()"
+            @click="sidebarOpen = false"
         ></div>
         <x-nttu-sidebar />
 
