@@ -239,7 +239,7 @@
         type="button"
         x-show="showBackToTop"
         x-transition
-        @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+        @click="scrollToTop()"
         class="fixed bottom-20 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--nttu-primary)] text-white shadow-xl hover:bg-blue-800 transition transform hover:scale-110"
         title="Cuộn lên đầu trang"
     >
@@ -514,13 +514,28 @@ function manualApp() {
         insertTargetNode: null,
         isInsertingNewImage: false,
 
+        scrollToTop() {
+            const mainContainer = document.querySelector('main');
+            if (mainContainer && mainContainer.scrollTo) {
+                mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+
         init() {
-            window.addEventListener('scroll', () => {
-                this.showBackToTop = window.scrollY > 400;
+            const mainContainer = document.querySelector('main');
+            const handleScroll = () => {
+                const currentY = (mainContainer ? mainContainer.scrollTop : 0) || window.scrollY || 0;
+                this.showBackToTop = currentY > 300;
                 if (this.activeBlockNode) {
                     this.updateToolbarPosition();
                 }
-            });
+            };
+
+            if (mainContainer) {
+                mainContainer.addEventListener('scroll', handleScroll, { passive: true });
+            }
+            window.addEventListener('scroll', handleScroll, { passive: true });
 
             window.addEventListener('resize', () => {
                 if (this.activeBlockNode) {
@@ -723,16 +738,23 @@ function manualApp() {
             const container = document.getElementById('manual-content');
             if (!container) return;
 
+            const cleanSlug = (text) => {
+                if (!text) return '';
+                return text.toLowerCase()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+            };
+
             const headings = container.querySelectorAll('h1, h2, h3, h4');
             headings.forEach(h => {
                 const text = h.textContent.trim();
+                const slug = cleanSlug(text);
                 if (!h.id) {
-                    const plainSlug = text.toLowerCase()
-                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/^-+|-+$/g, '');
-                    h.id = plainSlug;
+                    h.id = slug;
                 }
+                h.dataset.cleanSlug = slug;
+                h.dataset.rawText = text.toLowerCase();
             });
 
             const links = container.querySelectorAll('a[href^="#"]');
@@ -747,43 +769,73 @@ function manualApp() {
                     const href = a.getAttribute('href');
                     if (!href || href === '#') return;
                     const targetId = decodeURIComponent(href.substring(1)).toLowerCase().trim();
+                    const targetSlug = cleanSlug(targetId);
 
-                    let targetEl = document.getElementById(targetId);
-
-                    if (!targetEl) {
-                        const unaccentedTarget = targetId.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                        targetEl = document.getElementById(unaccentedTarget);
-                    }
+                    let targetEl = document.getElementById(targetId) || document.getElementById(targetSlug);
 
                     if (!targetEl) {
-                        const linkText = a.textContent.trim().toLowerCase();
-                        const matchNum = linkText.match(/^([0-9\.]+|phần\s+[ivx0-9]+)/i);
-                        const prefix = matchNum ? matchNum[1].toLowerCase() : null;
-
                         for (const h of headings) {
-                            const hText = h.textContent.trim().toLowerCase();
-                            if (hText === linkText || hText.includes(linkText) || (prefix && hText.startsWith(prefix))) {
+                            if (h.id === targetId || h.id === targetSlug || h.dataset.cleanSlug === targetSlug) {
                                 targetEl = h;
                                 break;
                             }
                         }
                     }
 
+                    if (!targetEl) {
+                        const rawLinkText = a.textContent.trim().toLowerCase();
+                        const linkSlug = cleanSlug(rawLinkText);
+
+                        for (const h of headings) {
+                            if (h.dataset.cleanSlug === linkSlug || h.dataset.rawText === rawLinkText) {
+                                targetEl = h;
+                                break;
+                            }
+                        }
+
+                        if (!targetEl) {
+                            const matchNum = rawLinkText.match(/^([0-9\.]+|phần\s+[ivx0-9]+)/i);
+                            if (matchNum) {
+                                const prefix = matchNum[1].trim().toLowerCase();
+                                for (const h of headings) {
+                                    if (h.dataset.rawText.startsWith(prefix)) {
+                                        targetEl = h;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (targetEl) {
-                        const navOffset = 90;
-                        const elementPosition = targetEl.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - navOffset;
+                        const mainContainer = targetEl.closest('main') || document.querySelector('main');
+                        if (mainContainer && mainContainer.scrollHeight > mainContainer.clientHeight) {
+                            const containerRect = mainContainer.getBoundingClientRect();
+                            const targetRect = targetEl.getBoundingClientRect();
+                            const relativeTop = targetRect.top - containerRect.top;
+                            const targetScrollTop = mainContainer.scrollTop + relativeTop - 24;
 
-                        window.scrollTo({
-                            top: offsetPosition,
-                            behavior: 'smooth'
-                        });
+                            mainContainer.scrollTo({
+                                top: Math.max(0, targetScrollTop),
+                                behavior: 'smooth'
+                            });
+                        } else {
+                            const navOffset = 90;
+                            const elementPosition = targetEl.getBoundingClientRect().top;
+                            const offsetPosition = elementPosition + window.pageYOffset - navOffset;
 
-                        targetEl.style.transition = 'background-color 0.4s ease';
+                            window.scrollTo({
+                                top: Math.max(0, offsetPosition),
+                                behavior: 'smooth'
+                            });
+                        }
+
+                        targetEl.style.transition = 'background-color 0.4s ease, border-radius 0.4s ease';
                         targetEl.style.backgroundColor = '#FEF08A';
+                        targetEl.style.borderRadius = '6px';
                         setTimeout(() => {
                             targetEl.style.backgroundColor = '';
-                        }, 1600);
+                        }, 2000);
                     }
                 });
             });
