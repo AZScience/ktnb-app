@@ -363,3 +363,16 @@ Route::get('/run-secret-migrations-999', function (\Illuminate\Http\Request $req
         return 'Loi: '.$e->getMessage();
     }
 });
+
+Route::get('/tai-lieu-ktnb', function () {
+    $path = base_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
+    if (! file_exists($path)) {
+        $path = public_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
+    }
+    if (file_exists($path)) {
+        return response()->download($path, 'TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md', [
+            'Content-Type' => 'text/markdown; charset=UTF-8',
+        ]);
+    }
+    abort(404, 'File tài liệu không tồn tại.');
+})->name('manual.download');

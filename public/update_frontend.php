@@ -125,6 +125,13 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/routes/web.php') === 0) {
                 $writeFile(__DIR__ . '/../routes/web.php', $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md') === 0) {
+                $writeFile(__DIR__ . '/../TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md', $zip->getFromIndex($i));
+                $writeFile(__DIR__ . '/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/public/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md') === 0) {
+                $writeFile(__DIR__ . '/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md', $zip->getFromIndex($i));
+            }
         }
         $zip->close();
         @unlink($zipFile);
