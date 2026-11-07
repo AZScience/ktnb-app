@@ -35,7 +35,7 @@ copy /Y "package.json" "%STAGE%\package.json" >nul
 if exist "artisan" copy /Y "artisan" "%STAGE%\artisan" >nul
 
 REM Dung Compress-Archive (Windows Explorer mo duoc; tar -a thuong bi Explorer mo thay trong)
-powershell -NoProfile -Command "Compress-Archive -Path (Join-Path $env:TEMP 'ktnb_delta_stage\*') -DestinationPath 'deploy\ktnb-app-delta-update.zip' -Force"
+powershell -NoProfile -Command "$ProgressPreference = 'SilentlyContinue'; Compress-Archive -Path (Join-Path $env:TEMP 'ktnb_delta_stage\*') -DestinationPath 'deploy\ktnb-app-delta-update.zip' -Force"
 echo ZIP_EXIT=%ERRORLEVEL%
 rmdir /s /q "%STAGE%"
 
