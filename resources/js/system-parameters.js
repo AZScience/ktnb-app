@@ -67,6 +67,7 @@ export function registerSystemParameters(Alpine) {
             this.savedParams = JSON.parse(JSON.stringify(initial));
             this.$watch('localParams', () => {
                 this.hasChanges = JSON.stringify(this.normalizeParams(this.localParams)) !== JSON.stringify(this.savedParams);
+                this.syncLiveHeader();
             }, { deep: true });
 
             window.addEventListener('beforeunload', (event) => {
@@ -74,6 +75,87 @@ export function registerSystemParameters(Alpine) {
                 event.preventDefault();
                 event.returnValue = '';
             });
+
+            this.$nextTick(() => {
+                this.syncLiveHeader();
+            });
+        },
+
+        syncLiveHeader() {
+            if (typeof window !== 'undefined' && window.nttuApplyHeaderTitle) {
+                window.nttuApplyHeaderTitle(this.localParams);
+            }
+        },
+
+        headerTitlePreviewStyle() {
+            const p = this.localParams;
+            const color = p.headerTitleColor || '#111827';
+            const rawSize = p.headerTitleFontSize || '20';
+            const displayFontSize = String(rawSize).includes('px') ? rawSize : (rawSize + 'px');
+            const weight = p.headerTitleFontWeight || '700';
+            const transform = p.headerTitleTransform || 'uppercase';
+            const spacing = p.headerTitleLetterSpacing || '0.05em';
+            const style = p.headerTitleStyle || 'normal';
+            const effect = p.headerTitleEffect || 'none';
+            const gradient = p.headerTitleGradient || 'none';
+            const gradientColor2 = p.headerTitleGradientColor2 || '#06b6d4';
+            const animation = p.headerTitleAnimation || 'none';
+
+            let textShadow = 'none';
+            if (effect === 'shadow-soft') textShadow = '0 2px 4px rgba(0,0,0,0.18)';
+            else if (effect === 'shadow-3d') textShadow = '1px 1px 0px rgba(0,0,0,0.22), 2px 2px 0px rgba(0,0,0,0.16), 3px 3px 3px rgba(0,0,0,0.15)';
+            else if (effect === 'glow-neon') textShadow = '0 0 8px ' + color + ', 0 0 20px ' + color;
+            else if (effect === 'shadow-strong') textShadow = '2px 3px 6px rgba(0,0,0,0.35)';
+            else if (effect === 'letterpress') textShadow = '0 1px 1px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.25)';
+
+            let bgGradient = '';
+            if (gradient === 'blue-cyan') bgGradient = 'linear-gradient(135deg, #0054a6 0%, #06b6d4 100%)';
+            else if (gradient === 'purple-pink') bgGradient = 'linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)';
+            else if (gradient === 'sunset') bgGradient = 'linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%)';
+            else if (gradient === 'emerald') bgGradient = 'linear-gradient(135deg, #047857 0%, #10b981 100%)';
+            else if (gradient === 'gold') bgGradient = 'linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #fde047 100%)';
+            else if (gradient === 'custom') bgGradient = 'linear-gradient(135deg, ' + color + ' 0%, ' + gradientColor2 + ' 100%)';
+
+            const res = {
+                fontSize: 'clamp(14px, 4vw, ' + displayFontSize + ')',
+                fontWeight: weight,
+                textTransform: transform,
+                letterSpacing: spacing,
+                fontStyle: style,
+                textShadow: textShadow,
+            };
+
+            if (animation === 'shimmer') {
+                if (!bgGradient) bgGradient = 'linear-gradient(90deg, ' + color + ' 0%, #ffffff 50%, ' + color + ' 100%)';
+                res.backgroundImage = bgGradient;
+                res.webkitBackgroundClip = 'text';
+                res.webkitTextFillColor = 'transparent';
+                res.backgroundClip = 'text';
+                res.backgroundSize = '200% auto';
+                res.animation = 'nttu-header-shimmer 3s linear infinite';
+            } else if (bgGradient) {
+                res.backgroundImage = bgGradient;
+                res.webkitBackgroundClip = 'text';
+                res.webkitTextFillColor = 'transparent';
+                res.backgroundClip = 'text';
+                res.backgroundSize = '100% auto';
+            } else {
+                res.color = color;
+            }
+
+            if (animation === 'pulse') res.animation = 'nttu-header-pulse 2.5s ease-in-out infinite';
+            else if (animation === 'glow-pulse') res.animation = 'nttu-header-glow 2s ease-in-out infinite';
+            else if (animation === 'float') res.animation = 'nttu-header-float 3s ease-in-out infinite';
+
+            return res;
+        },
+
+        headerTitleBadgeClass() {
+            const badge = this.localParams.headerTitleBadge || 'none';
+            if (badge === 'pill-subtle') return 'inline-flex items-center justify-center px-4 py-1 rounded-full bg-slate-100/80 border border-slate-200/90 shadow-xs max-w-full';
+            if (badge === 'pill-glass') return 'inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-white/90 shadow-sm max-w-full';
+            if (badge === 'underline-gradient') return 'inline-flex items-center justify-center border-b-2 border-indigo-500/80 pb-0.5 max-w-full';
+            return 'inline-flex items-center justify-center max-w-full';
         },
 
         normalizeParams(params) {
@@ -109,6 +191,7 @@ export function registerSystemParameters(Alpine) {
             const restored = JSON.parse(JSON.stringify(this.savedParams));
             Object.keys(this.localParams).forEach((key) => delete this.localParams[key]);
             Object.assign(this.localParams, restored);
+            this.syncLiveHeader();
             this.showToast('Đã hoàn tác thay đổi');
         },
 
@@ -152,7 +235,11 @@ export function registerSystemParameters(Alpine) {
                 Object.assign(this.localParams, next);
                 this.savedParams = JSON.parse(JSON.stringify(next));
                 this.hasChanges = false;
-                this.showToast('Đã cập nhật tham số hệ thống.');
+                this.syncLiveHeader();
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('nttu-header-title-updated', { detail: next }));
+                }
+                this.showToast('Đã lưu và cập nhật tiêu đề hệ thống ngay lập tức!');
             } catch (error) {
                 this.showToast(error.message || 'Lỗi lưu trữ.', 'error');
             } finally {

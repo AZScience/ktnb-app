@@ -65,6 +65,11 @@ class AppServiceProvider extends ServiceProvider
                     'headerTitleTransform' => !empty($params['headerTitleTransform']) ? $params['headerTitleTransform'] : 'uppercase',
                     'headerTitleLetterSpacing' => !empty($params['headerTitleLetterSpacing']) ? $params['headerTitleLetterSpacing'] : '0.05em',
                     'headerTitleStyle' => !empty($params['headerTitleStyle']) ? $params['headerTitleStyle'] : 'normal',
+                    'headerTitleEffect' => !empty($params['headerTitleEffect']) ? $params['headerTitleEffect'] : 'none',
+                    'headerTitleGradient' => !empty($params['headerTitleGradient']) ? $params['headerTitleGradient'] : 'none',
+                    'headerTitleGradientColor2' => !empty($params['headerTitleGradientColor2']) ? $params['headerTitleGradientColor2'] : '#06b6d4',
+                    'headerTitleAnimation' => !empty($params['headerTitleAnimation']) ? $params['headerTitleAnimation'] : 'none',
+                    'headerTitleBadge' => !empty($params['headerTitleBadge']) ? $params['headerTitleBadge'] : 'none',
                     'employee' => null,
                     'employeePositionName' => null,
                 ]);
@@ -84,6 +89,11 @@ class AppServiceProvider extends ServiceProvider
                 $headerTitleTransform = !empty($params['headerTitleTransform']) ? $params['headerTitleTransform'] : 'uppercase';
                 $headerTitleLetterSpacing = !empty($params['headerTitleLetterSpacing']) ? $params['headerTitleLetterSpacing'] : '0.05em';
                 $headerTitleStyle = !empty($params['headerTitleStyle']) ? $params['headerTitleStyle'] : 'normal';
+                $headerTitleEffect = !empty($params['headerTitleEffect']) ? $params['headerTitleEffect'] : 'none';
+                $headerTitleGradient = !empty($params['headerTitleGradient']) ? $params['headerTitleGradient'] : 'none';
+                $headerTitleGradientColor2 = !empty($params['headerTitleGradientColor2']) ? $params['headerTitleGradientColor2'] : '#06b6d4';
+                $headerTitleAnimation = !empty($params['headerTitleAnimation']) ? $params['headerTitleAnimation'] : 'none';
+                $headerTitleBadge = !empty($params['headerTitleBadge']) ? $params['headerTitleBadge'] : 'none';
 
                 $employee = Employee::query()->where('user_id', auth()->id())->first()
                     ?? Employee::query()->where('email', auth()->user()->email)->first();
@@ -103,6 +113,11 @@ class AppServiceProvider extends ServiceProvider
                     'headerTitleTransform',
                     'headerTitleLetterSpacing',
                     'headerTitleStyle',
+                    'headerTitleEffect',
+                    'headerTitleGradient',
+                    'headerTitleGradientColor2',
+                    'headerTitleAnimation',
+                    'headerTitleBadge',
                     'employee',
                     'employeePositionName'
                 ));

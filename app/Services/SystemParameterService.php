@@ -50,6 +50,11 @@ class SystemParameterService
         'headerTitleTransform',
         'headerTitleLetterSpacing',
         'headerTitleStyle',
+        'headerTitleEffect',
+        'headerTitleGradient',
+        'headerTitleGradientColor2',
+        'headerTitleAnimation',
+        'headerTitleBadge',
     ];
 
     private const IMAGE_KEYS = ['bannerUrl', 'loginImageUrl'];
@@ -103,6 +108,11 @@ class SystemParameterService
             'headerTitleTransform' => 'uppercase',
             'headerTitleLetterSpacing' => '0.05em',
             'headerTitleStyle' => 'normal',
+            'headerTitleEffect' => 'none',
+            'headerTitleGradient' => 'none',
+            'headerTitleGradientColor2' => '#06b6d4',
+            'headerTitleAnimation' => 'none',
+            'headerTitleBadge' => 'none',
         ];
     }
 

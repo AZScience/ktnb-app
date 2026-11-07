@@ -180,7 +180,7 @@
 
                         {{-- Màu chữ & Bảng màu nhanh --}}
                         <div class="space-y-2">
-                            <x-form-label icon="sparkles" tone="rose">Màu sắc tiêu đề</x-form-label>
+                            <x-form-label icon="sparkles" tone="rose">Màu sắc tiêu đề chính</x-form-label>
                             <div class="flex items-center gap-3">
                                 <input type="color" class="h-10 w-12 cursor-pointer rounded-lg border border-slate-300 p-1 bg-white shadow-sm"
                                     x-model="localParams.headerTitleColor">
@@ -216,6 +216,33 @@
                                         class="h-7 w-7 rounded-full border border-slate-300 transition hover:scale-110 active:scale-95 shadow-sm"
                                         :class="localParams.headerTitleColor === '#7c3aed' ? 'ring-2 ring-indigo-500 ring-offset-2' : ''"
                                         style="background-color: #7c3aed;"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Hiệu ứng Gradient đa sắc --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <x-form-label icon="sparkles" tone="purple">Màu sắc Gradient</x-form-label>
+                                <select class="nttu-form-control w-full" x-model="localParams.headerTitleGradient">
+                                    <option value="none">Đơn sắc (Dùng màu chính)</option>
+                                    <option value="blue-cyan">Xanh NTTU ➔ Cyan hiện đại</option>
+                                    <option value="purple-pink">Tím hoàng gia ➔ Hồng rực rỡ</option>
+                                    <option value="sunset">Hoàng hôn Đỏ ➔ Cam ➔ Vàng</option>
+                                    <option value="emerald">Xanh lục ngọc bảo sang trọng</option>
+                                    <option value="gold">Vàng ánh kim cao cấp</option>
+                                    <option value="custom">Tùy chỉnh 2 màu...</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1.5" x-show="localParams.headerTitleGradient === 'custom'" x-cloak>
+                                <x-form-label icon="tag" tone="teal">Màu Gradient thứ 2</x-form-label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" class="h-10 w-12 cursor-pointer rounded-lg border border-slate-300 p-1 bg-white shadow-sm"
+                                        x-model="localParams.headerTitleGradientColor2">
+                                    <input type="text" class="nttu-form-control flex-1 uppercase font-mono text-sm"
+                                        placeholder="#06b6d4"
+                                        x-model="localParams.headerTitleGradientColor2">
                                 </div>
                             </div>
                         </div>
@@ -283,6 +310,52 @@
                                 </select>
                             </div>
                         </div>
+
+                        {{-- KHỐI MỚI: HIỆU ỨNG ĐỔ BÓNG, HOẠT ẢNH & KHUNG TRANG TRÍ --}}
+                        <div class="rounded-lg border border-indigo-100 bg-indigo-50/40 p-4 space-y-4">
+                            <div class="flex items-center gap-2">
+                                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">★</span>
+                                <h5 class="text-xs font-bold uppercase tracking-wide text-indigo-950">Hiệu ứng đặc biệt (Effects &amp; Animations)</h5>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                {{-- Hiệu ứng đổ bóng & Ánh sáng --}}
+                                <div class="space-y-1.5">
+                                    <x-form-label icon="shield" tone="blue">Đổ bóng &amp; Ánh sáng</x-form-label>
+                                    <select class="nttu-form-control w-full" x-model="localParams.headerTitleEffect">
+                                        <option value="none">Không đổ bóng</option>
+                                        <option value="shadow-soft">Bóng mờ êm dịu</option>
+                                        <option value="shadow-3d">Nổi khối 3D sống động</option>
+                                        <option value="glow-neon">Phát sáng Neon viền</option>
+                                        <option value="shadow-strong">Đổ bóng đậm chiều sâu</option>
+                                        <option value="letterpress">Chìm khối Letterpress</option>
+                                    </select>
+                                </div>
+
+                                {{-- Hoạt ảnh chuyển động --}}
+                                <div class="space-y-1.5">
+                                    <x-form-label icon="sparkles" tone="amber">Hiệu ứng hoạt ảnh</x-form-label>
+                                    <select class="nttu-form-control w-full" x-model="localParams.headerTitleAnimation">
+                                        <option value="none">Tĩnh (Không hoạt ảnh)</option>
+                                        <option value="shimmer">Ánh kim quét lấp lánh (Shimmer)</option>
+                                        <option value="pulse">Nhịp thở mềm mại (Soft Pulse)</option>
+                                        <option value="glow-pulse">Hào quang phát sáng (Glow Pulse)</option>
+                                        <option value="float">Bồng bềnh nhẹ nhàng (Floating)</option>
+                                    </select>
+                                </div>
+
+                                {{-- Khung viền trang trí --}}
+                                <div class="space-y-1.5">
+                                    <x-form-label icon="layout" tone="teal">Khung / Nền bao quanh</x-form-label>
+                                    <select class="nttu-form-control w-full" x-model="localParams.headerTitleBadge">
+                                        <option value="none">Không khung nền</option>
+                                        <option value="pill-subtle">Viên nang mờ (Subtle Pill)</option>
+                                        <option value="pill-glass">Kính mờ cao cấp (Glassmorphism)</option>
+                                        <option value="underline-gradient">Gạch chân nghệ thuật</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Cột xem trước trực tiếp (5 cols) --}}
@@ -299,20 +372,15 @@
                                     </svg>
                                 </div>
 
-                                {{-- Title preview --}}
+                                {{-- Title preview with dynamic styling and wrapper badge --}}
                                 <div class="flex flex-1 items-center justify-center px-2 text-center overflow-hidden">
-                                    <span
-                                        class="truncate transition-all duration-150"
-                                        :style="{
-                                            color: localParams.headerTitleColor || '#111827',
-                                            fontSize: (localParams.headerTitleFontSize ? (String(localParams.headerTitleFontSize).includes('px') ? localParams.headerTitleFontSize : localParams.headerTitleFontSize + 'px') : '20px'),
-                                            fontWeight: localParams.headerTitleFontWeight || '700',
-                                            textTransform: localParams.headerTitleTransform || 'uppercase',
-                                            letterSpacing: localParams.headerTitleLetterSpacing || '0.05em',
-                                            fontStyle: localParams.headerTitleStyle || 'normal',
-                                        }"
-                                        x-text="localParams.headerTitleText || 'CÔNG CỤ KIỂM SOÁT'"
-                                    ></span>
+                                    <div :class="headerTitleBadgeClass()">
+                                        <span
+                                            class="truncate transition-all duration-150"
+                                            :style="headerTitlePreviewStyle()"
+                                            x-text="localParams.headerTitleText || 'CÔNG CỤ KIỂM SOÁT'"
+                                        ></span>
+                                    </div>
                                 </div>
 
                                 {{-- Icon chuông & User mô phỏng --}}
@@ -328,8 +396,8 @@
                                 </div>
                             </div>
 
-                            <div class="text-xs text-gray-500 text-center italic">
-                                Xem thử giao diện thanh Header cập nhật tức thì theo các tùy chọn trên.
+                            <div class="rounded-md border border-indigo-100 bg-indigo-50/60 p-2 text-center text-xs text-indigo-900">
+                                ⚡ <strong>Cập nhật trực tiếp:</strong> Tiêu đề trên thanh Header ở đầu trang được đồng bộ tự động ngay khi bạn chỉnh sửa và cập nhật lưu trữ vĩnh viễn khi bấm <em>Lưu tất cả thay đổi</em>.
                             </div>
                         </div>
                     </div>

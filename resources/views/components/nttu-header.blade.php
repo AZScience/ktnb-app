@@ -49,15 +49,101 @@
         </svg>
     </button>
 
-    <div class="flex flex-1 items-center justify-center gap-3 overflow-hidden px-2">
-        @php
-            $displayFontSize = is_numeric($headerTitleFontSize ?? 20) ? ($headerTitleFontSize . 'px') : ($headerTitleFontSize ?? '20px');
-        @endphp
-        <h1
-            class="text-center transition-all truncate"
-            style="color: {{ $headerTitleColor ?? '#111827' }}; font-size: clamp(14px, 4vw, {{ $displayFontSize }}); font-weight: {{ $headerTitleFontWeight ?? '700' }}; text-transform: {{ $headerTitleTransform ?? 'uppercase' }}; letter-spacing: {{ $headerTitleLetterSpacing ?? '0.05em' }}; font-style: {{ $headerTitleStyle ?? 'normal' }};"
-            data-i18n="{{ $headerTitleText ?? 'CÔNG CỤ KIỂM SOÁT' }}"
-        >{{ $headerTitleText ?? 'CÔNG CỤ KIỂM SOÁT' }}</h1>
+    <style>
+        @keyframes nttu-header-shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes nttu-header-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.88; transform: scale(0.985); }
+        }
+        @keyframes nttu-header-glow {
+            0%, 100% { filter: drop-shadow(0 0 1px rgba(255,255,255,0.3)); }
+            50% { filter: drop-shadow(0 0 10px currentColor); }
+        }
+        @keyframes nttu-header-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+    </style>
+
+    @php
+        $text = !empty($headerTitleText) ? $headerTitleText : 'CÔNG CỤ KIỂM SOÁT';
+        $color = !empty($headerTitleColor) ? $headerTitleColor : '#111827';
+        $rawSize = !empty($headerTitleFontSize) ? $headerTitleFontSize : '20';
+        $displayFontSize = is_numeric($rawSize) ? ($rawSize . 'px') : $rawSize;
+        $weight = !empty($headerTitleFontWeight) ? $headerTitleFontWeight : '700';
+        $transform = !empty($headerTitleTransform) ? $headerTitleTransform : 'uppercase';
+        $spacing = !empty($headerTitleLetterSpacing) ? $headerTitleLetterSpacing : '0.05em';
+        $style = !empty($headerTitleStyle) ? $headerTitleStyle : 'normal';
+        $effect = !empty($headerTitleEffect) ? $headerTitleEffect : 'none';
+        $gradient = !empty($headerTitleGradient) ? $headerTitleGradient : 'none';
+        $gradientColor2 = !empty($headerTitleGradientColor2) ? $headerTitleGradientColor2 : '#06b6d4';
+        $animation = !empty($headerTitleAnimation) ? $headerTitleAnimation : 'none';
+        $badge = !empty($headerTitleBadge) ? $headerTitleBadge : 'none';
+
+        // Text Shadow
+        $textShadow = match($effect) {
+            'shadow-soft' => '0 2px 4px rgba(0,0,0,0.18)',
+            'shadow-3d' => '1px 1px 0px rgba(0,0,0,0.22), 2px 2px 0px rgba(0,0,0,0.16), 3px 3px 3px rgba(0,0,0,0.15)',
+            'glow-neon' => "0 0 8px {$color}, 0 0 20px {$color}",
+            'shadow-strong' => '2px 3px 6px rgba(0,0,0,0.35)',
+            'letterpress' => '0 1px 1px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.25)',
+            default => 'none'
+        };
+
+        // Gradient background
+        $bgGradient = match($gradient) {
+            'blue-cyan' => 'linear-gradient(135deg, #0054a6 0%, #06b6d4 100%)',
+            'purple-pink' => 'linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)',
+            'sunset' => 'linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%)',
+            'emerald' => 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+            'gold' => 'linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #fde047 100%)',
+            'custom' => "linear-gradient(135deg, {$color} 0%, {$gradientColor2} 100%)",
+            default => ''
+        };
+
+        $isGradientActive = !empty($bgGradient);
+        $animationStyle = '';
+        if ($animation === 'shimmer') {
+            if (!$isGradientActive) {
+                $bgGradient = "linear-gradient(90deg, {$color} 0%, #ffffff 50%, {$color} 100%)";
+                $isGradientActive = true;
+            }
+            $animationStyle = 'background-size: 200% auto; animation: nttu-header-shimmer 3s linear infinite;';
+        } elseif ($animation === 'pulse') {
+            $animationStyle = 'animation: nttu-header-pulse 2.5s ease-in-out infinite;';
+        } elseif ($animation === 'glow-pulse') {
+            $animationStyle = 'animation: nttu-header-glow 2s ease-in-out infinite;';
+        } elseif ($animation === 'float') {
+            $animationStyle = 'animation: nttu-header-float 3s ease-in-out infinite;';
+        }
+
+        $titleInlineStyles = "font-size: clamp(14px, 4vw, {$displayFontSize}); font-weight: {$weight}; text-transform: {$transform}; letter-spacing: {$spacing}; font-style: {$style}; text-shadow: {$textShadow};";
+        if ($isGradientActive) {
+            $titleInlineStyles .= " background-image: {$bgGradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; {$animationStyle}";
+        } else {
+            $titleInlineStyles .= " color: {$color}; {$animationStyle}";
+        }
+    @endphp
+
+    <div id="nttu-main-header-title-container" class="flex flex-1 items-center justify-center gap-3 overflow-hidden px-2">
+        @if($badge === 'pill-subtle')
+            <div class="inline-flex items-center justify-center px-4 py-1 rounded-full bg-slate-100/80 border border-slate-200/90 shadow-xs max-w-full">
+                <h1 id="nttu-main-header-title" class="text-center transition-all truncate" style="{{ $titleInlineStyles }}" data-i18n="{{ $text }}">{{ $text }}</h1>
+            </div>
+        @elseif($badge === 'pill-glass')
+            <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-white/90 shadow-sm max-w-full">
+                <h1 id="nttu-main-header-title" class="text-center transition-all truncate" style="{{ $titleInlineStyles }}" data-i18n="{{ $text }}">{{ $text }}</h1>
+            </div>
+        @elseif($badge === 'underline-gradient')
+            <div class="inline-flex items-center justify-center border-b-2 border-indigo-500/80 pb-0.5 max-w-full">
+                <h1 id="nttu-main-header-title" class="text-center transition-all truncate" style="{{ $titleInlineStyles }}" data-i18n="{{ $text }}">{{ $text }}</h1>
+            </div>
+        @else
+            <h1 id="nttu-main-header-title" class="text-center transition-all truncate" style="{{ $titleInlineStyles }}" data-i18n="{{ $text }}">{{ $text }}</h1>
+        @endif
     </div>
 
     <div
@@ -269,4 +355,141 @@
             </div>
         </div>
     </div>
+
+    <script>
+        (function() {
+            window.nttuApplyHeaderTitle = function(params) {
+                if (!params) return;
+                const containerEl = document.getElementById('nttu-main-header-title-container');
+                let titleEl = document.getElementById('nttu-main-header-title');
+                if (!containerEl || !titleEl) return;
+
+                const text = params.headerTitleText || 'CÔNG CỤ KIỂM SOÁT';
+                const color = params.headerTitleColor || '#111827';
+                const rawSize = params.headerTitleFontSize || '20';
+                const displayFontSize = String(rawSize).includes('px') ? rawSize : (rawSize + 'px');
+                const weight = params.headerTitleFontWeight || '700';
+                const transform = params.headerTitleTransform || 'uppercase';
+                const spacing = params.headerTitleLetterSpacing || '0.05em';
+                const style = params.headerTitleStyle || 'normal';
+                const effect = params.headerTitleEffect || 'none';
+                const gradient = params.headerTitleGradient || 'none';
+                const gradientColor2 = params.headerTitleGradientColor2 || '#06b6d4';
+                const animation = params.headerTitleAnimation || 'none';
+                const badge = params.headerTitleBadge || 'none';
+
+                titleEl.textContent = text;
+                titleEl.setAttribute('data-i18n', text);
+
+                let textShadow = 'none';
+                if (effect === 'shadow-soft') {
+                    textShadow = '0 2px 4px rgba(0,0,0,0.18)';
+                } else if (effect === 'shadow-3d') {
+                    textShadow = '1px 1px 0px rgba(0,0,0,0.22), 2px 2px 0px rgba(0,0,0,0.16), 3px 3px 3px rgba(0,0,0,0.15)';
+                } else if (effect === 'glow-neon') {
+                    textShadow = '0 0 8px ' + color + ', 0 0 20px ' + color;
+                } else if (effect === 'shadow-strong') {
+                    textShadow = '2px 3px 6px rgba(0,0,0,0.35)';
+                } else if (effect === 'letterpress') {
+                    textShadow = '0 1px 1px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.25)';
+                }
+
+                let bgGradient = '';
+                if (gradient === 'blue-cyan') {
+                    bgGradient = 'linear-gradient(135deg, #0054a6 0%, #06b6d4 100%)';
+                } else if (gradient === 'purple-pink') {
+                    bgGradient = 'linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)';
+                } else if (gradient === 'sunset') {
+                    bgGradient = 'linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%)';
+                } else if (gradient === 'emerald') {
+                    bgGradient = 'linear-gradient(135deg, #047857 0%, #10b981 100%)';
+                } else if (gradient === 'gold') {
+                    bgGradient = 'linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #fde047 100%)';
+                } else if (gradient === 'custom') {
+                    bgGradient = 'linear-gradient(135deg, ' + color + ' 0%, ' + gradientColor2 + ' 100%)';
+                }
+
+                titleEl.style.fontSize = 'clamp(14px, 4vw, ' + displayFontSize + ')';
+                titleEl.style.fontWeight = weight;
+                titleEl.style.textTransform = transform;
+                titleEl.style.letterSpacing = spacing;
+                titleEl.style.fontStyle = style;
+                titleEl.style.textShadow = textShadow;
+
+                let isGrad = !!bgGradient;
+                if (animation === 'shimmer') {
+                    if (!isGrad) {
+                        bgGradient = 'linear-gradient(90deg, ' + color + ' 0%, #ffffff 50%, ' + color + ' 100%)';
+                        isGrad = true;
+                    }
+                    titleEl.style.backgroundImage = bgGradient;
+                    titleEl.style.webkitBackgroundClip = 'text';
+                    titleEl.style.webkitTextFillColor = 'transparent';
+                    titleEl.style.backgroundClip = 'text';
+                    titleEl.style.backgroundSize = '200% auto';
+                    titleEl.style.animation = 'nttu-header-shimmer 3s linear infinite';
+                } else if (isGrad) {
+                    titleEl.style.backgroundImage = bgGradient;
+                    titleEl.style.webkitBackgroundClip = 'text';
+                    titleEl.style.webkitTextFillColor = 'transparent';
+                    titleEl.style.backgroundClip = 'text';
+                    titleEl.style.backgroundSize = '100% auto';
+                    titleEl.style.animation = '';
+                } else {
+                    titleEl.style.backgroundImage = 'none';
+                    titleEl.style.webkitBackgroundClip = 'unset';
+                    titleEl.style.webkitTextFillColor = color;
+                    titleEl.style.backgroundClip = 'unset';
+                    titleEl.style.color = color;
+                    titleEl.style.animation = '';
+                }
+
+                if (animation === 'pulse') {
+                    titleEl.style.animation = 'nttu-header-pulse 2.5s ease-in-out infinite';
+                } else if (animation === 'glow-pulse') {
+                    titleEl.style.animation = 'nttu-header-glow 2s ease-in-out infinite';
+                } else if (animation === 'float') {
+                    titleEl.style.animation = 'nttu-header-float 3s ease-in-out infinite';
+                }
+
+                // Wrapper badge
+                if (badge === 'pill-subtle') {
+                    if (!titleEl.parentElement.classList.contains('bg-slate-100/80')) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'inline-flex items-center justify-center px-4 py-1 rounded-full bg-slate-100/80 border border-slate-200/90 shadow-xs max-w-full';
+                        containerEl.innerHTML = '';
+                        wrapper.appendChild(titleEl);
+                        containerEl.appendChild(wrapper);
+                    }
+                } else if (badge === 'pill-glass') {
+                    if (!titleEl.parentElement.classList.contains('bg-white/70')) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-white/90 shadow-sm max-w-full';
+                        containerEl.innerHTML = '';
+                        wrapper.appendChild(titleEl);
+                        containerEl.appendChild(wrapper);
+                    }
+                } else if (badge === 'underline-gradient') {
+                    if (!titleEl.parentElement.classList.contains('border-b-2')) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'inline-flex items-center justify-center border-b-2 border-indigo-500/80 pb-0.5 max-w-full';
+                        containerEl.innerHTML = '';
+                        wrapper.appendChild(titleEl);
+                        containerEl.appendChild(wrapper);
+                    }
+                } else {
+                    if (titleEl.parentElement !== containerEl) {
+                        containerEl.innerHTML = '';
+                        containerEl.appendChild(titleEl);
+                    }
+                }
+            };
+
+            window.addEventListener('nttu-header-title-updated', function(e) {
+                if (window.nttuApplyHeaderTitle && e.detail) {
+                    window.nttuApplyHeaderTitle(e.detail);
+                }
+            });
+        })();
+    </script>
 </header>
