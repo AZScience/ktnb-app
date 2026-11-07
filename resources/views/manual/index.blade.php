@@ -114,7 +114,7 @@
                 </button>
                 <button
                     type="button"
-                    @click="toggleEditMode()"
+                    @click="toggleEditMode(false)"
                     class="px-3.5 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs sm:text-sm border border-slate-300 shadow transition"
                 >
                     ❌ Tắt sửa
@@ -235,7 +235,7 @@
         </button>
         <button
             type="button"
-            @click="toggleEditMode()"
+            @click="toggleEditMode(false)"
             class="ml-1 px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs"
         >
             Đóng
@@ -715,7 +715,13 @@ function manualApp() {
     return {
         zoomImg: null,
         showBackToTop: false,
-        editMode: false,
+        editMode: (function() {
+            try {
+                return localStorage.getItem('ktnb_manual_edit_mode') === 'true';
+            } catch (e) {
+                return false;
+            }
+        })(),
         isSaving: false,
         updatedAtDisplay: '{{ $updatedAt }}',
         htmlContent: {!! json_encode($htmlContent) !!},
@@ -783,8 +789,15 @@ function manualApp() {
             });
         },
 
-        toggleEditMode() {
-            this.editMode = !this.editMode;
+        toggleEditMode(forceState = null) {
+            if (forceState !== null) {
+                this.editMode = !!forceState;
+            } else {
+                this.editMode = !this.editMode;
+            }
+            try {
+                localStorage.setItem('ktnb_manual_edit_mode', this.editMode ? 'true' : 'false');
+            } catch (e) {}
             this.activeBlockNode = null;
             this.applyEditModeState();
         },
@@ -1795,7 +1808,6 @@ function manualApp() {
                 if (data.success) {
                     this.htmlContent = data.html;
                     this.updatedAtDisplay = data.updatedAt;
-                    this.editMode = false;
                     this.activeBlockNode = null;
                     this.$nextTick(() => {
                         this.setupTableOfContents();
