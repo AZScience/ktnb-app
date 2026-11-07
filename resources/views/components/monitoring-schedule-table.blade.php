@@ -104,7 +104,7 @@
                     </button>
                 </form>
                 @endif
-                <a x-show="canExport" x-cloak :href="exportUrl" class="rounded-md p-2 text-green-600 hover:bg-green-50" title="Xuất file Excel">
+                <a x-show="canExport" x-cloak :href="exportUrl" @click="exportExcel($event)" class="rounded-md p-2 text-green-600 hover:bg-green-50" title="Xuất file Excel">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 </a>
                 <button type="button" x-show="canAdd" x-cloak @click="openAddModal()" class="rounded-md p-2 text-[var(--nttu-primary)] hover:bg-cyan-50" title="Thêm mới">
@@ -124,7 +124,7 @@
                     <x-form-field-icon name="eye" tone="indigo" class="h-4 w-4" />
                     Cột hiển thị
                 </button>
-                <a x-show="canExport" x-cloak :href="exportUrl" class="inline-flex items-center gap-1.5 rounded-md border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700 hover:bg-green-100">
+                <a x-show="canExport" x-cloak :href="exportUrl" @click="exportExcel($event)" class="inline-flex items-center gap-1.5 rounded-md border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700 hover:bg-green-100">
                     <x-form-field-icon name="export" tone="green" class="h-4 w-4" />
                     Xuất
                 </a>

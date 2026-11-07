@@ -25,7 +25,7 @@
                 <button type="button" @click="filterOpen = true" class="rounded-md p-2 text-orange-500 hover:bg-orange-50" title="Bộ lọc nâng cao">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 8h12M9 12h6M11 16h2"/></svg>
                 </button>
-                <a x-show="canExport" x-cloak :href="exportHref" class="rounded-md p-2 text-green-600 hover:bg-green-50" title="Xuất file Excel (mẫu in kiểm tra phòng)">
+                <a x-show="canExport" x-cloak :href="exportHref" @click="exportExcel($event)" class="rounded-md p-2 text-green-600 hover:bg-green-50" title="Xuất file Excel (mẫu in kiểm tra phòng)">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 </a>
             </div>

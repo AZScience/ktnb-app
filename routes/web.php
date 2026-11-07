@@ -68,7 +68,7 @@ Route::redirect('/', '/dashboard');
 Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/schedule-lookup', [DashboardController::class, 'scheduleLookup'])->name('dashboard.schedule-lookup');
-    Route::get('/dashboard/schedule-export', [DashboardController::class, 'exportSchedule'])->name('dashboard.schedule-export');
+    Route::match(['GET', 'POST'], '/dashboard/schedule-export', [DashboardController::class, 'exportSchedule'])->name('dashboard.schedule-export');
     Route::get('/dashboard/filter-presets', [DashboardController::class, 'filterPresets'])->name('dashboard.filter-presets');
     Route::put('/dashboard/filter-presets', [DashboardController::class, 'saveFilterPresets'])->name('dashboard.filter-presets.save');
     Route::post('/dashboard/shift-schedule', [DashboardController::class, 'uploadShiftSchedule'])->name('dashboard.shift-schedule.store');
@@ -189,7 +189,7 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::put('monitoring/{module}/filter-presets', [MonitoringScheduleController::class, 'saveFilterPresets'])
         ->whereIn('module', ['online', 'in-person', 'exams', 'external-practice', 'homeroom'])
         ->name('monitoring.schedules.filter-presets.save');
-    Route::get('monitoring/{module}/export', [MonitoringScheduleController::class, 'export'])
+    Route::match(['GET', 'POST'], 'monitoring/{module}/export', [MonitoringScheduleController::class, 'export'])
         ->whereIn('module', ['online', 'in-person', 'exams', 'external-practice', 'homeroom'])
         ->name('monitoring.schedules.export');
     Route::post('monitoring/{module}/import', [MonitoringScheduleController::class, 'import'])
@@ -231,7 +231,7 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::post('settings/schedules-import-preview', [ScheduleController::class, 'importPreview'])->name('schedules.import-preview');
     Route::post('settings/schedules-import-batch', [ScheduleController::class, 'importBatch'])->name('schedules.import-batch');
     Route::resource('settings/schedules', ScheduleController::class)->names('schedules')->except(['show']);
-    Route::get('settings/schedules-export', [ScheduleController::class, 'export'])->name('schedules.export');
+    Route::match(['GET', 'POST'], 'settings/schedules-export', [ScheduleController::class, 'export'])->name('schedules.export');
     Route::post('settings/schedules-import', [ScheduleController::class, 'import'])->name('schedules.import');
     Route::get('settings/parameters', [SystemParameterController::class, 'index'])->name('parameters.index');
     Route::post('settings/parameters/bulk', [SystemParameterController::class, 'bulkUpdate'])->name('parameters.bulk');
