@@ -94,13 +94,24 @@
     .nttu-table td[data-col="lecturer"] {
         text-align: left !important;
     }
-    .nttu-table tbody td[data-col="note"] > span,
-    .nttu-table tbody td[data-col="content"] > span,
-    .nttu-table tbody td[data-col="lecturer"] > span {
+    html, body, main {
+        scrollbar-gutter: stable;
+    }
+    .nttu-table:not(.daily-schedule-table) tbody td[data-col="note"] > span,
+    .nttu-table:not(.daily-schedule-table) tbody td[data-col="content"] > span,
+    .nttu-table:not(.daily-schedule-table) tbody td[data-col="lecturer"] > span {
         display: block;
         text-align: left;
         white-space: normal;
         word-break: break-word;
+    }
+    /* Khoa 1 dong tuyet doi cho cot Noi dung tren trang Lich hoc de giu chieu cao dong bat bien */
+    .daily-schedule-table tbody td[data-col="content"] > span {
+        display: block;
+        text-align: left;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     .nttu-table th.nttu-th-resizable,
     .nttu-table td.nttu-col-custom-width,

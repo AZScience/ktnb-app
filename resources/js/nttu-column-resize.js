@@ -270,20 +270,29 @@ function fillRemainingWidthBeforeSettings(table) {
         return;
     }
 
-    const total = sumColumnWidths(table);
-    const remainder = available - total;
-    if (remainder <= 4) {
-        return;
-    }
-
     const lastIdx = lastDataColumnIndex(table);
     if (lastIdx < 0) {
         return;
     }
 
+    const currentWidth = columnWidthAtIndex(table, lastIdx);
+    const total = sumColumnWidths(table);
+    const remainder = available - total;
+
+    // Dung sai an toan 6px de triet tieu dao dong subpixel do thanh cuon
+    if (Math.abs(remainder) <= 6) {
+        return;
+    }
+
     const th = headerCells(table)[lastIdx];
     const colKey = th.dataset.col || '';
-    const next = columnWidthAtIndex(table, lastIdx) + remainder;
+    const labelMins = getLabelMinWidths(table);
+    const floor = labelMins[colKey] || DEFAULT_WIDTHS[colKey] || MIN_COL_WIDTH;
+    const next = Math.max(floor, currentWidth + remainder - 2);
+
+    if (Math.abs(next - currentWidth) <= 2) {
+        return;
+    }
 
     if (colKey) {
         applyColumnWidth(table, colKey, next);

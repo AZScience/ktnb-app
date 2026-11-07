@@ -256,7 +256,7 @@
                         <tr @click="handleRowClick(item)" class="group cursor-pointer" :class="isRowSelected(item.id) && 'row-selected'">
                             <td class="text-center align-middle w-20 border-r" x-text="startIndex + idx + 1"></td>
                             <template x-for="key in visibleColumnKeys" :key="key">
-                                <td class="align-middle border-r min-w-0 break-words" :data-col="key" :class="key === 'content' ? 'min-w-[180px] text-left' : ''">
+                                <td class="align-middle border-r min-w-0" :data-col="key" :class="key === 'content' ? 'min-w-[200px] text-left' : ''">
                                     <template x-if="key === 'period'">
                                         <span class="font-mono font-bold text-xs" x-text="cellValue(item, key) || '—'"></span>
                                     </template>
@@ -265,7 +265,7 @@
                                         <span x-show="!item.type" class="text-gray-400">---</span>
                                     </template>
                                     <template x-if="key !== 'period' && key !== 'type'">
-                                        <span class="break-words block" :class="key === 'content' ? 'line-clamp-3' : ''" :title="key === 'content' ? cellValue(item, key) : null" x-text="cellValue(item, key)"></span>
+                                        <span class="truncate block" :title="cellValue(item, key)" x-text="cellValue(item, key)"></span>
                                     </template>
                                 </td>
                             </template>
@@ -299,7 +299,7 @@
             </table>
         </div>
 
-        <div class="px-4 py-3 border-t text-sm text-gray-500 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="px-4 py-3 border-t text-sm text-gray-500 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 sticky bottom-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
             <span>
                 <span x-text="'Tổng cộng ' + filteredItems.length + ' bản ghi.'"></span>
                 <span x-show="visibleSelectedCount > 0" x-text="' Đã chọn ' + visibleSelectedCount + ' dòng.'"></span>
