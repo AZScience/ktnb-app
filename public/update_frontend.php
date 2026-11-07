@@ -164,6 +164,9 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/SystemParameterService.php') === 0) {
                 $writeFile(__DIR__ . '/../app/Services/SystemParameterService.php', $zip->getFromIndex($i));
             }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/DailyReportService.php') === 0) {
+                $writeFile(__DIR__ . '/../app/Services/DailyReportService.php', $zip->getFromIndex($i));
+            }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/routes/web.php') === 0) {
                 $writeFile(__DIR__ . '/../routes/web.php', $zip->getFromIndex($i));
             }

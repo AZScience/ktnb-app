@@ -117,6 +117,14 @@ export function registerDailyReport(Alpine) {
         tableStates: {},
 
         init() {
+            if (Array.isArray(this.datasets['in-person'])) {
+                const homeroomKeywords = ['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'];
+                this.datasets['in-person'] = this.datasets['in-person'].filter((item) => {
+                    const text = `${item.content || ''} ${item.status || ''}`.toLowerCase();
+                    return !homeroomKeywords.some((kw) => text.includes(kw));
+                });
+            }
+
             Object.entries(this.tabDefinitions).forEach(([key, def]) => {
                 const storageKey = `daily_report_${slugify(def.title)}`;
                 const saved = loadJson(`${storageKey}_state`, null);
@@ -355,6 +363,15 @@ export function registerDailyReport(Alpine) {
 
         processedItems(tabKey) {
             let items = [...(this.datasets[tabKey] || [])];
+
+            if (tabKey === 'in-person') {
+                const homeroomKeywords = ['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'];
+                items = items.filter((item) => {
+                    const text = `${item.content || ''} ${item.status || ''}`.toLowerCase();
+                    return !homeroomKeywords.some((kw) => text.includes(kw));
+                });
+            }
+
             const state = this.stateFor(tabKey);
             const columns = this.tabDefinitions[tabKey]?.columns || [];
 

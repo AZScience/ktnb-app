@@ -109,6 +109,15 @@ class DailyReportService
 
         $query->forModule($module);
 
+        if ($module === 'in-person') {
+            $query->where(function ($sub) {
+                foreach (['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'] as $kw) {
+                    $sub->whereRaw('LOWER(COALESCE(content, "")) NOT LIKE ?', ["%{$kw}%"])
+                        ->whereRaw('LOWER(COALESCE(status, "")) NOT LIKE ?', ["%{$kw}%"]);
+                }
+            });
+        }
+
         return $query->orderBy('period')->get()->map(fn (DailySchedule $row) => $this->mapSchedule($row));
     }
 
