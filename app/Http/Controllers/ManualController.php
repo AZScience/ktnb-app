@@ -113,20 +113,28 @@ class ManualController extends Controller
         $oldSrc = $request->input('old_src');
         $targetName = $request->input('target_name');
 
-        // Xác định tên tệp đích
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
+        if (! in_array($ext, ['png', 'jpg', 'jpeg', 'webp', 'gif'])) {
+            $ext = 'png';
+        }
+
+        // Xác định tên tệp đích: Luôn tạo tên tệp có timestamp + random hash để triệt tiêu 100% cache trình duyệt
         if (! empty($targetName)) {
-            $filename = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', basename($targetName));
-            if (! Str::endsWith(strtolower($filename), ['.png', '.jpg', '.jpeg', '.webp'])) {
-                $filename .= '.' . ($file->getClientOriginalExtension() ?: 'png');
-            }
+            $cleanTarget = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($targetName, PATHINFO_FILENAME));
+            $filename = $cleanTarget . '_' . date('Ymd_His') . '_' . Str::random(4) . '.' . $ext;
         } elseif (! empty($oldSrc)) {
             $cleaned = trim(parse_url($oldSrc, PHP_URL_PATH) ?? '', '/');
-            $filename = basename($cleaned);
-            if (empty($filename) || $filename === 'screenshots') {
-                $filename = 'manual_' . date('Ymd_His') . '.' . ($file->getClientOriginalExtension() ?: 'png');
+            $oldBase = basename($cleaned);
+            $nameWithoutExt = pathinfo($oldBase, PATHINFO_FILENAME);
+            // Loại bỏ các hậu tố timestamp cũ (vd: _20261107_164500 hoặc _20261107_164500_abcd) để giữ tên gốc ngắn gọn
+            $cleanBase = preg_replace('/_\d{8}_\d{4,6}(_[a-zA-Z0-9]{2,6})?$/', '', $nameWithoutExt);
+            $cleanBase = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $cleanBase);
+            $cleanBase = trim($cleanBase, '_');
+            if (empty($cleanBase) || $cleanBase === 'screenshots') {
+                $cleanBase = 'screenshot';
             }
+            $filename = $cleanBase . '_' . date('Ymd_His') . '_' . Str::random(4) . '.' . $ext;
         } else {
-            $ext = $file->getClientOriginalExtension() ?: 'png';
             $filename = 'screenshot_' . date('Ymd_His') . '_' . Str::random(4) . '.' . $ext;
         }
 
@@ -145,17 +153,36 @@ class ManualController extends Controller
         $newRelativePath = 'screenshots/' . $filename;
         $url = asset($newRelativePath) . '?v=' . time();
 
-        // Nếu oldSrc khác tên mới, tự động cập nhật đường dẫn trong tài liệu Markdown
+        // Tự động cập nhật đường dẫn trong tài liệu Markdown và dọn dẹp ảnh cũ
         if (! empty($oldSrc)) {
             $oldPathClean = trim(parse_url($oldSrc, PHP_URL_PATH) ?? '', '/');
+            $oldDecoded = urldecode($oldPathClean);
+            $oldRawDecoded = rawurldecode($oldPathClean);
             $manualPath = $this->getManualPath();
             if (file_exists($manualPath)) {
                 $md = file_get_contents($manualPath);
-                $updatedMd = str_replace([$oldSrc, $oldPathClean], $newRelativePath, $md);
+                $searchList = array_unique(array_filter([
+                    $oldSrc,
+                    $oldPathClean,
+                    '/' . $oldPathClean,
+                    $oldDecoded,
+                    '/' . $oldDecoded,
+                    $oldRawDecoded,
+                    '/' . $oldRawDecoded,
+                ]));
+                $updatedMd = str_replace($searchList, $newRelativePath, $md);
                 if ($updatedMd !== $md) {
                     @file_put_contents(base_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md'), $updatedMd);
                     @file_put_contents(public_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md'), $updatedMd);
                 }
+            }
+
+            // Dọn dẹp tệp ảnh cũ do các lần tải trước sinh ra để không chiếm dung lượng ổ cứng
+            if (preg_match('/_\d{8}_\d{4,6}/', basename($oldPathClean))) {
+                $oldPub = public_path($oldPathClean);
+                $oldBase = base_path($oldPathClean);
+                if (file_exists($oldPub)) @unlink($oldPub);
+                if (file_exists($oldBase)) @unlink($oldBase);
             }
         }
 

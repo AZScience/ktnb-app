@@ -960,7 +960,16 @@ function manualApp() {
         },
 
         triggerImageUpload(imgElement) {
-            this.targetOldSrc = imgElement.getAttribute('src');
+            let src = imgElement.getAttribute('src') || imgElement.src || '';
+            src = src.replace(/\?v=\d+.*$/, '');
+            try {
+                const url = new URL(src, window.location.origin);
+                if (url.origin === window.location.origin) {
+                    src = url.pathname.replace(/^\/+/, '');
+                }
+            } catch (e) {}
+
+            this.targetOldSrc = src;
             this.currentImgElement = imgElement;
             this.isInsertingNewImage = false;
             this.insertTargetNode = null;
@@ -1047,8 +1056,20 @@ function manualApp() {
                 const data = await response.json();
                 if (data.success) {
                     if (imgElement) {
-                        imgElement.src = data.url;
                         imgElement.setAttribute('src', data.relative_path);
+                        imgElement.src = data.url;
+                        this.targetOldSrc = data.relative_path;
+
+                        const container = imgElement.closest('.manual-img-container');
+                        if (container) {
+                            const zoomBtn = container.querySelector('.btn-zoom-img');
+                            if (zoomBtn) {
+                                zoomBtn.onclick = (e) => {
+                                    e.stopPropagation();
+                                    this.zoomImg = data.url;
+                                };
+                            }
+                        }
                     }
                     alert('✅ ' + data.message);
                 } else {
@@ -1080,6 +1101,21 @@ function manualApp() {
                     filter: ['table'],
                     replacement: function (content, node) {
                         return '\n\n' + node.outerHTML + '\n\n';
+                    }
+                });
+                turndown.addRule('images', {
+                    filter: 'img',
+                    replacement: function (content, node) {
+                        let src = node.getAttribute('src') || '';
+                        src = src.replace(/\?v=\d+.*$/, '');
+                        try {
+                            const url = new URL(src, window.location.origin);
+                            if (url.origin === window.location.origin) {
+                                src = url.pathname.replace(/^\/+/, '');
+                            }
+                        } catch (e) {}
+                        const alt = node.getAttribute('alt') || 'Ảnh minh chứng';
+                        return `\n\n![${alt}](${src})\n\n`;
                     }
                 });
                 markdown = turndown.turndown(clone);

@@ -299,7 +299,7 @@
             </table>
         </div>
 
-        <div class="px-4 py-3 border-t text-sm text-gray-500 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 sticky bottom-0 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <div class="px-4 py-3 border-t text-sm text-gray-500 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
             <span>
                 <span x-text="'Tổng cộng ' + filteredItems.length + ' bản ghi.'"></span>
                 <span x-show="visibleSelectedCount > 0" x-text="' Đã chọn ' + visibleSelectedCount + ' dòng.'"></span>
