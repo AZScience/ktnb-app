@@ -73,11 +73,11 @@
         </div>
     </div>
 
-    <div class="overflow-auto bg-slate-50/60 p-3 sm:p-4">
+    <div class="overflow-hidden bg-slate-50/60 p-2 sm:p-4 min-w-0 w-full max-w-full">
         <img
             src="{{ $previewUrl }}"
             alt="Bảng tiết học theo giờ"
-            class="mx-auto w-full rounded-lg border border-cyan-100 bg-white shadow-sm"
+            class="mx-auto w-full max-w-full h-auto rounded-lg border border-cyan-100 bg-white shadow-sm"
             loading="lazy"
         >
     </div>

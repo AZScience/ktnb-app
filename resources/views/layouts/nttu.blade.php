@@ -60,11 +60,11 @@
         ></div>
         <x-nttu-sidebar />
 
-        <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div class="flex min-w-0 flex-1 flex-col overflow-hidden w-full max-w-full">
 
             <x-nttu-header />
 
-            <main class="flex-1 overflow-y-scroll bg-[var(--nttu-bg)] p-4 md:p-6">
+            <main class="flex-1 overflow-y-auto overflow-x-hidden min-w-0 w-full max-w-full bg-[var(--nttu-bg)] p-3 sm:p-4 md:p-6">
 
                 @php
                     use App\Support\PageHeading;

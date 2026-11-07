@@ -10,13 +10,13 @@
     $msgCanAdd = $nttuCan('/messaging', 'add');
 @endphp
 <div
-    class="space-y-5"
+    class="space-y-5 min-w-0 w-full max-w-full"
     x-data="{ birthdayModal: false, birthdayAction: '', birthdayBody: '', birthdayName: '' }"
 >
 
     {{-- Sinh nhật hôm nay --}}
     @if($birthdays->count())
-    <div class="rounded-xl border border-pink-200 bg-gradient-to-r from-pink-100 via-fuchsia-50 to-purple-100 p-4 shadow-sm">
+    <div class="rounded-xl border border-pink-200 bg-gradient-to-r from-pink-100 via-fuchsia-50 to-purple-100 p-3 sm:p-4 shadow-sm min-w-0 w-full max-w-full overflow-hidden">
         <p class="text-xs font-bold uppercase text-pink-700 mb-3 flex items-center gap-2">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
             <span class="i18n-auto">Sinh nhật hôm nay</span>
@@ -58,7 +58,7 @@
 
     {{-- Thông báo nội bộ --}}
     @if($announcements->count())
-    <div class="rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 p-4 shadow-sm">
+    <div class="rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 p-3 sm:p-4 shadow-sm min-w-0 w-full max-w-full overflow-hidden">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p class="text-xs font-bold uppercase text-amber-800 flex items-center gap-2">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
@@ -72,7 +72,7 @@
             @foreach($announcements as $announcement)
                 <article class="rounded-xl border border-amber-100 bg-white px-4 py-3 shadow-sm">
                     <h3 class="font-semibold text-sm text-gray-900">{{ $announcement->title }}</h3>
-                    <div class="ck-content prose prose-sm max-w-none mt-2 text-gray-700 leading-relaxed">{!! $announcement->body !!}</div>
+                    <div class="ck-content prose prose-sm max-w-none mt-2 text-gray-700 leading-relaxed min-w-0 w-full max-w-full overflow-x-auto break-words">{!! $announcement->body !!}</div>
                     <p class="mt-2 text-[11px] text-gray-400">
                         {{ $announcement->created_by_name ?: 'Hệ thống' }}
                         @if($announcement->created_at)
@@ -86,10 +86,10 @@
     @endif
 
     {{-- Main grid: 8 + 4 --}}
-    <div class="grid gap-5 lg:grid-cols-12">
+    <div class="grid gap-5 lg:grid-cols-12 min-w-0 w-full max-w-full">
 
         {{-- Left col: Tổng qua hoạt động + Tra cứu lịch + Lịch trực --}}
-        <div class="lg:col-span-8 space-y-5">
+        <div class="lg:col-span-8 space-y-5 min-w-0 w-full max-w-full">
 
             {{-- DailyActivitySummary --}}
             <div class="nttu-card overflow-hidden">
@@ -224,21 +224,50 @@
                     </div>
                 </div>
 
-                <div x-show="expanded" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                <div x-show="expanded" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="min-w-0 w-full max-w-full overflow-hidden">
                     @if($shiftSchedule)
-                        <div class="relative flex min-h-[500px] items-center justify-center overflow-auto bg-slate-50/60 md:min-h-[650px]">
+                        <div class="relative flex min-h-[300px] md:min-h-[650px] items-center justify-center bg-slate-50/60 overflow-hidden min-w-0 w-full max-w-full">
                             @if(($shiftSchedule['preview_kind'] ?? '') === 'image')
                                 <img
                                     src="{{ $shiftSchedulePreviewUrl }}"
                                     alt="{{ $shiftSchedule['name'] }}"
-                                    class="max-h-[800px] max-w-full object-contain"
+                                    class="max-h-[800px] w-auto max-w-full object-contain mx-auto p-2"
                                 >
                             @elseif(($shiftSchedule['preview_kind'] ?? '') === 'pdf')
-                                <iframe
-                                    src="{{ $shiftSchedulePreviewUrl }}#view=FitH"
-                                    class="h-[600px] w-full border-0 md:h-[800px]"
-                                    title="Lịch trực"
-                                ></iframe>
+                                {{-- Giao diện trên điện thoại / Mobile: hiển thị thẻ xem PDF chuyên dụng, không nhúng iframe 1800px làm vỡ layout --}}
+                                <div class="block md:hidden w-full p-6 text-center">
+                                    <div class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600 shadow-sm">
+                                        <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                    </div>
+                                    <h3 class="font-bold text-sm text-gray-900 mb-1 break-words">{{ $shiftSchedule['name'] }}</h3>
+                                    <p class="text-xs text-gray-500 mb-5">File tài liệu lịch trực định dạng PDF</p>
+                                    <div class="flex flex-col gap-2.5 sm:flex-row sm:justify-center">
+                                        <a
+                                            href="{{ $shiftSchedulePreviewUrl }}"
+                                            target="_blank"
+                                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow hover:bg-blue-700 active:scale-95 transition"
+                                        >
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                            Mở xem toàn màn hình (PDF)
+                                        </a>
+                                        <a
+                                            href="{{ route('dashboard.shift-schedule.file', ['download' => 1]) }}"
+                                            class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 active:scale-95 transition"
+                                        >
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                            Tải file về máy
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {{-- Giao diện trên Máy tính / Desktop: nhúng Iframe xem trực tiếp --}}
+                                <div class="hidden md:block w-full max-w-full overflow-hidden">
+                                    <iframe
+                                        src="{{ $shiftSchedulePreviewUrl }}#view=FitH"
+                                        class="h-[650px] w-full max-w-full border-0 lg:h-[800px]"
+                                        title="Lịch trực"
+                                    ></iframe>
+                                </div>
                             @else
                                 <div class="p-8 text-center text-gray-500">
                                     <svg class="mx-auto mb-4 h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -271,7 +300,7 @@
         </div>
 
         {{-- Right col: UserEngagement + RecentActivity --}}
-        <div class="lg:col-span-4 space-y-5">
+        <div class="lg:col-span-4 space-y-5 min-w-0 w-full max-w-full">
 
             <x-dashboard-period-schedule
                 :period-schedule="$periodSchedule"

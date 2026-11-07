@@ -83,17 +83,11 @@ if ($content) {
                 }
             }
 
-            // 2. Cập nhật tất cả Blade view components & partials
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/components/') === 0) {
-                $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/components/', '', $filename);
+            // 2. Cập nhật tất cả Blade views, layouts, components & partials
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/') === 0) {
+                $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/', '', $filename);
                 if (substr($rel, -1) !== '/') {
-                    $writeFile(__DIR__ . '/../resources/views/components/' . $rel, $zip->getFromIndex($i));
-                }
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/monitoring/') === 0) {
-                $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/monitoring/', '', $filename);
-                if (substr($rel, -1) !== '/') {
-                    $writeFile(__DIR__ . '/../resources/views/monitoring/' . $rel, $zip->getFromIndex($i));
+                    $writeFile(__DIR__ . '/../resources/views/' . $rel, $zip->getFromIndex($i));
                 }
             }
 

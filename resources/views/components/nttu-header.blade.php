@@ -88,7 +88,7 @@
                 x-cloak
                 x-transition
                 @click.stop
-                class="absolute right-0 z-[60] mt-2 w-[340px] overflow-hidden rounded-md border bg-white shadow-xl"
+                class="absolute right-0 z-[60] mt-2 w-[calc(100vw-2rem)] sm:w-[340px] max-w-[340px] overflow-hidden rounded-md border bg-white shadow-xl"
             >
                 <div class="flex items-center justify-between border-b bg-slate-50/80 p-4">
                     <h3 class="text-sm font-bold tracking-tight text-gray-900" data-i18n="Thông báo">Thông báo</h3>
@@ -169,7 +169,7 @@
                 x-cloak
                 x-transition
                 @click.stop
-                class="absolute right-0 z-[60] mt-2 w-64 rounded-md border bg-white py-1 shadow-lg"
+                class="absolute right-0 z-[60] mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border bg-white py-1 shadow-lg"
             >
                 <div class="border-b px-4 py-3">
                     <p class="text-sm font-bold leading-none text-gray-900">{{ $displayName }}</p>
