@@ -161,7 +161,7 @@ export function registerDailyReport(Alpine) {
                     let defaultIcon = btn.querySelector('svg.opacity-30, svg.opacity-40');
                     let oldActiveSvg = btn.querySelector('svg.nttu-sort-active, svg.nttu-sort-filtered');
 
-                    if (sort) {
+                    if (sort && !isFilt) {
                         const isAsc = sort.direction === 'ascending';
                         const pathD = isAsc ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7';
                         const titleText = isAsc ? 'Sắp xếp tăng dần' : 'Sắp xếp giảm dần';
@@ -177,8 +177,24 @@ export function registerDailyReport(Alpine) {
                         if (oldActiveSvg && oldActiveSvg !== badgeSpan.querySelector('svg')) {
                             oldActiveSvg.style.setProperty('display', 'none', 'important');
                         }
+                    } else if (sort && isFilt) {
+                        const isAsc = sort.direction === 'ascending';
+                        const pathD = isAsc ? 'M5 13l7-7 7 7M5 19h14' : 'M5 5h14M5 11l7 7 7-7';
+                        const titleText = isAsc ? 'Tăng dần có lọc' : 'Giảm dần có lọc';
+                        if (!badgeSpan) {
+                            badgeSpan = document.createElement('span');
+                            badgeSpan.className = 'nttu-header-badge-active';
+                            btn.appendChild(badgeSpan);
+                        }
+                        badgeSpan.title = titleText;
+                        badgeSpan.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="${pathD}"/></svg>`;
+                        badgeSpan.style.setProperty('display', 'inline-flex', 'important');
+                        if (defaultIcon) defaultIcon.style.setProperty('display', 'none', 'important');
+                        if (oldActiveSvg && oldActiveSvg !== badgeSpan.querySelector('svg')) {
+                            oldActiveSvg.style.setProperty('display', 'none', 'important');
+                        }
                     } else if (isFilt) {
-                        const pathD = 'M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z';
+                        const pathD = 'M5 12h14';
                         if (!badgeSpan) {
                             badgeSpan = document.createElement('span');
                             badgeSpan.className = 'nttu-header-badge-active';

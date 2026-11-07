@@ -82,19 +82,29 @@
                                         @click="headerPopover = headerPopover === key ? null : key">
                                         <svg x-show="columnHeaderIconPath(key)" x-cloak class="mr-0.5 h-3.5 w-3.5 shrink-0 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="columnHeaderIconPath(key)"></path></svg>
                                         <span class="nttu-th-label-text" x-text="columns[key].label"></span>
-                                        <template x-if="sortStateFor(key)?.direction === 'ascending'">
+                                        <template x-if="sortStateFor(key)?.direction === 'ascending' && !isFiltered(key)">
                                             <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
                                             </span>
                                         </template>
-                                        <template x-if="sortStateFor(key)?.direction === 'descending'">
+                                        <template x-if="sortStateFor(key)?.direction === 'descending' && !isFiltered(key)">
                                             <span class="nttu-header-badge-active" title="Sắp xếp giảm dần">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                             </span>
                                         </template>
+                                        <template x-if="sortStateFor(key)?.direction === 'ascending' && isFiltered(key)">
+                                            <span class="nttu-header-badge-active" title="Tăng dần có lọc">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l7-7 7 7M5 19h14"/></svg>
+                                            </span>
+                                        </template>
+                                        <template x-if="sortStateFor(key)?.direction === 'descending' && isFiltered(key)">
+                                            <span class="nttu-header-badge-active" title="Giảm dần có lọc">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 5h14M5 11l7 7 7-7"/></svg>
+                                            </span>
+                                        </template>
                                         <template x-if="!sortStateFor(key) && isFiltered(key)">
                                             <span class="nttu-header-badge-active" title="Cột đang có bộ lọc">
-                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14"/></svg>
                                             </span>
                                         </template>
                                         <svg x-show="!sortStateFor(key) && !isFiltered(key)" x-cloak class="ml-2 h-4 w-4 shrink-0 opacity-50 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
