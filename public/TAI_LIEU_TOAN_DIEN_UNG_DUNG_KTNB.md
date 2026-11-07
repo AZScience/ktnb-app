@@ -125,6 +125,18 @@ Trên mỗi tiêu đề cột của bảng:
 ---
 # PHẦN V: HƯỚNG DẪN CHI TIẾT TỪNG PHÂN HỆ NGHIỆP VỤ (ĐÚNG TRÌNH TỰ - 100% CÓ ẢNH)
 
+## 5.1. Bảng điều khiển Tổng quan (Dashboard)
+- **Đường dẫn:** `/dashboard`
+
+![Bảng điều khiển Dashboard](screenshots/dashboard.png)
+
+#### 📋 Các bước theo dõi trên Dashboard:
+1. **Bước 1:** Đăng nhập hệ thống → Màn hình Dashboard tự động hiển thị đầu tiên.
+2. **Bước 2: Xem các chỉ số KPI nhanh:** Kiểm tra tổng số tiết học trong ngày, tỷ lệ hoàn thành ca trực, số ca phát sinh KPH và số sinh viên vi phạm.
+3. **Bước 3: Xem Lịch trực thanh tra viên:** Nắm rõ cán bộ nào đang trực tại Cơ sở Q.12, Cơ sở Q.4 và số điện thoại liên hệ.
+4. **Bước 4: Theo dõi thời khóa biểu realtime:** Xem dòng thời gian các phòng học đang học tiết hiện tại, nhận diện nhanh các phòng chớp vàng (vào trễ) hoặc đỏ (nghỉ).
+
+---
 ## 5.2. Giám sát Sinh hoạt Chủ nhiệm & Cố vấn Học tập (Homeroom)
 - **Đường dẫn truy cập:** `/monitoring/homeroom` hoặc Menu: **Công cụ kiểm tra** → **Cố vấn học tập**.
 - **Đối tượng sử dụng chính:** Thanh tra viên ca trực, Lãnh đạo Phòng KTNB, Cố vấn học tập (CVHT).
@@ -270,6 +282,82 @@ Trường hợp cần đính chính lại số lượng sinh viên tham gia ho�
    - Nhấn **Xác nhận Xóa** để xóa, hoặc nhấn **Hủy bỏ** để giữ nguyên.
 
 ---
+## 5.3. Giám sát Lớp học Trực tiếp (In-person Classes)
+- **Đường dẫn truy cập:** `/monitoring/in-person`
+- **Đối tượng sử dụng chính:** Thanh tra viên, Cán bộ kiểm tra ca trực
+- **Mục đích nghiệp vụ:** Kiểm tra nề nếp giảng dạy và học tập trực tiếp tại các phòng học thuộc các cơ sở đào tạo của Nhà trường.
+
+---
+
+### Bước 1: Truy cập và Quan sát Màn hình Danh sách Chính
+Thanh tra viên đăng nhập hệ thống, chọn menu `Giám sát Lớp học Trực tiếp (In-person Classes)` trên thanh Sidebar. Màn hình danh sách chính sẽ hiển thị như hình minh chứng bên dưới:
+
+![Màn hình Danh sách Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_1_list.png)
+
+#### 📋 Chú giải các nút tác vụ trên màn hình danh sách (Theo số khoanh đỏ):
+- **[1] Nhóm nút tác vụ thanh công cụ**: Gồm các nút Tải lên file Excel, Tải file mẫu import, Xuất file Excel báo cáo và Thêm lớp học mới.\n- **[2] Nút Cài đặt hiển thị cột**: Bấm để mở ngăn kéo bật/tắt các cột thông tin cần xem trên bảng lớp học.\n- **[3] Nút Menu hành động dòng**: Nằm ở cột cuối cùng mỗi phòng học, bấm để mở menu: Cập nhật tình trạng, Ghi nhận việc phát sinh, Đổi phòng, Sửa, Xóa.\n- **[4] Ô tìm kiếm nhanh**: Nhập mã phòng (A.101, B.203), tên giảng viên hoặc môn học để lọc tức thì.\n
+---
+
+### Bước 2: Tùy biến Hiển thị Cột Dữ liệu (Ẩn / Hiện Cột)
+Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt trên thanh tiêu đề bảng) để mở bảng chọn cột:
+
+![Cài đặt Hiển thị Cột Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_2_columns.png)
+
+#### 📋 Hướng dẫn thao tác cài đặt cột:
+- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
+- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
+- **Mã lớp học phần / Môn học**: Hiển thị mã số lớp và tên học phần đang giảng dạy.\n- **Giảng viên giảng dạy**: Hiển thị họ và tên giảng viên được phân công trên thời khóa biểu.\n- **Sĩ số sinh viên**: Hiển thị sĩ số đăng ký và sĩ số sinh viên có mặt thực tế.\n- **Tình trạng lớp học**: Hiển thị nhãn trạng thái: Đang học, Vào trễ, Nghỉ, Đổi phòng...\n- **Việc phát sinh / Ghi chú**: Hiển thị nội dung sự cố hoặc việc bất thường phát hiện tại phòng.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
+Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
+
+![Cửa sổ Bộ lọc Nâng cao Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_3_filter.png)
+
+#### 📋 Hướng dẫn thiết lập các tiêu chí lọc:
+- **Chọn Ngày kiểm tra**: Mặc định là ngày hôm nay. Chọn ngày bất kỳ để xem lịch kiểm tra cũ hoặc tương lai.\n- **Chọn Cơ sở đào tạo**: Chọn Cơ sở Q.4, Cơ sở Q.12 hoặc Cơ sở Q.7 nơi cán bộ đang thực hiện ca trực.\n- **Chọn Buổi học / Ca trực**: Chọn Buổi Sáng (Tiết 1-5), Buổi Chiều (Tiết 6-10) hoặc Buổi Tối (Tiết 11-15).\n- **Chọn Tiết học cụ thể**: Chọn tiết học đang diễn ra (ví dụ: Tiết 3) để hệ thống lọc ra danh sách đúng các phòng đang học tiết đó.\n- **Thực thi lọc:** Sau khi chọn xong các tiêu chí, nhấp nút màu xanh **Áp dụng** để bảng làm mới số liệu.
+- **Xóa bộ lọc:** Nhấp nút **Đặt lại** để hủy tất cả điều kiện lọc và quay về danh sách ban đầu.
+
+---
+
+### Bước 4: Thêm mới Bản ghi Dữ liệu (Form Nhập Liệu)
+Trên màn hình chính, nhấp vào nút **Thêm mới (+)** màu nổi bật:
+
+![Form Thêm Mới Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_4_add.png)
+
+#### 📋 Bảng hướng dẫn chi tiết từng ô nhập liệu trên Form:
+
+| Số hiệu | Tên trường / Ô nhập | Bắt buộc | Kiểu nhập liệu | Ý nghĩa nghiệp vụ & Hướng dẫn nhập |
+| :---: | :--- | :---: | :---: | :--- |
+| **`1`** | **Mã học phần / Tên môn học** | Có (*) | `Text / Select` | Chọn hoặc gõ mã môn học và tên môn học. |\n| **`2`** | **Phòng học** | Có (*) | `Select` | Chọn mã phòng học diễn ra tiết học (VD: A.301, B.202). |\n| **`3`** | **Giảng viên** | Có (*) | `Select` | Chọn tên giảng viên phụ trách giảng dạy từ danh mục. |\n| **`4`** | **Ngày học & Tiết học** | Có (*) | `Date & Select` | Chọn ngày và khoảng tiết học (VD: Tiết 1 đến Tiết 5). |\n| **`5`** | **Sĩ số đăng ký** | Không | `Number` | Nhập số lượng sinh viên đăng ký môn học theo danh sách. |\n
+- **Hoàn tất thêm mới:** Điền đầy đủ các trường bắt buộc (có dấu `*`), nhấp nút **Lưu dữ liệu**.
+
+---
+
+### Bước 5: Chỉnh sửa / Cập nhật Bản ghi Dữ liệu
+Khi cần điều chỉnh thông tin, nhấp vào nút **Chỉnh sửa (Hình cây bút)** ở cột Hành động:
+
+![Form Chỉnh Sửa Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_5_edit.png)
+
+#### 📋 Hướng dẫn thao tác chỉnh sửa:
+- Form chỉnh sửa cho phép thanh tra viên cập nhật trạng thái lớp học tại hiện trường:
+  1. **Đổi trạng thái lớp:** Chọn *Bình thường*, *Giảng viên vào trễ* (nhập số phút trễ), *Nghỉ không báo trước*, *Đổi phòng học*, *Dạy bù*.
+  2. **Cập nhật sĩ số thực tế:** Đếm nhanh số sinh viên đang ngồi trong lớp và điền vào ô sĩ số.
+  3. **Ghi nhận Việc phát sinh (ĐẶC BIỆT QUAN TRỌNG):** Gõ chi tiết bất kỳ sự cố nào xảy ra tại phòng (ví dụ: *Máy chiếu hỏng nguồn, Máy lạnh chảy nước, Giảng viên vắng tiết 1-2*).
+  4. **Quy tắc trích xuất tự động:** Nội dung trong ô này sẽ tự động chuyển thành cột Ghi chú khi xuất file Excel báo cáo cuối ngày!
+- Nhấp nút **Cập nhật** để lưu lại thông tin mới.
+
+---
+
+### Bước 6: Xóa Bản ghi & Hộp thoại Xác nhận An toàn
+Khi một bản ghi bị nhập trùng hoặc hủy bỏ, nhấp vào nút **Xóa (Hình thùng rác)** ở cột Hành động:
+
+![Hộp thoại Xác nhận Xóa Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_6_delete.png)
+
+#### 📋 Hướng dẫn thao tác xóa dữ liệu an toàn:
+- Hệ thống sẽ hiển thị hộp thoại xác nhận: *"Bạn có chắc chắn muốn xóa bản ghi lớp học này không?"*.
+- Chỉ xóa khi lớp học bị trùng lặp hoặc hủy lịch giảng dạy chính thức.
+- **Nút Xác nhận Xóa (Màu đỏ):** Nhấp để xóa vĩnh viễn bản ghi khỏi hệ thống.
+- **Nút Hủy bỏ (Màu xám):** Đóng hộp thoại và giữ nguyên dữ liệu.
+
+---
 ## 5.4. Giám sát Lớp học Trực tuyến (Online Classes)
 - **Đường dẫn truy cập:** `/monitoring/online` hoặc Menu: **Công cụ kiểm tra** → **Lớp học online**.
 - **Đối tượng sử dụng chính:** Thanh tra viên kiểm tra ca trực, Lãnh đạo phòng KTNB.
@@ -358,82 +446,6 @@ Quay lại tab phần mềm KTNB → Nhấp nút **Ghi nhận kiểm tra** trên
 ![Xác nhận Xóa Lớp Học Online](screenshots/annotated/online_7_delete.png)
 
 - Khi lớp học có quyết định chuyển về học trực tiếp tại trường, thanh tra viên có thể xóa bản ghi khỏi danh mục online để tránh kiểm tra trùng lặp.
-
----
-## 5.3. Giám sát Lớp học Trực tiếp (In-person Classes)
-- **Đường dẫn truy cập:** `/monitoring/in-person`
-- **Đối tượng sử dụng chính:** Thanh tra viên, Cán bộ kiểm tra ca trực
-- **Mục đích nghiệp vụ:** Kiểm tra nề nếp giảng dạy và học tập trực tiếp tại các phòng học thuộc các cơ sở đào tạo của Nhà trường.
-
----
-
-### Bước 1: Truy cập và Quan sát Màn hình Danh sách Chính
-Thanh tra viên đăng nhập hệ thống, chọn menu `Giám sát Lớp học Trực tiếp (In-person Classes)` trên thanh Sidebar. Màn hình danh sách chính sẽ hiển thị như hình minh chứng bên dưới:
-
-![Màn hình Danh sách Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_1_list.png)
-
-#### 📋 Chú giải các nút tác vụ trên màn hình danh sách (Theo số khoanh đỏ):
-- **[1] Nhóm nút tác vụ thanh công cụ**: Gồm các nút Tải lên file Excel, Tải file mẫu import, Xuất file Excel báo cáo và Thêm lớp học mới.\n- **[2] Nút Cài đặt hiển thị cột**: Bấm để mở ngăn kéo bật/tắt các cột thông tin cần xem trên bảng lớp học.\n- **[3] Nút Menu hành động dòng**: Nằm ở cột cuối cùng mỗi phòng học, bấm để mở menu: Cập nhật tình trạng, Ghi nhận việc phát sinh, Đổi phòng, Sửa, Xóa.\n- **[4] Ô tìm kiếm nhanh**: Nhập mã phòng (A.101, B.203), tên giảng viên hoặc môn học để lọc tức thì.\n
----
-
-### Bước 2: Tùy biến Hiển thị Cột Dữ liệu (Ẩn / Hiện Cột)
-Nhấp vào nút **Cài đặt hiển thị cột** (biểu tượng con mắt trên thanh tiêu đề bảng) để mở bảng chọn cột:
-
-![Cài đặt Hiển thị Cột Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_2_columns.png)
-
-#### 📋 Hướng dẫn thao tác cài đặt cột:
-- **Bật cột:** Nhấp chuột vào ô vuông để xuất hiện dấu tick xanh →\r→ Cột dữ liệu đó sẽ hiển thị trên bảng.
-- **Ẩn cột:** Bỏ dấu tick xanh →\r→ Cột dữ liệu đó sẽ ẩn đi để giao diện gọn gàng hơn.
-- **Mã lớp học phần / Môn học**: Hiển thị mã số lớp và tên học phần đang giảng dạy.\n- **Giảng viên giảng dạy**: Hiển thị họ và tên giảng viên được phân công trên thời khóa biểu.\n- **Sĩ số sinh viên**: Hiển thị sĩ số đăng ký và sĩ số sinh viên có mặt thực tế.\n- **Tình trạng lớp học**: Hiển thị nhãn trạng thái: Đang học, Vào trễ, Nghỉ, Đổi phòng...\n- **Việc phát sinh / Ghi chú**: Hiển thị nội dung sự cố hoặc việc bất thường phát hiện tại phòng.\n- **Lưu ý:** Cấu hình cột được lưu tự động trên trình duyệt của bạn.\n\n---\n\n### Bước 3: Lọc Dữ liệu Nâng cao theo Nhiều Tiêu chí
-Khi cần tìm kiếm các bản ghi thỏa mãn nhiều điều kiện kết hợp, nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
-
-![Cửa sổ Bộ lọc Nâng cao Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_3_filter.png)
-
-#### 📋 Hướng dẫn thiết lập các tiêu chí lọc:
-- **Chọn Ngày kiểm tra**: Mặc định là ngày hôm nay. Chọn ngày bất kỳ để xem lịch kiểm tra cũ hoặc tương lai.\n- **Chọn Cơ sở đào tạo**: Chọn Cơ sở Q.4, Cơ sở Q.12 hoặc Cơ sở Q.7 nơi cán bộ đang thực hiện ca trực.\n- **Chọn Buổi học / Ca trực**: Chọn Buổi Sáng (Tiết 1-5), Buổi Chiều (Tiết 6-10) hoặc Buổi Tối (Tiết 11-15).\n- **Chọn Tiết học cụ thể**: Chọn tiết học đang diễn ra (ví dụ: Tiết 3) để hệ thống lọc ra danh sách đúng các phòng đang học tiết đó.\n- **Thực thi lọc:** Sau khi chọn xong các tiêu chí, nhấp nút màu xanh **Áp dụng** để bảng làm mới số liệu.
-- **Xóa bộ lọc:** Nhấp nút **Đặt lại** để hủy tất cả điều kiện lọc và quay về danh sách ban đầu.
-
----
-
-### Bước 4: Thêm mới Bản ghi Dữ liệu (Form Nhập Liệu)
-Trên màn hình chính, nhấp vào nút **Thêm mới (+)** màu nổi bật:
-
-![Form Thêm Mới Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_4_add.png)
-
-#### 📋 Bảng hướng dẫn chi tiết từng ô nhập liệu trên Form:
-
-| Số hiệu | Tên trường / Ô nhập | Bắt buộc | Kiểu nhập liệu | Ý nghĩa nghiệp vụ & Hướng dẫn nhập |
-| :---: | :--- | :---: | :---: | :--- |
-| **`1`** | **Mã học phần / Tên môn học** | Có (*) | `Text / Select` | Chọn hoặc gõ mã môn học và tên môn học. |\n| **`2`** | **Phòng học** | Có (*) | `Select` | Chọn mã phòng học diễn ra tiết học (VD: A.301, B.202). |\n| **`3`** | **Giảng viên** | Có (*) | `Select` | Chọn tên giảng viên phụ trách giảng dạy từ danh mục. |\n| **`4`** | **Ngày học & Tiết học** | Có (*) | `Date & Select` | Chọn ngày và khoảng tiết học (VD: Tiết 1 đến Tiết 5). |\n| **`5`** | **Sĩ số đăng ký** | Không | `Number` | Nhập số lượng sinh viên đăng ký môn học theo danh sách. |\n
-- **Hoàn tất thêm mới:** Điền đầy đủ các trường bắt buộc (có dấu `*`), nhấp nút **Lưu dữ liệu**.
-
----
-
-### Bước 5: Chỉnh sửa / Cập nhật Bản ghi Dữ liệu
-Khi cần điều chỉnh thông tin, nhấp vào nút **Chỉnh sửa (Hình cây bút)** ở cột Hành động:
-
-![Form Chỉnh Sửa Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_5_edit.png)
-
-#### 📋 Hướng dẫn thao tác chỉnh sửa:
-- Form chỉnh sửa cho phép thanh tra viên cập nhật trạng thái lớp học tại hiện trường:
-  1. **Đổi trạng thái lớp:** Chọn *Bình thường*, *Giảng viên vào trễ* (nhập số phút trễ), *Nghỉ không báo trước*, *Đổi phòng học*, *Dạy bù*.
-  2. **Cập nhật sĩ số thực tế:** Đếm nhanh số sinh viên đang ngồi trong lớp và điền vào ô sĩ số.
-  3. **Ghi nhận Việc phát sinh (ĐẶC BIỆT QUAN TRỌNG):** Gõ chi tiết bất kỳ sự cố nào xảy ra tại phòng (ví dụ: *Máy chiếu hỏng nguồn, Máy lạnh chảy nước, Giảng viên vắng tiết 1-2*).
-  4. **Quy tắc trích xuất tự động:** Nội dung trong ô này sẽ tự động chuyển thành cột Ghi chú khi xuất file Excel báo cáo cuối ngày!
-- Nhấp nút **Cập nhật** để lưu lại thông tin mới.
-
----
-
-### Bước 6: Xóa Bản ghi & Hộp thoại Xác nhận An toàn
-Khi một bản ghi bị nhập trùng hoặc hủy bỏ, nhấp vào nút **Xóa (Hình thùng rác)** ở cột Hành động:
-
-![Hộp thoại Xác nhận Xóa Giám sát Lớp học Trực tiếp (In-person Classes)](screenshots/annotated/in_person_6_delete.png)
-
-#### 📋 Hướng dẫn thao tác xóa dữ liệu an toàn:
-- Hệ thống sẽ hiển thị hộp thoại xác nhận: *"Bạn có chắc chắn muốn xóa bản ghi lớp học này không?"*.
-- Chỉ xóa khi lớp học bị trùng lặp hoặc hủy lịch giảng dạy chính thức.
-- **Nút Xác nhận Xóa (Màu đỏ):** Nhấp để xóa vĩnh viễn bản ghi khỏi hệ thống.
-- **Nút Hủy bỏ (Màu xám):** Đóng hộp thoại và giữ nguyên dữ liệu.
 
 ---
 ## 5.5. Quản lý Lịch học theo ngày & Xuất Excel In ấn chuẩn A4 (Schedule)
@@ -1309,18 +1321,6 @@ Nhấp vào nút **Bộ lọc nâng cao (Chiếc phễu)**:
 
 ### Bước 4: Xuất File Báo cáo (Word / Excel) & Đồng bộ Dữ liệu Đám mây
 - Dữ liệu nhật ký kiểm toán được hệ thống ghi nhận tự động vào cơ sở dữ liệu và không thể chỉnh sửa bởi bất kỳ người dùng nào, đảm bảo tính khách quan tuyệt đối.
-
----
-## 5.1. Bảng điều khiển Tổng quan (Dashboard)
-- **Đường dẫn:** `/dashboard`
-
-![Bảng điều khiển Dashboard](screenshots/dashboard.png)
-
-#### 📋 Các bước theo dõi trên Dashboard:
-1. **Bước 1:** Đăng nhập hệ thống → Màn hình Dashboard tự động hiển thị đầu tiên.
-2. **Bước 2: Xem các chỉ số KPI nhanh:** Kiểm tra tổng số tiết học trong ngày, tỷ lệ hoàn thành ca trực, số ca phát sinh KPH và số sinh viên vi phạm.
-3. **Bước 3: Xem Lịch trực thanh tra viên:** Nắm rõ cán bộ nào đang trực tại Cơ sở Q.12, Cơ sở Q.4 và số điện thoại liên hệ.
-4. **Bước 4: Theo dõi thời khóa biểu realtime:** Xem dòng thời gian các phòng học đang học tiết hiện tại, nhận diện nhanh các phòng chớp vàng (vào trễ) hoặc đỏ (nghỉ).
 
 ---
 

@@ -16,7 +16,7 @@
                     <h1 class="text-xl sm:text-2xl font-black uppercase tracking-wide text-white">Cẩm Nang Hướng Dẫn Sử Dụng</h1>
                     <span class="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-300/40 px-2.5 py-0.5 text-xs font-bold text-amber-300">
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        Admin Editor
+                        Admin
                     </span>
                 </div>
                 <p class="text-xs sm:text-sm text-blue-200 mt-0.5">
@@ -27,30 +27,33 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            <!-- Nút Lưu Nhanh Trên Header -->
+            <!-- NÚT BẬT / TẮT CHẾ ĐỘ CHỈNH SỬA -->
             <button
                 type="button"
+                @click="toggleEditMode()"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm shadow-md transition transform active:scale-95"
+                :class="editMode ? 'bg-emerald-500 hover:bg-emerald-400 text-white ring-2 ring-emerald-300' : 'bg-amber-500 hover:bg-amber-400 text-slate-950 ring-1 ring-amber-300'"
+                :title="editMode ? 'Bấm để tắt chế độ chỉnh sửa (trở về chế độ xem)' : 'Bấm để bật chế độ chỉnh sửa chữ và thay hình trực tiếp'"
+            >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                <span x-text="editMode ? 'Đang bật Sửa (Bấm để Tắt)' : '✏️ Bật Sửa Trực Tiếp'"></span>
+            </button>
+
+            <!-- Nút Lưu khi đang sửa (chỉ hiện khi editMode = true) -->
+            <button
+                type="button"
+                x-show="editMode"
+                x-cloak
                 @click="saveFromContent()"
                 :disabled="isSaving"
-                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-md transition"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow-md transition"
                 title="Lưu tất cả nội dung vừa sửa trực tiếp trên trang"
             >
                 <svg x-show="!isSaving" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                 <svg x-show="isSaving" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 <span x-text="isSaving ? 'Đang lưu...' : '💾 Lưu thay đổi (Ctrl+S)'"></span>
-            </button>
-
-            <!-- Nút Mở Trình Soạn Thảo Markdown -->
-            <button
-                type="button"
-                @click="openMarkdownModal()"
-                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow transition"
-                title="Mở trình soạn thảo mã nguồn Markdown chuyên sâu"
-            >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-                </svg>
-                <span>Soạn thảo Markdown</span>
             </button>
 
             <!-- Nút Tải file MD -->
@@ -71,8 +74,8 @@
         </div>
     </div>
 
-    <!-- BẢNG ĐIỀU KHIỂN QUẢN TRỊ VIÊN RÕ RÀNG NGAY ĐẦU NỘI DUNG -->
-    <div class="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 shadow-md border-2 border-amber-300">
+    <!-- BANNER HƯỚNG DẪN KHI ĐANG BẬT CHẾ ĐỘ SỬA TRỰC TIẾP -->
+    <div x-show="editMode" x-cloak class="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 shadow-md border-2 border-amber-300 transition">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-start sm:items-center gap-3">
                 <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-amber-300 font-black text-2xl shadow">
@@ -80,12 +83,12 @@
                 </div>
                 <div>
                     <h2 class="text-base sm:text-lg font-black uppercase tracking-wide text-slate-950">
-                        Chế độ Quản trị: Sửa Chữ & Thay Hình Trực Tiếp Trên Trang
+                        Chế độ Chỉnh sửa Đang Bật
                     </h2>
                     <ul class="text-xs sm:text-sm font-semibold text-slate-900 mt-1 space-y-0.5">
-                        <li>• <strong>Sửa chữ trực tiếp:</strong> Nhấp chuột thẳng vào bất kỳ tiêu đề, đoạn văn, danh sách bước nào bên dưới để gõ, xóa, viết thêm nội dung.</li>
-                        <li>• <strong>Thay hình trực tiếp:</strong> Nhấp vào nút <strong>"📷 Thay ảnh này"</strong> đè trên mỗi bức ảnh (hoặc kéo thả ảnh từ máy tính thả thẳng vào vị trí ảnh đó).</li>
-                        <li>• <strong>Lưu lại:</strong> Nhấn nút <strong>"LƯU THAY ĐỔI NGAY"</strong> (hoặc bấm <code>Ctrl + S</code>) để hệ thống tự động lưu file gốc trên máy chủ.</li>
+                        <li>• <strong>Sửa chữ trực tiếp:</strong> Nhấp chuột thẳng vào bất kỳ dòng chữ nào bên dưới để gõ, xóa, viết thêm nội dung.</li>
+                        <li>• <strong>Thay hình trực tiếp:</strong> Nhấp nút <strong>"📷 Thay ảnh này"</strong> trên mỗi hình để chọn ảnh thật (hoặc kéo thả ảnh từ máy tính vào).</li>
+                        <li>• <strong>Lưu lại:</strong> Nhấn <strong>"LƯU THAY ĐỔI NGAY"</strong> (hoặc nhấn <code>Ctrl + S</code>) để hệ thống lưu vào máy chủ.</li>
                     </ul>
                 </div>
             </div>
@@ -100,11 +103,18 @@
                     <svg x-show="!isSaving" class="h-5 w-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                     <span x-text="isSaving ? 'Đang lưu...' : '💾 LƯU THAY ĐỔI NGAY'"></span>
                 </button>
+                <button
+                    type="button"
+                    @click="toggleEditMode()"
+                    class="px-3.5 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs sm:text-sm border border-slate-300 shadow transition"
+                >
+                    ❌ Tắt sửa
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Khung Nội dung Tài liệu (Hỗ trợ nhấp chuột sửa trực tiếp) -->
+    <!-- Khung Nội dung Tài liệu -->
     <div class="nttu-card p-4 sm:p-8 md:p-10 bg-white rounded-xl shadow-sm border border-slate-200 relative">
         <div
             id="manual-content"
@@ -122,127 +132,28 @@
         @change="handleImageSelected($event)"
     >
 
-    <!-- THANH NỔI LƯU THAY ĐỔI CỐ ĐỊNH Ở GÓC DƯỚI (LUÔN ĐI THEO KHI CUỘN) -->
-    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slate-950/90 backdrop-blur-md text-white px-4 py-2.5 rounded-full shadow-2xl border border-amber-400/50">
+    <!-- THANH NỔI LƯU THAY ĐỔI (CHỈ HIỆN KHI ĐANG BẬT SỬA) -->
+    <div x-show="editMode" x-cloak class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slate-950/90 backdrop-blur-md text-white px-4 py-2.5 rounded-full shadow-2xl border border-amber-400/50">
         <span class="flex h-2.5 w-2.5 relative">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs sm:text-sm font-semibold text-amber-300">Nhấp vào chữ để sửa • Nhấp vào ảnh để đổi</span>
+        <span class="text-xs sm:text-sm font-semibold text-emerald-300">Đang bật Sửa trực tiếp</span>
         <button
             type="button"
             @click="saveFromContent()"
             :disabled="isSaving"
-            class="ml-2 px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-black text-xs shadow transition flex items-center gap-1.5"
+            class="ml-2 px-3.5 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-black text-xs shadow transition flex items-center gap-1.5"
         >
-            <span x-text="isSaving ? 'Đang lưu...' : '💾 Lưu nhanh'"></span>
+            <span x-text="isSaving ? 'Đang lưu...' : '💾 Lưu thay đổi'"></span>
         </button>
-    </div>
-
-    <!-- MODAL SOẠN THẢO MARKDOWN TOÀN DIỆN (NẾU MUỐN SỬA MÃ NGUỒN) -->
-    <div
-        x-show="showEditorModal"
-        x-cloak
-        class="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-2 sm:p-4 backdrop-blur-sm"
-        @keydown.escape.window="if (!isSaving) showEditorModal = false"
-    >
-        <div class="relative flex flex-col h-[94vh] w-[98vw] max-w-7xl rounded-xl bg-white shadow-2xl overflow-hidden border border-slate-300">
-            <!-- Header Modal -->
-            <div class="flex items-center justify-between px-4 py-3 bg-slate-900 text-white shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="p-1.5 bg-amber-400 text-slate-950 rounded-lg">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                    </div>
-                    <div>
-                        <h2 class="font-bold text-base sm:text-lg">Trình Soạn Thảo Toàn Văn (Mã Nguồn Markdown)</h2>
-                        <p class="text-xs text-slate-300">Sửa trực tiếp từng bước, từng phân hệ, thêm bảng biểu hoặc hộp lưu ý</p>
-                    </div>
-                </div>
-
-                <!-- Nút tác vụ lưu & đóng -->
-                <div class="flex items-center gap-2">
-                    <button
-                        type="button"
-                        @click="saveManual(editorMarkdown)"
-                        :disabled="isSaving"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm shadow transition"
-                    >
-                        <svg x-show="!isSaving" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                        <svg x-show="isSaving" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span x-text="isSaving ? 'Đang lưu...' : 'Lưu Thay Đổi (Ctrl+S)'"></span>
-                    </button>
-                    <button
-                        type="button"
-                        @click="showEditorModal = false"
-                        class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
-                        title="Đóng cửa sổ"
-                    >
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Thanh công cụ định dạng nhanh & Nhảy phân hệ -->
-            <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-slate-100 border-b border-slate-200 text-xs shrink-0">
-                <!-- Dropdown nhảy nhanh đến phân hệ -->
-                <div class="flex items-center gap-2">
-                    <label class="font-bold text-slate-700 whitespace-nowrap">📍 Đi đến phân hệ:</label>
-                    <select
-                        @change="jumpToSection($event.target.value)"
-                        class="rounded border-slate-300 text-xs py-1 px-2.5 font-medium bg-white shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    >
-                        <option value="">-- Chọn phân hệ cần xem / sửa --</option>
-                        <option value="## 5.2. Giám sát Sinh hoạt Chủ nhiệm">5.2. Sinh hoạt Chủ nhiệm & CVHT</option>
-                        <option value="## 5.3. Giám sát Lớp học Trực tuyến">5.3. Lớp học trực tuyến (Online Teams/Zoom)</option>
-                        <option value="## 5.4. Giám sát Giảng dạy Trực tiếp">5.4. Giảng dạy trực tiếp & Thực hành ngoài</option>
-                        <option value="## 5.1. Bàn giao & Tiếp nhận Tài sản">5.1. Bàn giao & Tiếp nhận tài sản</option>
-                        <option value="## 5.5. Khảo sát">5.5. Khảo sát & Đánh giá ý kiến</option>
-                        <option value="## 5.6. Quản lý Sinh viên">5.6. Hồ sơ Sinh viên & Lập Biên bản vi phạm</option>
-                        <option value="## 5.7. Tổng hợp Báo cáo">5.7. Báo cáo thống kê & Xuất Excel</option>
-                        <option value="## 5.8. Thiết lập Hệ thống">5.8. Thiết lập hệ thống & Danh mục</option>
-                        <option value="## 1. TỔNG QUAN">1. Tổng quan & Bối cảnh</option>
-                        <option value="## 2. CÔNG NGHỆ">2. Công nghệ & Chi phí</option>
-                    </select>
-                </div>
-
-                <!-- Các nút định dạng nhanh Markdown -->
-                <div class="flex flex-wrap items-center gap-1">
-                    <button type="button" @click="insertText('**', '**', 'chữ in đậm')" class="px-2 py-1 rounded bg-white hover:bg-slate-200 border border-slate-300 font-bold" title="In đậm">B</button>
-                    <button type="button" @click="insertText('*', '*', 'chữ in nghiêng')" class="px-2 py-1 rounded bg-white hover:bg-slate-200 border border-slate-300 italic" title="In nghiêng">I</button>
-                    <button type="button" @click="insertLine('### ')" class="px-2 py-1 rounded bg-white hover:bg-slate-200 border border-slate-300 font-semibold" title="Tiêu đề cấp 3">H3</button>
-                    <button type="button" @click="insertLine('#### ')" class="px-2 py-1 rounded bg-white hover:bg-slate-200 border border-slate-300 font-semibold" title="Tiêu đề cấp 4 (Bước)">Bước</button>
-                    <button type="button" @click="insertLine('- ')" class="px-2 py-1 rounded bg-white hover:bg-slate-200 border border-slate-300" title="Danh sách gạch đầu dòng">• Danh sách</button>
-                    <button type="button" @click="insertLine('1. ')" class="px-2 py-1 rounded bg-white hover:bg-slate-200 border border-slate-300" title="Danh sách số thứ tự">1. Thứ tự</button>
-                    <button type="button" @click="insertAlert()" class="px-2 py-1 rounded bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-semibold" title="Hộp lưu ý quan trọng">⚠️ Hộp Lưu ý</button>
-                    <button type="button" @click="insertTable()" class="px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-900 font-semibold" title="Chèn bảng">📊 Bảng mẫu</button>
-                    <button type="button" @click="triggerUploadForInsert()" class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1 shadow-sm" title="Tải ảnh từ máy tính chèn vào tài liệu">
-                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <span>+ Tải ảnh mới chèn vào</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Khu vực Soạn thảo Textarea -->
-            <div class="flex-1 p-3 overflow-hidden bg-slate-900">
-                <textarea
-                    id="markdown-textarea"
-                    x-model="editorMarkdown"
-                    class="w-full h-full p-4 font-mono text-sm bg-slate-950 text-slate-100 rounded-lg border border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none leading-relaxed"
-                    placeholder="Nội dung cẩm nang Markdown..."
-                    @keydown.ctrl.s.prevent="saveManual(editorMarkdown)"
-                ></textarea>
-            </div>
-
-            <!-- Footer Modal -->
-            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-100 border-t border-slate-200 text-xs text-slate-600 shrink-0">
-                <div class="flex items-center gap-2">
-                    <span>💡 <strong>Mẹo:</strong> Nhấn <code>Ctrl + S</code> để lưu nhanh. Hệ thống tự động sao lưu 1 bản dự phòng mỗi khi bấm Lưu.</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span x-text="'Độ dài: ' + (editorMarkdown ? editorMarkdown.length.toLocaleString() : 0) + ' ký tự'"></span>
-                </div>
-            </div>
-        </div>
+        <button
+            type="button"
+            @click="toggleEditMode()"
+            class="ml-1 px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs"
+        >
+            Đóng
+        </button>
     </div>
 
     <!-- Modal Phóng to Ảnh khi nhấp vào -->
@@ -329,6 +240,15 @@ if (typeof TurndownService === 'undefined') {
 .manual-prose li {
     margin-bottom: 0.35rem;
 }
+.manual-prose a {
+    color: #0284C7;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+.manual-prose a:hover {
+    color: #0369A1;
+}
 .manual-prose table {
     width: 100%;
     margin-top: 1rem;
@@ -370,16 +290,17 @@ if (typeof TurndownService === 'undefined') {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     margin: 1rem auto;
     display: block;
+    cursor: zoom-in;
     transition: all 0.2s ease;
 }
 
 /* Kiểu hiển thị trực quan khi gõ sửa văn bản trực tiếp */
-#manual-content [contenteditable="true"]:hover {
+.manual-editing-active [contenteditable="true"]:hover {
     outline: 1px dashed #93C5FD;
     border-radius: 4px;
     background-color: rgba(239, 246, 255, 0.3);
 }
-#manual-content [contenteditable="true"]:focus {
+.manual-editing-active [contenteditable="true"]:focus {
     outline: 2px solid #2563EB !important;
     border-radius: 4px;
     background-color: rgba(239, 246, 255, 0.6);
@@ -401,7 +322,7 @@ if (typeof TurndownService === 'undefined') {
     right: 14px;
     display: flex;
     gap: 8px;
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(15, 23, 42, 0.88);
     backdrop-filter: blur(4px);
     padding: 6px 12px;
     border-radius: 10px;
@@ -460,13 +381,11 @@ function manualApp() {
     return {
         zoomImg: null,
         showBackToTop: false,
-        showEditorModal: false,
+        editMode: false,
         isSaving: false,
         updatedAtDisplay: '{{ $updatedAt }}',
         htmlContent: {!! json_encode($htmlContent) !!},
-        editorMarkdown: {!! json_encode($rawMarkdown) !!},
         targetOldSrc: null,
-        isInsertingNewImage: false,
 
         init() {
             window.addEventListener('scroll', () => {
@@ -474,32 +393,126 @@ function manualApp() {
             });
 
             this.$nextTick(() => {
-                this.setupDirectEditing();
-                this.enhanceImages();
+                this.setupTableOfContents();
+                this.applyEditModeState();
             });
 
             // Lắng nghe phím tắt Ctrl + S để lưu nhanh
             window.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-                    e.preventDefault();
-                    if (this.showEditorModal) {
-                        this.saveManual(this.editorMarkdown);
-                    } else {
+                    if (this.editMode) {
+                        e.preventDefault();
                         this.saveFromContent();
                     }
                 }
             });
         },
 
-        setupDirectEditing() {
+        toggleEditMode() {
+            this.editMode = !this.editMode;
+            this.applyEditModeState();
+        },
+
+        applyEditModeState() {
             const container = document.getElementById('manual-content');
             if (!container) return;
 
-            // Bật contenteditable cho tất cả các thẻ chữ để người dùng có thể nhấp chuột gõ sửa trực tiếp
+            if (this.editMode) {
+                container.classList.add('manual-editing-active');
+            } else {
+                container.classList.remove('manual-editing-active');
+            }
+
+            // Bật/tắt contenteditable cho các thẻ văn bản
             const editableTags = container.querySelectorAll('h1, h2, h3, h4, h5, p, li, td, th');
             editableTags.forEach(el => {
-                el.setAttribute('contenteditable', 'true');
-                el.setAttribute('spellcheck', 'false');
+                // Không bật contenteditable cho các thẻ chứa mục lục links để tránh cản trở việc click link
+                if (el.closest('.manual-toc') || el.querySelector('a[href^="#"]')) {
+                    el.removeAttribute('contenteditable');
+                } else {
+                    if (this.editMode) {
+                        el.setAttribute('contenteditable', 'true');
+                        el.setAttribute('spellcheck', 'false');
+                    } else {
+                        el.removeAttribute('contenteditable');
+                    }
+                }
+            });
+
+            // Bật/tắt overlay thay ảnh
+            this.enhanceImages();
+        },
+
+        setupTableOfContents() {
+            const container = document.getElementById('manual-content');
+            if (!container) return;
+
+            // 1. Tự động gắn id chuẩn cho tất cả các heading h1, h2, h3, h4
+            const headings = container.querySelectorAll('h1, h2, h3, h4');
+            headings.forEach(h => {
+                const text = h.textContent.trim();
+                if (!h.id) {
+                    const plainSlug = text.toLowerCase()
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                    h.id = plainSlug;
+                }
+            });
+
+            // 2. Kích hoạt chuyển hướng cuộn mượt khi click vào các liên kết Mục Lục
+            const links = container.querySelectorAll('a[href^="#"]');
+            links.forEach(a => {
+                if (a.dataset.tocBound) return;
+                a.dataset.tocBound = 'true';
+
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const href = a.getAttribute('href');
+                    if (!href || href === '#') return;
+                    const targetId = decodeURIComponent(href.substring(1)).toLowerCase().trim();
+
+                    // Tìm heading theo id
+                    let targetEl = document.getElementById(targetId);
+
+                    if (!targetEl) {
+                        const unaccentedTarget = targetId.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        targetEl = document.getElementById(unaccentedTarget);
+                    }
+
+                    if (!targetEl) {
+                        const linkText = a.textContent.trim().toLowerCase();
+                        const matchNum = linkText.match(/^([0-9\.]+|phần\s+[ivx0-9]+)/i);
+                        const prefix = matchNum ? matchNum[1].toLowerCase() : null;
+
+                        for (const h of headings) {
+                            const hText = h.textContent.trim().toLowerCase();
+                            if (hText === linkText || hText.includes(linkText) || (prefix && hText.startsWith(prefix))) {
+                                targetEl = h;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (targetEl) {
+                        const navOffset = 90;
+                        const elementPosition = targetEl.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - navOffset;
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+
+                        targetEl.style.transition = 'background-color 0.4s ease';
+                        targetEl.style.backgroundColor = '#FEF08A';
+                        setTimeout(() => {
+                            targetEl.style.backgroundColor = '';
+                        }, 1600);
+                    }
+                });
             });
         },
 
@@ -510,79 +523,79 @@ function manualApp() {
             const imgs = container.querySelectorAll('img');
             imgs.forEach(img => {
                 const parent = img.parentElement;
-                if (parent.classList.contains('manual-img-container')) return;
+                let wrapper = parent.classList.contains('manual-img-container') ? parent : null;
 
-                const wrapper = document.createElement('div');
-                wrapper.className = 'manual-img-container';
-                img.parentNode.insertBefore(wrapper, img);
-                wrapper.appendChild(img);
+                if (!wrapper) {
+                    wrapper = document.createElement('div');
+                    wrapper.className = 'manual-img-container';
+                    img.parentNode.insertBefore(wrapper, img);
+                    wrapper.appendChild(img);
 
-                const overlay = document.createElement('div');
-                overlay.className = 'manual-img-overlay';
+                    const overlay = document.createElement('div');
+                    overlay.className = 'manual-img-overlay';
 
-                // Nút thay ảnh
-                const replaceBtn = document.createElement('button');
-                replaceBtn.type = 'button';
-                replaceBtn.className = 'btn-replace-img';
-                replaceBtn.innerHTML = `
-                    <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    <span>📷 Thay ảnh này</span>
-                `;
-                replaceBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    this.triggerImageUpload(img);
-                };
+                    const replaceBtn = document.createElement('button');
+                    replaceBtn.type = 'button';
+                    replaceBtn.className = 'btn-replace-img';
+                    replaceBtn.innerHTML = `
+                        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span>📷 Thay ảnh này</span>
+                    `;
+                    replaceBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.triggerImageUpload(img);
+                    };
 
-                // Nút phóng to ảnh
-                const zoomBtn = document.createElement('button');
-                zoomBtn.type = 'button';
-                zoomBtn.className = 'btn-zoom-img';
-                zoomBtn.innerHTML = `
-                    <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
-                    <span>Phóng to</span>
-                `;
-                zoomBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    this.zoomImg = img.src;
-                };
+                    const zoomBtn = document.createElement('button');
+                    zoomBtn.type = 'button';
+                    zoomBtn.className = 'btn-zoom-img';
+                    zoomBtn.innerHTML = `
+                        <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
+                        <span>Phóng to</span>
+                    `;
+                    zoomBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.zoomImg = img.src;
+                    };
 
-                overlay.appendChild(replaceBtn);
-                overlay.appendChild(zoomBtn);
-                wrapper.appendChild(overlay);
+                    overlay.appendChild(replaceBtn);
+                    overlay.appendChild(zoomBtn);
+                    wrapper.appendChild(overlay);
 
-                // Kéo & Thả ảnh trực tiếp từ máy tính vào khung ảnh
-                wrapper.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    wrapper.classList.add('is-dragover');
-                });
-                wrapper.addEventListener('dragleave', () => {
-                    wrapper.classList.remove('is-dragover');
-                });
-                wrapper.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    wrapper.classList.remove('is-dragover');
-                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                        this.uploadImageFile(e.dataTransfer.files[0], img.getAttribute('src'), img);
-                    }
-                });
+                    img.addEventListener('click', (e) => {
+                        if (!this.editMode) {
+                            this.zoomImg = img.src;
+                        }
+                    });
+
+                    wrapper.addEventListener('dragover', (e) => {
+                        if (!this.editMode) return;
+                        e.preventDefault();
+                        wrapper.classList.add('is-dragover');
+                    });
+                    wrapper.addEventListener('dragleave', () => {
+                        wrapper.classList.remove('is-dragover');
+                    });
+                    wrapper.addEventListener('drop', (e) => {
+                        if (!this.editMode) return;
+                        e.preventDefault();
+                        wrapper.classList.remove('is-dragover');
+                        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                            this.uploadImageFile(e.dataTransfer.files[0], img.getAttribute('src'), img);
+                        }
+                    });
+                }
+
+                const overlay = wrapper.querySelector('.manual-img-overlay');
+                if (overlay) {
+                    overlay.style.display = this.editMode ? 'flex' : 'none';
+                }
             });
         },
 
         triggerImageUpload(imgElement) {
             this.targetOldSrc = imgElement.getAttribute('src');
             this.currentImgElement = imgElement;
-            this.isInsertingNewImage = false;
-            const fileInput = document.getElementById('image-file-input');
-            if (fileInput) {
-                fileInput.value = '';
-                fileInput.click();
-            }
-        },
-
-        triggerUploadForInsert() {
-            this.targetOldSrc = null;
-            this.currentImgElement = null;
-            this.isInsertingNewImage = true;
             const fileInput = document.getElementById('image-file-input');
             if (fileInput) {
                 fileInput.value = '';
@@ -593,12 +606,7 @@ function manualApp() {
         handleImageSelected(event) {
             const file = event.target.files[0];
             if (!file) return;
-
-            if (this.isInsertingNewImage) {
-                this.uploadAndInsertImage(file);
-            } else {
-                this.uploadImageFile(file, this.targetOldSrc, this.currentImgElement);
-            }
+            this.uploadImageFile(file, this.targetOldSrc, this.currentImgElement);
         },
 
         async uploadImageFile(file, oldSrc, imgElement) {
@@ -626,9 +634,6 @@ function manualApp() {
                         imgElement.src = data.url;
                         imgElement.setAttribute('src', data.relative_path);
                     }
-                    if (oldSrc && this.editorMarkdown) {
-                        this.editorMarkdown = this.editorMarkdown.split(oldSrc).join(data.relative_path);
-                    }
                     alert('✅ ' + data.message);
                 } else {
                     alert('❌ Lỗi tải ảnh: ' + (data.message || 'Không thể upload ảnh'));
@@ -639,40 +644,10 @@ function manualApp() {
             }
         },
 
-        async uploadAndInsertImage(file) {
-            const formData = new FormData();
-            formData.append('image', file);
-            const token = document.querySelector('meta[name="csrf-token"]')?.content;
-
-            try {
-                const response = await fetch('{{ route("manual.upload_image") }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': token,
-                        'Accept': 'application/json',
-                    },
-                    body: formData,
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    const tag = `\n\n![Ảnh minh chứng mới](${data.relative_path})\n\n`;
-                    this.insertAtCursor(tag);
-                    alert('✅ Đã tải ảnh lên và chèn vào tài liệu!');
-                } else {
-                    alert('❌ Lỗi: ' + (data.message || 'Không thể upload ảnh'));
-                }
-            } catch (err) {
-                console.error(err);
-                alert('❌ Lỗi kết nối khi tải ảnh!');
-            }
-        },
-
         saveFromContent() {
             const container = document.getElementById('manual-content');
             if (!container) return;
 
-            // Nhân bản node để loại bỏ overlay trước khi chuyển sang Markdown
             const clone = container.cloneNode(true);
             clone.querySelectorAll('.manual-img-overlay').forEach(el => el.remove());
 
@@ -691,8 +666,8 @@ function manualApp() {
                 });
                 markdown = turndown.turndown(clone);
             } else {
-                // Nếu chưa nạp xong Turndown, dùng editorMarkdown hiện có
-                markdown = this.editorMarkdown;
+                alert('Đang tải bộ chuyển đổi, vui lòng thử lại sau 2 giây...');
+                return;
             }
 
             this.saveManual(markdown);
@@ -720,12 +695,11 @@ function manualApp() {
                 const data = await response.json();
                 if (data.success) {
                     this.htmlContent = data.html;
-                    this.editorMarkdown = content;
                     this.updatedAtDisplay = data.updatedAt;
-                    this.showEditorModal = false;
+                    this.editMode = false;
                     this.$nextTick(() => {
-                        this.setupDirectEditing();
-                        this.enhanceImages();
+                        this.setupTableOfContents();
+                        this.applyEditModeState();
                     });
                     alert('✅ ĐÃ LƯU THAY ĐỔI CẨM NANG HƯỚNG DẪN THÀNH CÔNG!');
                 } else {
@@ -737,80 +711,6 @@ function manualApp() {
             } finally {
                 this.isSaving = false;
             }
-        },
-
-        openMarkdownModal() {
-            this.showEditorModal = true;
-            this.$nextTick(() => {
-                const ta = document.getElementById('markdown-textarea');
-                if (ta) ta.focus();
-            });
-        },
-
-        jumpToSection(headingPrefix) {
-            if (!headingPrefix) return;
-            const ta = document.getElementById('markdown-textarea');
-            if (!ta) return;
-
-            const idx = this.editorMarkdown.indexOf(headingPrefix);
-            if (idx !== -1) {
-                ta.focus();
-                ta.setSelectionRange(idx, idx + headingPrefix.length);
-                const fullText = this.editorMarkdown.substring(0, idx);
-                const lines = fullText.split('\n').length;
-                const lineHeight = 20;
-                ta.scrollTop = (lines - 4) * lineHeight;
-            } else {
-                alert('Không tìm thấy mục: ' + headingPrefix);
-            }
-        },
-
-        insertText(before, after, defaultText) {
-            const ta = document.getElementById('markdown-textarea');
-            if (!ta) return;
-            const start = ta.selectionStart;
-            const end = ta.selectionEnd;
-            const selected = ta.value.substring(start, end) || defaultText;
-            const replacement = before + selected + after;
-            this.editorMarkdown = ta.value.substring(0, start) + replacement + ta.value.substring(end);
-            this.$nextTick(() => {
-                ta.focus();
-                ta.setSelectionRange(start + before.length, start + before.length + selected.length);
-            });
-        },
-
-        insertLine(prefix) {
-            const ta = document.getElementById('markdown-textarea');
-            if (!ta) return;
-            const start = ta.selectionStart;
-            const replacement = '\n' + prefix;
-            this.editorMarkdown = ta.value.substring(0, start) + replacement + ta.value.substring(start);
-            this.$nextTick(() => {
-                ta.focus();
-                ta.setSelectionRange(start + replacement.length, start + replacement.length);
-            });
-        },
-
-        insertAlert() {
-            const snippet = '\n\n> [!NOTE]\n> **LƯU Ý NGHIỆP VỤ QUAN TRỌNG:**\n> Ghi nội dung lưu ý chi tiết cho thanh tra viên tại đây...\n\n';
-            this.insertAtCursor(snippet);
-        },
-
-        insertTable() {
-            const snippet = '\n\n| Tiêu chí | Hướng dẫn thao tác | Ghi chú |\n| :--- | :--- | :--- |\n| Bước 1 | Thực hiện tác vụ A | Lưu ý thời gian |\n| Bước 2 | Nhập thông tin B | Bắt buộc |\n\n';
-            this.insertAtCursor(snippet);
-        },
-
-        insertAtCursor(text) {
-            const ta = document.getElementById('markdown-textarea');
-            if (!ta) return;
-            const start = ta.selectionStart;
-            const end = ta.selectionEnd;
-            this.editorMarkdown = ta.value.substring(0, start) + text + ta.value.substring(end);
-            this.$nextTick(() => {
-                ta.focus();
-                ta.setSelectionRange(start + text.length, start + text.length);
-            });
         }
     };
 }
