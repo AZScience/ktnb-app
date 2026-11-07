@@ -322,17 +322,17 @@
 
                                     <!-- Khung hiển thị Canvas PDF -->
                                     <div class="p-2 sm:p-3 overflow-x-auto min-h-[350px] flex items-center justify-center relative bg-slate-200/60">
-                                        <!-- Loading spinner -->
-                                        <div x-show="loading" class="flex flex-col items-center justify-center py-12 text-slate-500">
+                                        <!-- Loading spinner lớp phủ tuyệt đối -->
+                                        <div x-show="loading" class="absolute inset-0 bg-slate-100/90 z-10 flex flex-col items-center justify-center text-slate-600">
                                             <svg class="animate-spin h-8 w-8 text-blue-600 mb-2" fill="none" viewBox="0 0 24 24">
                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                             </svg>
-                                            <span class="text-xs font-semibold">Đang tải lịch trực PDF...</span>
+                                            <span class="text-xs font-semibold">Đang nạp dữ liệu lịch trực...</span>
                                         </div>
 
                                         <!-- Lỗi fallback -->
-                                        <div x-show="error && !loading" x-cloak class="p-4 text-center max-w-sm">
+                                        <div x-show="error && !loading" x-cloak class="p-4 text-center max-w-sm z-10">
                                             <div class="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600">
                                                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                             </div>
@@ -342,8 +342,8 @@
                                             </a>
                                         </div>
 
-                                        <!-- Canvas chứa trang PDF -->
-                                        <div x-show="!loading && !error" class="w-full flex justify-center cursor-pointer" @click="openFullscreen()" title="Chạm để phóng to toàn màn hình">
+                                        <!-- Canvas chứa trang PDF (Luôn hiện diện trong DOM, không display:none) -->
+                                        <div class="w-full flex justify-center cursor-pointer" @click="openFullscreen()" title="Chạm để phóng to toàn màn hình">
                                             <canvas x-ref="pdfCanvas" class="shadow-lg rounded-lg bg-white border border-slate-300 max-w-full transition-transform"></canvas>
                                         </div>
                                     </div>
@@ -353,10 +353,15 @@
                                         <span class="flex items-center gap-1 text-[11px] text-blue-600 font-medium">
                                             💡 Chạm vào để xem toàn màn hình
                                         </span>
-                                        <a href="{{ route('dashboard.shift-schedule.file', ['download' => 1]) }}" class="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-800">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                            Tải PDF về máy
-                                        </a>
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ $shiftSchedulePreviewUrl }}" target="_blank" class="text-slate-600 hover:text-blue-600 underline text-[11px]">
+                                                Mở link PDF
+                                            </a>
+                                            <a href="{{ route('dashboard.shift-schedule.file', ['download' => 1]) }}" class="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-800">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                Tải về
+                                            </a>
+                                        </div>
                                     </div>
 
                                     <!-- Modal Xem Toàn Màn Hình trên Mobile -->
@@ -733,25 +738,38 @@ function mobilePdfViewer(pdfUrl) {
                 this.pdfDoc = await task.promise;
                 this.totalPages = this.pdfDoc.numPages || 1;
                 this.pageNum = 1;
+                this.loading = false;
                 this.$nextTick(() => {
-                    this.renderCurrentPage();
+                    setTimeout(() => {
+                        this.renderCurrentPage();
+                    }, 50);
                 });
             } catch (err) {
                 console.error('Lỗi khi nạp PDF:', err);
-                this.error = 'Không thể xem trực tiếp tệp PDF trên trình duyệt này.';
-            } finally {
                 this.loading = false;
+                this.error = 'Không thể xem trực tiếp tệp PDF trên trình duyệt này.';
             }
         },
 
         async renderPageToCanvas(canvas, pageNum, zoomScale = 1.0, isFitWidth = true) {
             if (!this.pdfDoc || !canvas) return;
+
+            if (canvas._renderTask) {
+                try {
+                    await canvas._renderTask.cancel();
+                } catch (e) {}
+                canvas._renderTask = null;
+            }
+
             try {
                 const page = await this.pdfDoc.getPage(pageNum);
                 const ctx = canvas.getContext('2d');
 
-                let targetWidth = canvas.parentElement ? canvas.parentElement.clientWidth - 16 : window.innerWidth - 32;
-                if (targetWidth <= 0) targetWidth = 360;
+                let targetWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
+                if (!targetWidth || targetWidth <= 0) {
+                    targetWidth = Math.min(window.innerWidth - 32, 480);
+                }
+                if (targetWidth < 200) targetWidth = 320;
 
                 const baseViewport = page.getViewport({ scale: 1.0 });
                 let finalScale = zoomScale;
@@ -760,23 +778,29 @@ function mobilePdfViewer(pdfUrl) {
                     finalScale = (targetWidth / baseViewport.width) * zoomScale;
                 }
 
-                finalScale = Math.max(0.4, Math.min(finalScale, 3.5));
+                finalScale = Math.max(0.3, Math.min(finalScale, 4.0));
                 const viewport = page.getViewport({ scale: finalScale });
 
-                const outputScale = window.devicePixelRatio || 1;
-                canvas.width = Math.floor(viewport.width * outputScale);
-                canvas.height = Math.floor(viewport.height * outputScale);
-                canvas.style.width = Math.floor(viewport.width) + 'px';
-                canvas.style.height = Math.floor(viewport.height) + 'px';
+                canvas.width = Math.floor(viewport.width);
+                canvas.height = Math.floor(viewport.height);
+                canvas.style.width = '100%';
+                canvas.style.maxWidth = Math.floor(viewport.width) + 'px';
+                canvas.style.height = 'auto';
 
-                ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 const renderContext = {
                     canvasContext: ctx,
                     viewport: viewport,
                 };
-                await page.render(renderContext).promise;
+                const renderTask = page.render(renderContext);
+                canvas._renderTask = renderTask;
+                await renderTask.promise;
+                canvas._renderTask = null;
             } catch (e) {
+                if (e && e.name === 'RenderingCancelledException') {
+                    return;
+                }
                 console.error('Lỗi render trang PDF:', e);
             }
         },
@@ -836,9 +860,11 @@ function mobilePdfViewer(pdfUrl) {
             this.fullscreenModal = true;
             this.modalScale = 1.5;
             this.$nextTick(() => {
-                if (this.$refs.modalCanvas) {
-                    this.renderPageToCanvas(this.$refs.modalCanvas, this.pageNum, this.modalScale, false);
-                }
+                setTimeout(() => {
+                    if (this.$refs.modalCanvas) {
+                        this.renderPageToCanvas(this.$refs.modalCanvas, this.pageNum, this.modalScale, false);
+                    }
+                }, 50);
             });
         },
 
