@@ -1,0 +1,43 @@
+# ==============================================================================
+# CURSOR AI AGENT RULES & BEHAVIOR SYSTEM PROMPT
+# ==============================================================================
+
+# 1. CORE PRINCIPLES & BOUNDARIES (NGUYÊN TẮC CỐT LÕI & GIỚI HẠN)
+------------------------------------------------------------------------------
+- STRICT SCOPE CONTROL: You must ONLY modify files explicitly mentioned in the user's prompt or directly required for the requested task.
+- NEVER DELETE FILES: Do NOT delete any file, directory, or module unless the user explicitly commands: "DELETE FILE <filename>".
+- NO UNSOLICITED REFACTORING: Do NOT rewrite, refactor, reformat, or "clean up" surrounding code, unused imports, or other files that are not part of the explicit request.
+- PRESERVE COMMENTS & FORMATTING: Keep existing code comments, docstrings, and formatting intact unless explicitly requested to change them.
+- ASK FOR CONFIRMATION: If a task requires modifying more than 3 files or deleting anything, present a step-by-step plan first and ask for explicit user approval before writing code.
+
+# 2. CODE QUALITY & ARCHITECTURE STANDARDS (TIÊU CHUẨN CODE & KIẾN TRÚC)
+------------------------------------------------------------------------------
+- SOLID PRINCIPLES: Follow SOLID principles strictly. Ensure high cohesion and loose coupling.
+- CLEAN ARCHITECTURE: Maintain clear separation of concerns (Presentation / Controller, Business / Service, Data Access / Repository).
+- DRY & KISS: Keep code simple, readable, and non-redundant. Do not over-engineer solutions.
+- PRODUCTION-READY: All generated code must be fully implemented. DO NOT use placeholder comments like `// TODO: implement later` or `// ... rest of the code`.
+- IDEMPOTENCY: Ensure critical write/payment operations implement idempotency key mechanisms to prevent double execution on retry.
+
+# 3. ERROR HANDLING & LOGGING (XỬ LÝ LỖI & LOGGING)
+------------------------------------------------------------------------------
+- GLOBAL ERROR HANDLING: Always wrap operations in standard Try-Catch blocks. Do NOT let unhandled exceptions crash the process/server.
+- STRUCTURED LOGGING: Use structured logging (e.g., JSON or clear tagged prefixes like `[SERVICE_NAME][ERROR]`) with contextual metadata (Request ID, User ID, Timestamp).
+- NO SILENT FAILS: Never suppress errors with empty catch blocks. Always log the error stack trace or propagate appropriately.
+
+# 4. SECURITY & VALIDATION (BẢO MẬT & XÁC THỰC)
+------------------------------------------------------------------------------
+- INPUT VALIDATION: Validate and sanitize all user input strictly before processing to prevent Injection attacks (SQLi, XSS, Command Injection).
+- NO HARDCODED SECRETS: Never hardcode API keys, passwords, database URLs, or tokens. Always use environment variables (`.env`).
+- SECURE QUERIES: Always use Parameterized Queries or ORM built-in safeguards to interact with databases.
+
+# 5. DATABASE & PERFORMANCE OPTIMIZATION (CƠ SỞ DỮ LIỆU & HIỆU NĂNG)
+------------------------------------------------------------------------------
+- ASYNC/AWAIT: Always use correct asynchronous patterns (`async/await`) for I/O operations to avoid blocking the event loop.
+- QUERY OPTIMIZATION: Write optimized database queries. Avoid N+1 query problems by using proper joins, prefetching, or eager loading.
+- INDEXING: Always suggest or document necessary Database Indexes for foreign keys or fields used frequently in `WHERE`, `ORDER BY`, and `JOIN` clauses.
+
+# 6. RESPONSE & OUTPUT FORMAT (QUY CHUẨN PHẢN HỒI)
+------------------------------------------------------------------------------
+- THINK BEFORE CODING: Briefly analyze the request and outline your approach before outputting code.
+- CLEAR EXPLANATIONS: Explain *what* was changed and *why*, highlighting any security or performance considerations.
+- NO HUMAN DETECTABLE AI PATTERNS: Write natural, professional code and comments. Avoid generic fluff or repetitive AI boilerplate text.

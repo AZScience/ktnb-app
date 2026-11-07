@@ -1,0 +1,1 @@
+{"error":"Không có email nào gửi trong 7 ngày qua chứa link Meet và khớp với GV/Lớp."}

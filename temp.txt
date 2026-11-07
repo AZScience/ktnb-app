@@ -1,0 +1,21 @@
+// Trích xuất Mã môn từ subject (vd: "011007558111 - Kinh tế Chính trị" -> "011007558111")
+                        $searchTerm = '';
+                        if ($subject) {
+                            if (preg_match('/^([A-Z0-9]+)\s*-/', $subject, $m)) {
+                                $searchTerm = $m[1]; // Lấy mã môn
+                            } else {
+                                $searchTerm = explode(' ', $subject)[0]; // Hoặc lấy từ đầu tiên
+                            }
+                        }
+                        
+                        // Nếu vẫn không có mã môn thì dùng lớp
+                        if (!$searchTerm) {
+                            $searchTerm = $class;
+                        }
+                        
+                        // Nếu vẫn không có thì ghép lại tìm chung
+                        if (!$searchTerm) {
+                            $searchTerm = trim($class . ' ' . $subject);
+                        }
+                        
+                   
