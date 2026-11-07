@@ -20,33 +20,50 @@ if ($content) {
         $updatedFiles = [];
         $failedFiles = [];
 
-        // Đảm bảo tất cả thư mục views có quyền 0777 để đọc ghi bình thường
-        @chmod(__DIR__ . '/../resources/views', 0777);
-        @chmod(__DIR__ . '/../resources/views/components', 0777);
-        @chmod(__DIR__ . '/../resources/views/components/partials', 0777);
-        @chmod(__DIR__ . '/../resources/views/monitoring', 0777);
-        @chmod(__DIR__ . '/../resources/views/reports', 0777);
-        @chmod(__DIR__ . '/../resources/views/layouts', 0777);
+        // Đảm bảo tất cả thư mục views, app, database có quyền ghi
+        $ensureDirWritable = function($dirPath) use (&$ensureDirWritable) {
+            if (!is_dir($dirPath)) return;
+            @chmod($dirPath, 0777);
+            $items = @scandir($dirPath);
+            if ($items) {
+                foreach ($items as $item) {
+                    if ($item === '.' || $item === '..') continue;
+                    $p = $dirPath . '/' . $item;
+                    if (is_dir($p)) {
+                        $ensureDirWritable($p);
+                    } else {
+                        @chmod($p, 0666);
+                    }
+                }
+            }
+        };
+        $ensureDirWritable(__DIR__ . '/../resources/views');
+        $ensureDirWritable(__DIR__ . '/../app');
+        $ensureDirWritable(__DIR__ . '/../database');
 
-        $writeFile = function($destPath, $data) use (&$updatedFiles, &$failedFiles) {
+        $writeFile = function($destPath, $data, $displayRel = '') use (&$updatedFiles, &$failedFiles) {
+            $displayName = $displayRel ?: basename($destPath);
             if (substr($destPath, -1) === '/' || is_dir($destPath)) {
                 @chmod($destPath, 0777);
                 return true;
             }
             $dir = dirname($destPath);
-            if (is_link($dir) && !is_dir($dir)) {
-                @unlink($dir);
-            }
             if (!is_dir($dir)) {
                 if (file_exists($dir)) @unlink($dir);
                 @mkdir($dir, 0777, true);
             }
             @chmod($dir, 0777);
-            if (file_exists($destPath) || is_link($destPath)) {
-                @chmod($destPath, 0777);
-                @unlink($destPath);
+
+            // Thử ghi trực tiếp trước
+            if (file_exists($destPath)) {
+                @chmod($destPath, 0666);
             }
             $ok = @file_put_contents($destPath, $data);
+            if ($ok === false && file_exists($destPath)) {
+                @chmod($destPath, 0777);
+                @unlink($destPath);
+                $ok = @file_put_contents($destPath, $data);
+            }
             if ($ok === false && file_exists($destPath)) {
                 $tempOld = $destPath . '.old.' . uniqid();
                 @rename($destPath, $tempOld);
@@ -55,9 +72,9 @@ if ($content) {
             }
             if ($ok !== false) {
                 @chmod($destPath, 0666);
-                $updatedFiles[] = basename($destPath);
+                $updatedFiles[] = $displayName;
             } else {
-                $failedFiles[] = basename($destPath);
+                $failedFiles[] = $displayName;
             }
             return $ok !== false;
         };
@@ -120,7 +137,7 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/resources/views/') === 0) {
                 $rel = str_replace('ktnb-app-kiemtranoibo/resources/views/', '', $filename);
                 if (substr($rel, -1) !== '/') {
-                    $writeFile(__DIR__ . '/../resources/views/' . $rel, $zip->getFromIndex($i));
+                    $writeFile(__DIR__ . '/../resources/views/' . $rel, $zip->getFromIndex($i), 'views/' . $rel);
                 }
             }
 
