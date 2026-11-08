@@ -163,19 +163,19 @@ if ($content) {
                 }
             }
 
-            // 3. Cập nhật tất cả các file mã nguồn trong app/
-            if (strpos(, 'ktnb-app-kiemtranoibo/app/') === 0) {
-                 = str_replace('ktnb-app-kiemtranoibo/app/', '', );
-                if (substr(, -1) !== '/') {
-                    (__DIR__ . '/../app/' . , ->getFromIndex(), 'app/' . );
+            // 3. Cap nhat tat ca file ma nguon trong app/
+            if (strpos($filename, "ktnb-app-kiemtranoibo/app/") === 0) {
+                $rel = str_replace("ktnb-app-kiemtranoibo/app/", "", $filename);
+                if (substr($rel, -1) !== "/") {
+                    $writeFile(__DIR__ . "/../app/" . $rel, $zip->getFromIndex($i), "app/" . $rel);
                 }
             }
-            // 3.1 Cập nhật clear_cache.php và update_db.php có bảo vệ token
-            if ( === 'ktnb-app-kiemtranoibo/public/clear_cache.php') {
-                (__DIR__ . '/clear_cache.php', ->getFromIndex(), 'clear_cache.php');
+            // 3.1 Cap nhat clear_cache.php va update_db.php
+            if ($filename === "ktnb-app-kiemtranoibo/public/clear_cache.php") {
+                $writeFile(__DIR__ . "/clear_cache.php", $zip->getFromIndex($i), "clear_cache.php");
             }
-            if ( === 'ktnb-app-kiemtranoibo/public/update_db.php') {
-                (__DIR__ . '/update_db.php', ->getFromIndex(), 'update_db.php');
+            if ($filename === "ktnb-app-kiemtranoibo/public/update_db.php") {
+                $writeFile(__DIR__ . "/update_db.php", $zip->getFromIndex($i), "update_db.php");
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/database/migrations/') === 0) {
                 $rel = str_replace('ktnb-app-kiemtranoibo/database/migrations/', '', $filename);
@@ -196,7 +196,7 @@ if ($content) {
         }
         $zip->close();
         // Dọn dẹp triệt để các script vá lỗi cũ khỏi thư mục public trên máy chủ
-         = [
+        $obsoleteFiles = [
             'cap_cuu_loi_500.php', 'cap_cuu_v11.php', 'check_perm.php', 'debug_incidents.php',
             'debug_lcms.php', 'debug_lcms_full.php', 'fix_daily_export.php', 'fix_import_msg.php',
             'fix_layout.php', 'fix_merge.php', 'fix_mojibake.php', 'fix_requests.php',
@@ -204,10 +204,10 @@ if ($content) {
             'sua_loi_excel_v2.php', 'sua_loi_excel_v3.php', 'test_fix.php', 'update_backend2.php',
             'update_backend_now.php', 'lcms_debug_log.txt'
         ];
-        foreach ( as ) {
-             = __DIR__ . '/' . ;
-            if (file_exists()) {
-                @unlink();
+        foreach ($obsoleteFiles as $obs) {
+            $obsPath = __DIR__ . '/' . $obs;
+            if (file_exists($obsPath)) {
+                @unlink($obsPath);
             }
         }
         @unlink($zipFile);
