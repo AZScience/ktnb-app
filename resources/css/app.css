@@ -846,14 +846,17 @@
         color: #4b5563 !important;
     }
     .nttu-table thead th .nttu-report-header-popover,
-    .nttu-interactive-report .nttu-report-header-popover {
+    .nttu-interactive-report .nttu-report-header-popover,
+    .nttu-report-header-popover {
         color: #111827 !important;
         background-color: #fff !important;
     }
     .nttu-table thead th .nttu-report-header-popover button:not(.nttu-popover-clear-action),
     .nttu-table thead th .nttu-report-header-popover input,
     .nttu-interactive-report .nttu-report-header-popover button:not(.nttu-popover-clear-action),
-    .nttu-interactive-report .nttu-report-header-popover input {
+    .nttu-interactive-report .nttu-report-header-popover input,
+    .nttu-report-header-popover button:not(.nttu-popover-clear-action),
+    .nttu-report-header-popover input {
         color: #111827 !important;
     }
     button.nttu-popover-clear-action,

@@ -207,6 +207,12 @@ function positionFixedPopover(popover, trigger) {
     const safeTop = getHeaderSafeTop() + PAD;
     const triggerRect = trigger.getBoundingClientRect();
 
+    if (popover.parentElement !== document.body) {
+        popover._origParent = popover.parentElement;
+        popover._origNextSibling = popover.nextSibling;
+        document.body.appendChild(popover);
+    }
+
     popover.style.position = 'fixed';
     popover.style.zIndex = '10060';
     popover.style.margin = '0';
@@ -394,17 +400,24 @@ export function enhanceTableHeader(th) {
             hideFixedPopover(popover);
         };
 
-        document.addEventListener('click', (e) => {
+        const handleOutside = (e) => {
             if (!th.contains(e.target) && !popover.contains(e.target)) {
                 hideFixedPopover(popover);
             }
-        });
+        };
 
-        window.addEventListener('scroll', () => {
+        document.addEventListener('click', handleOutside, true);
+        document.addEventListener('pointerdown', handleOutside, true);
+
+        const handleScrollOrResize = () => {
             if (!popover.classList.contains('hidden')) {
                 hideFixedPopover(popover);
             }
-        }, true);
+        };
+
+        window.addEventListener('scroll', handleScrollOrResize, true);
+        window.addEventListener('resize', handleScrollOrResize);
+        window.addEventListener('orientationchange', handleScrollOrResize);
     }
 
     syncBadge();

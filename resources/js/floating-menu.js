@@ -120,7 +120,40 @@ function getHeaderSafeTop() {
     return 64;
 }
 
-function positionPanel(panel, trigger, align = 'end') {
+function ensureTeleportedToBody(panel, Alpine) {
+    if (panel.parentElement === document.body) {
+        return;
+    }
+
+    if (!panel._floatOriginalParent) {
+        panel._floatOriginalParent = panel.parentElement;
+        panel._floatNextSibling = panel.nextSibling;
+    }
+
+    if (!panel._x_dataStack) {
+        const stack = (Alpine && typeof Alpine.closestDataStack === 'function')
+            ? Alpine.closestDataStack(panel)
+            : (panel._floatOriginalParent?._x_dataStack || null);
+        if (stack) {
+            panel._x_dataStack = stack;
+        }
+    }
+
+    document.body.appendChild(panel);
+}
+
+function restoreFromTeleport(panel) {
+    if (panel.parentElement === document.body) {
+        if (panel._floatOriginalParent?.isConnected) {
+            panel._floatOriginalParent.insertBefore(panel, panel._floatNextSibling || null);
+        } else {
+            panel.remove();
+        }
+    }
+}
+
+function positionPanel(panel, trigger, align = 'end', Alpine = null) {
+    ensureTeleportedToBody(panel, Alpine);
     const triggerRect = trigger.getBoundingClientRect();
     const { width: panelWidth, height: panelHeight } = measurePanel(panel);
 
@@ -266,9 +299,11 @@ function bindOutsideDismiss(panel, trigger, Alpine, closeExpressionText) {
     };
 
     document.addEventListener('click', handler, true);
+    document.addEventListener('pointerdown', handler, true);
 
     return () => {
         document.removeEventListener('click', handler, true);
+        document.removeEventListener('pointerdown', handler, true);
 
         if (panel._floatDismissGen === generation) {
             panel._floatDismissGen = generation + 1;
@@ -301,7 +336,7 @@ export function registerFloatingMenu(Alpine) {
                 return;
             }
 
-            positionPanel(el, trigger, align);
+            positionPanel(el, trigger, align, Alpine);
         };
 
         const bindScrollListeners = () => {
@@ -313,6 +348,7 @@ export function registerFloatingMenu(Alpine) {
             resizeHandler = () => reposition();
             window.addEventListener('scroll', scrollHandler, true);
             window.addEventListener('resize', resizeHandler);
+            window.addEventListener('orientationchange', resizeHandler);
         };
 
         const unbindScrollListeners = () => {
@@ -322,6 +358,7 @@ export function registerFloatingMenu(Alpine) {
             }
             if (resizeHandler) {
                 window.removeEventListener('resize', resizeHandler);
+                window.removeEventListener('orientationchange', resizeHandler);
                 resizeHandler = null;
             }
         };
@@ -377,9 +414,12 @@ export function registerFloatingMenu(Alpine) {
             unbindOutside();
             unbindScrollListeners();
             hideFloatedPanel(el);
+            restoreFromTeleport(el);
             delete el._floatPinnedHost;
             delete el._floatHost;
             delete el._floatTrigger;
+            delete el._floatOriginalParent;
+            delete el._floatNextSibling;
         });
     });
 }
