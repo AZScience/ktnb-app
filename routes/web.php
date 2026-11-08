@@ -261,6 +261,7 @@ Route::middleware(['auth', 'verified', 'route.permission'])->group(function () {
     Route::post('discussion', [DiscussionController::class, 'storeSection'])->name('discussion.store');
 
     Route::get('messaging', [MessagingController::class, 'index'])->name('messaging.index');
+    Route::get('messaging/data', [MessagingController::class, 'data'])->name('messaging.data');
     Route::get('messaging/notifications', [MessagingController::class, 'notifications'])->name('messaging.notifications');
     Route::post('messaging/mark-all-read', [MessagingController::class, 'markAllRead'])->name('messaging.mark-all-read');
     Route::post('messaging', [MessagingController::class, 'store'])->name('messaging.store');
@@ -374,23 +375,43 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/screenshots/{path}', function ($path) {
-    $fullPath = base_path('screenshots/' . $path);
-    if (! file_exists($fullPath)) {
-        $fullPath = public_path('screenshots/' . $path);
+    if (str_contains($path, '..') || str_contains($path, "\0") || str_contains($path, '\\')) {
+        abort(404);
     }
-    if (file_exists($fullPath) && is_file($fullPath)) {
-        return response()->file($fullPath);
+    $allowedDirs = array_filter([
+        realpath(base_path('screenshots')),
+        realpath(public_path('screenshots')),
+    ]);
+    foreach ([base_path('screenshots/' . $path), public_path('screenshots/' . $path)] as $cand) {
+        $real = realpath($cand);
+        if ($real && is_file($real)) {
+            foreach ($allowedDirs as $allowed) {
+                if (str_starts_with($real, $allowed . DIRECTORY_SEPARATOR) || $real === $allowed) {
+                    return response()->file($real);
+                }
+            }
+        }
     }
     abort(404);
 })->where('path', '.*')->name('screenshots.file');
 
 Route::get('/videos/{path}', function ($path) {
-    $fullPath = base_path('videos/' . $path);
-    if (! file_exists($fullPath)) {
-        $fullPath = public_path('videos/' . $path);
+    if (str_contains($path, '..') || str_contains($path, "\0") || str_contains($path, '\\')) {
+        abort(404);
     }
-    if (file_exists($fullPath) && is_file($fullPath)) {
-        return response()->file($fullPath);
+    $allowedDirs = array_filter([
+        realpath(base_path('videos')),
+        realpath(public_path('videos')),
+    ]);
+    foreach ([base_path('videos/' . $path), public_path('videos/' . $path)] as $cand) {
+        $real = realpath($cand);
+        if ($real && is_file($real)) {
+            foreach ($allowedDirs as $allowed) {
+                if (str_starts_with($real, $allowed . DIRECTORY_SEPARATOR) || $real === $allowed) {
+                    return response()->file($real);
+                }
+            }
+        }
     }
     abort(404);
 })->where('path', '.*')->name('videos.file');

@@ -751,7 +751,7 @@ BLADE;
                         
                         $searchQueries = array_values(array_filter(array_unique($searchQueries)));
                         
-                        $logFile = public_path('lcms_debug_log.txt');
+                        $logFile = storage_path('logs/lcms_debug.log');
                         file_put_contents($logFile, "=== BẮT ĐẦU TÌM KIẾM LCMS (" . date('Y-m-d H:i:s') . ") ===\n");
                         file_put_contents($logFile, "Đã parse: SubCode='$subjectCode', Class='$class', Lec='$lecturer'\n", FILE_APPEND);
                         file_put_contents($logFile, "Tổng cộng có " . count($searchQueries) . " lệnh tìm kiếm: " . implode(" | ", $searchQueries) . "\n\n", FILE_APPEND);

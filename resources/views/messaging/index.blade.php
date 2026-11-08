@@ -17,6 +17,7 @@
         unreadCount: @js($unreadCount),
         routes: {
             index: @js(route('messaging.index')),
+            dataUrl: @js(route('messaging.data')),
             readTemplate: @js(route('messaging.read', ['message' => '__ID__'])),
         },
         canAdd: @js($msgPerms['add']),

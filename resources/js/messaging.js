@@ -170,10 +170,46 @@ export function registerMessaging(Alpine) {
             return this.recipients.find((r) => r.user_id === Number(userId))?.name || '';
         },
 
+        syncTimer: null,
+
         init() {
             const params = new URLSearchParams(window.location.search);
             if (params.get('compose') === '1') {
                 this.openCompose();
+            }
+
+            // Realtime sync hộp thư ngầm mỗi 20 giây
+            if (this.routes?.dataUrl) {
+                this.syncTimer = setInterval(() => this.refreshMessages(), 20000);
+            }
+        },
+
+        destroy() {
+            if (this.syncTimer) {
+                clearInterval(this.syncTimer);
+                this.syncTimer = null;
+            }
+        },
+
+        async refreshMessages() {
+            if (!this.routes?.dataUrl) return;
+            try {
+                const url = new URL(this.routes.dataUrl, window.location.origin);
+                url.searchParams.set('folder', this.folder);
+                const res = await fetch(url.toString(), {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data.messages)) {
+                        this.messages = data.messages;
+                    }
+                    if (typeof data.unreadCount === 'number') {
+                        this.unreadCount = data.unreadCount;
+                    }
+                }
+            } catch {
+                // ignore background sync error
             }
         },
 

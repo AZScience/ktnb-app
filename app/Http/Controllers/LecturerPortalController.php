@@ -96,34 +96,6 @@ class LecturerPortalController extends Controller
             ->first();
 
         if (! $schedule) {
-            $mock = match ($classCode) {
-                'L01' => [
-                    'Class' => 'L01',
-                    'Course' => 'Thực hành ngoài (Demo L01)',
-                    'Lecturer' => 'GV Demo',
-                    'Date' => $date,
-                    'Building' => 'Ngoài trường',
-                    'Room' => '—',
-                    'Period' => '1-3',
-                    'StudentCount' => '30',
-                ],
-                'L02' => [
-                    'Class' => 'L02',
-                    'Course' => 'Thực hành ngoài (Demo L02)',
-                    'Lecturer' => 'GV Demo',
-                    'Date' => $date,
-                    'Building' => 'Ngoài trường',
-                    'Room' => '—',
-                    'Period' => '4-6',
-                    'StudentCount' => '28',
-                ],
-                default => null,
-            };
-
-            if ($mock) {
-                return response()->json(['success' => true, 'data' => $mock]);
-            }
-
             return response()->json(['success' => false, 'message' => 'Không tìm thấy lớp vào ngày đã chọn']);
         }
 

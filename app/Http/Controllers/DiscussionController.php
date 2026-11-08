@@ -19,9 +19,29 @@ class DiscussionController extends Controller
         private DiscussionModeratorService $moderators,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $highlightId = $request->get('id');
+
+        if ($request->wantsJson()) {
+            if ($highlightId) {
+                $highlight = DiscussionSection::find($highlightId);
+                return response()->json([
+                    'sections' => $highlight ? [$this->mapSection($highlight, $request)] : [],
+                ]);
+            }
+            if ($user = $request->user()) {
+                $participant = $this->participants->participantPayload($user);
+                $sections = DiscussionSection::query()
+                    ->orderByDesc('created_at')
+                    ->get()
+                    ->map(fn (DiscussionSection $section) => $this->mapSectionForBoard($section, $user, $participant))
+                    ->values()
+                    ->all();
+                return response()->json(['sections' => $sections]);
+            }
+            return response()->json(['sections' => []]);
+        }
 
         if ($highlightId) {
             return $this->publicSectionView($request, $highlightId);

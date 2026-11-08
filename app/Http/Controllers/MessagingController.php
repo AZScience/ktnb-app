@@ -52,6 +52,24 @@ class MessagingController extends Controller
         ]);
     }
 
+    public function data(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $folder = $request->get('folder', 'inbox');
+        $employeeByUserId = $this->messaging->employeeByUserId();
+        $positionNames = $this->messaging->positionNames();
+
+        $messages = $this->messaging->messagesForUser($user, $folder)
+            ->map(fn (Message $m) => $this->messaging->formatMessage($m, $employeeByUserId, $positionNames))
+            ->values()
+            ->all();
+
+        return response()->json([
+            'messages' => $messages,
+            'unreadCount' => $this->messaging->unreadInboxCount($user),
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([

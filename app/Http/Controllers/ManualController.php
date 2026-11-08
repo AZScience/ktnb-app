@@ -23,7 +23,21 @@ class ManualController extends Controller
 
     private function canUserEdit(): bool
     {
-        return auth()->check();
+        if (! auth()->check()) {
+            return false;
+        }
+
+        $user = auth()->user();
+        if ($user && ($user->is_super_admin || $user->role === 'super_admin')) {
+            return true;
+        }
+
+        try {
+            return app(PermissionService::class)->isSuperAdmin($user)
+                || app(PermissionService::class)->can('/settings', 'access');
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     public function index()

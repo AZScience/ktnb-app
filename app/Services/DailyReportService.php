@@ -63,26 +63,40 @@ class DailyReportService
         return $this->resolveOfficerContext($user)['aliases'];
     }
 
-    public function isoToDisplay(string $isoDate): string
+    public function isoToDisplay(?string $isoDate): string
     {
+        if (! $isoDate) {
+            return '';
+        }
+
         if (str_contains($isoDate, '/')) {
             return $isoDate;
         }
 
-        [$y, $m, $d] = explode('-', $isoDate);
+        $parts = explode('-', $isoDate);
+        if (count($parts) === 3) {
+            return sprintf('%02d/%02d/%04d', (int) $parts[2], (int) $parts[1], (int) $parts[0]);
+        }
 
-        return sprintf('%s/%s/%s', $d, $m, $y);
+        return $isoDate;
     }
 
-    public function displayToIso(string $displayDate): string
+    public function displayToIso(?string $displayDate): string
     {
+        if (! $displayDate) {
+            return '';
+        }
+
         if (str_contains($displayDate, '-')) {
             return $displayDate;
         }
 
-        [$d, $m, $y] = explode('/', $displayDate);
+        $parts = explode('/', $displayDate);
+        if (count($parts) === 3) {
+            return sprintf('%04d-%02d-%02d', (int) $parts[2], (int) $parts[1], (int) $parts[0]);
+        }
 
-        return sprintf('%s-%s-%s', $y, $m, $d);
+        return $displayDate;
     }
 
     /**

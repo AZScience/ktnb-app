@@ -106,6 +106,36 @@ export function registerDiscussionBoard(Alpine) {
 
     Alpine.data('discussionCollaborationBoard', (config) => ({
         sections: config.sections || [],
+        syncTimer: null,
+
+        init() {
+            // Realtime sync định kỳ mỗi 15 giây
+            this.syncTimer = setInterval(async () => {
+                if (this.saving || this.editingTitleId || this.editingContentId || this.commentEditorId || this.isAddOpen) {
+                    return;
+                }
+                try {
+                    const res = await fetch(window.location.href, {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data.sections)) {
+                            this.sections = data.sections;
+                        }
+                    }
+                } catch {
+                    // ignore background sync error
+                }
+            }, 15000);
+        },
+
+        destroy() {
+            if (this.syncTimer) {
+                clearInterval(this.syncTimer);
+                this.syncTimer = null;
+            }
+        },
         participant: config.participant || {},
         routes: config.routes || {},
         csrf: config.csrf || '',
