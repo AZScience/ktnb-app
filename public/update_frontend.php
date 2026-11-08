@@ -163,48 +163,19 @@ if ($content) {
                 }
             }
 
-            // 3. Cập nhật các service và controller liên quan
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ReportQueryService.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Services/ReportQueryService.php', $zip->getFromIndex($i));
+            // 3. Cập nhật tất cả các file mã nguồn trong app/
+            if (strpos(, 'ktnb-app-kiemtranoibo/app/') === 0) {
+                 = str_replace('ktnb-app-kiemtranoibo/app/', '', );
+                if (substr(, -1) !== '/') {
+                    (__DIR__ . '/../app/' . , ->getFromIndex(), 'app/' . );
+                }
             }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ReportPresenterService.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Services/ReportPresenterService.php', $zip->getFromIndex($i));
+            // 3.1 Cập nhật clear_cache.php và update_db.php có bảo vệ token
+            if ( === 'ktnb-app-kiemtranoibo/public/clear_cache.php') {
+                (__DIR__ . '/clear_cache.php', ->getFromIndex(), 'clear_cache.php');
             }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/ReportController.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Http/Controllers/ReportController.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/ScheduleController.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Http/Controllers/ScheduleController.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ScheduleRoomChecklistExportService.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Services/ScheduleRoomChecklistExportService.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/ScheduleExcelService.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Services/ScheduleExcelService.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Models/DailySchedule.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Models/DailySchedule.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/MonitoringScheduleController.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Http/Controllers/MonitoringScheduleController.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/EvidenceController.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Http/Controllers/EvidenceController.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/LecturerPortalController.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Http/Controllers/LecturerPortalController.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Http/Controllers/ManualController.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Http/Controllers/ManualController.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Providers/AppServiceProvider.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Providers/AppServiceProvider.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/SystemParameterService.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Services/SystemParameterService.php', $zip->getFromIndex($i));
-            }
-            if (strpos($filename, 'ktnb-app-kiemtranoibo/app/Services/DailyReportService.php') === 0) {
-                $writeFile(__DIR__ . '/../app/Services/DailyReportService.php', $zip->getFromIndex($i));
+            if ( === 'ktnb-app-kiemtranoibo/public/update_db.php') {
+                (__DIR__ . '/update_db.php', ->getFromIndex(), 'update_db.php');
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/database/migrations/') === 0) {
                 $rel = str_replace('ktnb-app-kiemtranoibo/database/migrations/', '', $filename);
@@ -224,6 +195,21 @@ if ($content) {
             }
         }
         $zip->close();
+        // Dọn dẹp triệt để các script vá lỗi cũ khỏi thư mục public trên máy chủ
+         = [
+            'cap_cuu_loi_500.php', 'cap_cuu_v11.php', 'check_perm.php', 'debug_incidents.php',
+            'debug_lcms.php', 'debug_lcms_full.php', 'fix_daily_export.php', 'fix_import_msg.php',
+            'fix_layout.php', 'fix_merge.php', 'fix_mojibake.php', 'fix_requests.php',
+            'fix_route.php', 'fix_view_symlink.php', 'patch_routes.php', 'sua_loi_excel.php',
+            'sua_loi_excel_v2.php', 'sua_loi_excel_v3.php', 'test_fix.php', 'update_backend2.php',
+            'update_backend_now.php', 'lcms_debug_log.txt'
+        ];
+        foreach ( as ) {
+             = __DIR__ . '/' . ;
+            if (file_exists()) {
+                @unlink();
+            }
+        }
         @unlink($zipFile);
 
         // 4. Xóa cache của Laravel và view cache trực tiếp
