@@ -833,6 +833,10 @@ export function monitoringSchedulesPage(config) {
             return this.detectItemModule(this.form);
         },
 
+        get isCurrentItemHomeroom() {
+            return this.module === 'homeroom' || this.currentItemModule === 'homeroom';
+        },
+
         get currentIncidentCategories() {
             const mod = this.currentItemModule || this.module || 'in-person';
             let rawList = (this.incidentCategoriesByModule && (

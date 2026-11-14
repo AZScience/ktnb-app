@@ -709,13 +709,13 @@
                                                 x-model="form.note"
                                                 type="text"
                                                 class="nttu-form-control pr-10"
-                                                :placeholder="persistLocalNoteEnabled && module === 'online' ? 'Dán link eLearning (LCMS) hoặc ghi chú...' : 'Ghi chú thêm...'"
+                                                :placeholder="isCurrentItemHomeroom ? 'Dán link Google Meet hoặc ghi chú...' : (persistLocalNoteEnabled && module === 'online' ? 'Dán link eLearning (LCMS) hoặc ghi chú...' : 'Ghi chú thêm...')"
                                                 @input.debounce.400ms="persistLocalNoteDraft()"
                                             >
                                             <div x-data="{ showDropdown: false }" class="absolute inset-y-0 right-0 flex items-center pr-2" x-show="module === 'online' || module === 'homeroom'">
                                                 <button type="button" 
                                                     title="Quét tìm Link Google Meet"
-                                                    @click="module === 'homeroom' ? fetchMeetLinkFromEmail('email') : showDropdown = !showDropdown"
+                                                    @click="(module === 'homeroom' || isCurrentItemHomeroom) ? fetchMeetLinkFromEmail('email') : showDropdown = !showDropdown"
                                                     @click.away="showDropdown = false"
                                                     class="p-1 rounded-md text-blue-600 hover:bg-blue-50 hover:text-blue-800 disabled:opacity-50 flex items-center justify-center"
                                                     :disabled="isFetchingMeetLink">
@@ -728,7 +728,7 @@
                                                     </svg>
                                                 </button>
                                                 
-                                                <div x-show="showDropdown && module !== 'homeroom'" x-transition.opacity.duration.200ms
+                                                <div x-show="showDropdown && module !== 'homeroom' && !isCurrentItemHomeroom" x-transition.opacity.duration.200ms
                                                     class="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50 overflow-hidden"
                                                     style="display: none;">
                                                     <div class="py-1">
