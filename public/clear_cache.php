@@ -28,6 +28,32 @@ if (file_exists($file)) {
     }
 }
 
+$panelFile = __DIR__ . '/../resources/views/components/evidence-input-panel.blade.php';
+if (file_exists($panelFile)) {
+    $pContent = file_get_contents($panelFile);
+    if (strpos($pContent, 'btn-toggle-cam') !== false) {
+        $pContent = preg_replace('/<button\s+type="button"\s+@click="evidenceToggleCameraFacing\(\)"[^>]*class="btn-toggle-cam[^"]*"[^>]*>.*?<\/button>/is', '', $pContent);
+        @chmod($panelFile, 0666);
+        file_put_contents($panelFile, $pContent);
+        echo "Da xoa triet de btn-toggle-cam trong evidence-input-panel.blade.php tren may chu! <br>";
+    } else {
+        echo "evidence-input-panel.blade.php tren may chu da sach (khong con btn-toggle-cam). <br>";
+    }
+}
+
+$viewsDir = __DIR__ . '/../storage/framework/views';
+if (is_dir($viewsDir)) {
+    @chmod($viewsDir, 0777);
+    $vFiles = glob($viewsDir . '/*.php');
+    if ($vFiles) {
+        foreach ($vFiles as $f) {
+            @chmod($f, 0777);
+            @unlink($f);
+        }
+        echo "Da xoa " . count($vFiles) . " file compiled view cache tren may chu! <br>";
+    }
+}
+
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 \Illuminate\Support\Facades\Artisan::call('optimize:clear');

@@ -254,6 +254,7 @@ export function evidencePanelMethods() {
         },
 
         ensureCameraSelectorUI() {
+            document.querySelectorAll('.btn-toggle-cam').forEach((el) => el.remove());
             const aspectVideos = document.querySelectorAll('.aspect-video');
             aspectVideos.forEach((aspectVideo) => {
                 const container = aspectVideo.closest('.space-y-4') || aspectVideo.parentElement?.parentElement;
@@ -263,7 +264,9 @@ export function evidencePanelMethods() {
                 const leftCol = aspectVideo.previousElementSibling || container.querySelector('.space-y-3');
                 if (leftCol) {
                     let box = leftCol.querySelector('.evidence-camera-select-box');
-                    if (!box) {
+                    if (box) {
+                        box.querySelectorAll('.btn-toggle-cam').forEach((el) => el.remove());
+                    } else {
                         box = document.createElement('div');
                         box.className = 'evidence-camera-select-box rounded-md border bg-slate-50/80 p-3 space-y-2';
                         box.innerHTML = `
