@@ -159,26 +159,22 @@
                                     </svg>
                                     <span class="nttu-th-label-text" x-text="columnLabel(key)"></span>
                                     <template x-if="sortDirection(key) === 'asc' && !isColumnFiltered(key)">
-                                        <span class="nttu-header-badge-active" :title="sortPriority(key) ? `Sắp xếp tăng dần (ĐK ${sortPriority(key)})` : 'Sắp xếp tăng dần'">
-                                            <span x-show="sortPriority(key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(key)"></span>
+                                        <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
                                         </span>
                                     </template>
                                     <template x-if="sortDirection(key) === 'desc' && !isColumnFiltered(key)">
-                                        <span class="nttu-header-badge-active" :title="sortPriority(key) ? `Sắp xếp giảm dần (ĐK ${sortPriority(key)})` : 'Sắp xếp giảm dần'">
-                                            <span x-show="sortPriority(key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(key)"></span>
+                                        <span class="nttu-header-badge-active" title="Sắp xếp giảm dần">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                         </span>
                                     </template>
                                     <template x-if="sortDirection(key) === 'asc' && isColumnFiltered(key)">
-                                        <span class="nttu-header-badge-active" :title="sortPriority(key) ? `Tăng dần có lọc (ĐK ${sortPriority(key)})` : 'Tăng dần có lọc'">
-                                            <span x-show="sortPriority(key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(key)"></span>
+                                        <span class="nttu-header-badge-active" title="Tăng dần có lọc">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l7-7 7 7M5 19h14"/></svg>
                                         </span>
                                     </template>
                                     <template x-if="sortDirection(key) === 'desc' && isColumnFiltered(key)">
-                                        <span class="nttu-header-badge-active" :title="sortPriority(key) ? `Giảm dần có lọc (ĐK ${sortPriority(key)})` : 'Giảm dần có lọc'">
-                                            <span x-show="sortPriority(key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(key)"></span>
+                                        <span class="nttu-header-badge-active" title="Giảm dần có lọc">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 5h14M5 11l7 7 7-7"/></svg>
                                         </span>
                                     </template>

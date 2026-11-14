@@ -255,105 +255,11 @@ export function evidencePanelMethods() {
 
         ensureCameraSelectorUI() {
             document.querySelectorAll('.btn-toggle-cam').forEach((el) => el.remove());
+            document.querySelectorAll('.evidence-camera-select-box').forEach((el) => el.remove());
+
             const aspectVideos = document.querySelectorAll('.aspect-video');
             aspectVideos.forEach((aspectVideo) => {
-                const container = aspectVideo.closest('.space-y-4') || aspectVideo.parentElement?.parentElement;
-                if (!container) return;
-
-                // 1. Find left column where camera controls live
-                const leftCol = aspectVideo.previousElementSibling || container.querySelector('.space-y-3');
-                if (leftCol) {
-                    let box = leftCol.querySelector('.evidence-camera-select-box');
-                    if (box) {
-                        box.querySelectorAll('.btn-toggle-cam').forEach((el) => el.remove());
-                    } else {
-                        box = document.createElement('div');
-                        box.className = 'evidence-camera-select-box rounded-md border bg-slate-50/80 p-3 space-y-2';
-                        box.innerHTML = `
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-bold uppercase text-gray-700 flex items-center gap-1.5">
-                                    <svg class="h-4 w-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                    Chọn Camera:
-                                </label>
-                            </div>
-                            <select class="sel-cam-device w-full rounded border-gray-300 bg-white text-xs py-1.5 px-2 shadow-sm font-medium text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></select>
-                        `;
-
-                        // Insert after "Lấy minh chứng bằng" box or before action buttons
-                        const sourceBox = Array.from(leftCol.children).find((el) => el.textContent.includes('Lấy minh chứng bằng'));
-                        if (sourceBox) {
-                            sourceBox.after(box);
-                        } else {
-                            const btnContainer = leftCol.querySelector('.flex.gap-2, button[type="button"]');
-                            if (btnContainer) {
-                                btnContainer.before(box);
-                            } else {
-                                leftCol.appendChild(box);
-                            }
-                        }
-                    }
-
-                    // Visibility toggling based on source type
-                    box.style.display = (this.evidenceSourceType === 'camera') ? '' : 'none';
-
-                    // Populate / sync select dropdown
-                    const selectEl = box.querySelector('.sel-cam-device');
-                    if (selectEl) {
-                        const devs = this.evidenceDevices || [];
-                        const shouldUpdateOptions = selectEl.options.length !== (devs.length || 2) || selectEl.dataset.devCount !== String(devs.length);
-                        if (shouldUpdateOptions) {
-                            selectEl.innerHTML = '';
-                            if (devs.length > 0) {
-                                devs.forEach((dev, idx) => {
-                                    const opt = document.createElement('option');
-                                    opt.value = dev.deviceId;
-                                    opt.textContent = this.evidenceDeviceLabel(dev, idx, devs.length);
-                                    selectEl.appendChild(opt);
-                                });
-                            } else {
-                                const optEnv = document.createElement('option');
-                                optEnv.value = 'environment';
-                                optEnv.textContent = '📷 Camera sau (Chính)';
-                                selectEl.appendChild(optEnv);
-
-                                const optUser = document.createElement('option');
-                                optUser.value = 'user';
-                                optUser.textContent = '📷 Camera trước (Selfie)';
-                                selectEl.appendChild(optUser);
-                            }
-                            selectEl.dataset.devCount = String(devs.length);
-                        }
-
-                        if (this.evidenceDeviceId) {
-                            selectEl.value = this.evidenceDeviceId;
-                        } else if (this.evidenceFacingMode) {
-                            selectEl.value = this.evidenceFacingMode;
-                        }
-
-                        selectEl.onchange = (e) => {
-                            const val = e.target.value;
-                            if (val === 'user' || val === 'environment') {
-                                this.evidenceFacingMode = val;
-                                try {
-                                    localStorage.setItem('nttu_evidence_facing_mode', val);
-                                    localStorage.removeItem('nttu_evidence_device_id');
-                                } catch (_) {}
-                                this.evidenceDeviceId = '';
-                                this.evidenceStartMedia('camera');
-                            } else {
-                                this.evidenceDeviceId = val;
-                                try {
-                                    localStorage.setItem('nttu_evidence_device_id', val);
-                                } catch (_) {}
-                                this.evidenceStartMedia('camera', val);
-                            }
-                        };
-                    }
-
-
-                }
-
-                // 2. On video stream container on the right, ensure floating toggle button overlay
+                // Ensure floating toggle button overlay on video stream container
                 if (!aspectVideo.querySelector('.evidence-floating-cam-btn')) {
                     const overlay = document.createElement('button');
                     overlay.type = 'button';

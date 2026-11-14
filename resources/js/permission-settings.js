@@ -241,13 +241,11 @@ export function registerPermissionSettings(Alpine) {
         },
 
         sortPriority(key) {
-            const index = this.sortConfig.findIndex((entry) => entry.key === key);
-            return index >= 0 ? index + 1 : null;
+            return null;
         },
 
         sortPriorityBadge(key) {
-            const prio = this.sortPriority(key);
-            return prio ? `ĐK ${prio}` : '';
+            return '';
         },
 
         isPrimarySort(key) {

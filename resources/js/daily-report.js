@@ -351,14 +351,11 @@ export function registerDailyReport(Alpine) {
         },
 
         sortPriority(tabKey, colKey) {
-            const state = this.stateFor(tabKey);
-            const index = state.sortConfig.findIndex((entry) => entry.key === colKey);
-            return index >= 0 ? index + 1 : null;
+            return null;
         },
 
         sortPriorityBadge(tabKey, colKey) {
-            const prio = this.sortPriority(tabKey, colKey);
-            return prio ? `ĐK ${prio}` : '';
+            return '';
         },
 
         isPrimarySort(tabKey, colKey) {

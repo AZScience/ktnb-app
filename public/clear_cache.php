@@ -31,13 +31,14 @@ if (file_exists($file)) {
 $panelFile = __DIR__ . '/../resources/views/components/evidence-input-panel.blade.php';
 if (file_exists($panelFile)) {
     $pContent = file_get_contents($panelFile);
-    if (strpos($pContent, 'btn-toggle-cam') !== false) {
-        $pContent = preg_replace('/<button\s+type="button"\s+@click="evidenceToggleCameraFacing\(\)"[^>]*class="btn-toggle-cam[^"]*"[^>]*>.*?<\/button>/is', '', $pContent);
+    if (strpos($pContent, 'evidence-camera-select-box') !== false) {
+        $pContent = preg_replace('/<div[^>]*class="evidence-camera-select-box[^"]*"[^>]*>.*?<\/div>\s*<\/div>/is', '', $pContent);
+        $pContent = preg_replace('/<div[^>]*class="evidence-camera-select-box[^"]*"[^>]*>.*?<\/div>/is', '', $pContent);
         @chmod($panelFile, 0666);
         file_put_contents($panelFile, $pContent);
-        echo "Da xoa triet de btn-toggle-cam trong evidence-input-panel.blade.php tren may chu! <br>";
+        echo "Da xoa triet de hop CHON CAMERA trong evidence-input-panel.blade.php tren may chu! <br>";
     } else {
-        echo "evidence-input-panel.blade.php tren may chu da sach (khong con btn-toggle-cam). <br>";
+        echo "evidence-input-panel.blade.php tren may chu da sach (khong con hop chon camera). <br>";
     }
 }
 

@@ -445,8 +445,9 @@ export function scanAndEnhanceAllTables() {
         } catch (e) {}
     }
 
-    // Purge any redundant camera flip buttons in select box (leaving floating overlay intact)
+    // Purge any redundant camera flip buttons or camera select boxes in left panel (camera controls are overlaid directly on video)
     document.querySelectorAll('.btn-toggle-cam').forEach((el) => el.remove());
+    document.querySelectorAll('.evidence-camera-select-box').forEach((el) => el.remove());
 
     // Ensure camera selection UI is present whenever evidence camera panel is rendered
     document.querySelectorAll('.aspect-video').forEach((aspectVideo) => {

@@ -1106,13 +1106,11 @@ export function monitoringSchedulesPage(config) {
         },
 
         sortPriority(key) {
-            const index = this.activeSortRules.findIndex((r) => r.key === key);
-            return index >= 0 ? index + 1 : null;
+            return null;
         },
 
         sortPriorityBadge(key) {
-            const prio = this.sortPriority(key);
-            return prio ? `ĐK ${prio}` : '';
+            return '';
         },
 
         isPrimarySort(key) {
