@@ -388,6 +388,23 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
         </svg>
     </button>
+
+    <!-- Toast thông báo trạng thái tự động lưu -->
+    <div
+        x-show="toastMessage"
+        x-cloak
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+        class="fixed bottom-6 right-6 z-[100] max-w-md px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border text-xs sm:text-sm font-bold"
+        :class="toastType === 'success' ? 'bg-slate-900 text-emerald-300 border-emerald-500/50 shadow-emerald-950/40' : 'bg-red-950 text-red-200 border-red-500/50 shadow-red-950/40'"
+    >
+        <span class="text-base" x-text="toastType === 'success' ? '💾' : '⚠️'"></span>
+        <span x-text="toastMessage"></span>
+    </div>
 </div>
 
 <!-- Nạp thư viện Turndown để chuyển đổi HTML sang Markdown chuẩn xác -->
@@ -742,6 +759,19 @@ function manualApp() {
         targetVideoBlock: null,
         videoInsertDirection: 'after',
         videoInsertTargetNode: null,
+        toastMessage: '',
+        toastType: 'success',
+        toastTimeout: null,
+        autoSaveTimer: null,
+
+        showToast(msg, type = 'success') {
+            this.toastMessage = msg;
+            this.toastType = type;
+            if (this.toastTimeout) clearTimeout(this.toastTimeout);
+            this.toastTimeout = setTimeout(() => {
+                this.toastMessage = '';
+            }, 4000);
+        },
 
         scrollToTop() {
             const mainContainer = document.querySelector('main');
@@ -772,6 +802,18 @@ function manualApp() {
                 }
             });
 
+            // Tự động lưu tài liệu sau khi gõ nội dung (sau 3.5 giây dừng gõ)
+            const manualContentEl = document.getElementById('manual-content');
+            if (manualContentEl) {
+                manualContentEl.addEventListener('input', () => {
+                    if (!this.editMode) return;
+                    if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer);
+                    this.autoSaveTimer = setTimeout(() => {
+                        this.saveFromContent(true);
+                    }, 3500);
+                });
+            }
+
             this.$nextTick(() => {
                 this.setupTableOfContents();
                 this.applyEditModeState();
@@ -783,7 +825,7 @@ function manualApp() {
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
                     if (this.editMode) {
                         e.preventDefault();
-                        this.saveFromContent();
+                        this.saveFromContent(false);
                     }
                 }
             });
@@ -970,6 +1012,8 @@ function manualApp() {
                 this.activeBlockNode.remove();
                 this.activeBlockNode = prev || null;
                 this.updateToolbarPosition();
+                this.showToast('🗑️ Đã xóa khối nội dung và tự động lưu!', 'success');
+                this.saveFromContent(true);
             }
         },
 
@@ -1121,6 +1165,8 @@ function manualApp() {
                         e.stopPropagation();
                         if (confirm('Thầy có chắc chắn muốn xóa bức ảnh minh họa này khỏi tài liệu?')) {
                             wrapper.remove();
+                            this.showToast('🗑️ Đã xóa ảnh và tự động lưu vào máy chủ!', 'success');
+                            this.saveFromContent(true);
                         }
                     };
 
@@ -1323,7 +1369,8 @@ function manualApp() {
                     }
 
                     this.enhanceImages();
-                    alert('✅ ĐÃ THÊM ẢNH MỚI THÀNH CÔNG!');
+                    this.showToast('✅ Đã thêm ảnh mới và tự động lưu vào máy chủ!', 'success');
+                    this.saveFromContent(true);
                 } else {
                     alert('❌ Lỗi: ' + (data.message || 'Không thể upload ảnh'));
                 }
@@ -1370,7 +1417,8 @@ function manualApp() {
                             }
                         }
                     }
-                    alert('✅ ' + data.message);
+                    this.showToast('✅ Đã thay ảnh và tự động lưu vào máy chủ!', 'success');
+                    this.saveFromContent(true);
                 } else {
                     alert('❌ Lỗi tải ảnh: ' + (data.message || 'Không thể upload ảnh'));
                 }
@@ -1519,7 +1567,8 @@ function manualApp() {
                     }
                     this.enhanceVideos();
                     this.videoModalOpen = false;
-                    alert('✅ ĐÃ CHÈN VIDEO HƯỚNG DẪN THÀNH CÔNG!');
+                    this.showToast('✅ Đã chèn video và tự động lưu vào máy chủ!', 'success');
+                    this.saveFromContent(true);
                 } else if (this.videoModalMode === 'edit' && this.targetVideoBlock) {
                     const block = this.targetVideoBlock;
                     block.dataset.videoType = norm.type;
@@ -1543,7 +1592,8 @@ function manualApp() {
                     }
 
                     this.videoModalOpen = false;
-                    alert('✅ ĐÃ CẬP NHẬT VIDEO THÀNH CÔNG!');
+                    this.showToast('✅ Đã cập nhật video và tự động lưu vào máy chủ!', 'success');
+                    this.saveFromContent(true);
                 }
             } else if (this.videoSourceType === 'upload') {
                 const file = this.videoSelectedFile;
@@ -1587,7 +1637,8 @@ function manualApp() {
                             }
                             this.enhanceVideos();
                             this.videoModalOpen = false;
-                            alert('✅ ĐÃ TẢI LÊN VÀ CHÈN VIDEO THÀNH CÔNG!');
+                            this.showToast('✅ Đã tải lên video và tự động lưu vào máy chủ!', 'success');
+                            this.saveFromContent(true);
                         } else {
                             alert('❌ Lỗi tải video: ' + (data.message || 'Không thể upload video'));
                         }
@@ -1638,7 +1689,8 @@ function manualApp() {
                             }
 
                             this.videoModalOpen = false;
-                            alert('✅ ' + data.message);
+                            this.showToast('✅ Đã cập nhật video và tự động lưu vào máy chủ!', 'success');
+                            this.saveFromContent(true);
                         } else {
                             alert('❌ Lỗi cập nhật video: ' + (data.message || 'Không thể upload video'));
                         }
@@ -1656,7 +1708,8 @@ function manualApp() {
                         captionSpan.textContent = caption || 'Video minh họa nghiệp vụ';
                     }
                     this.videoModalOpen = false;
-                    alert('✅ ĐÃ CẬP NHẬT CHÚ THÍCH VIDEO THÀNH CÔNG!');
+                    this.showToast('✅ Đã cập nhật chú thích video và tự động lưu vào máy chủ!', 'success');
+                    this.saveFromContent(true);
                 }
             }
         }
@@ -1708,6 +1761,8 @@ function manualApp() {
                     e.stopPropagation();
                     if (confirm('Thầy có chắc chắn muốn xóa video hướng dẫn này khỏi tài liệu?')) {
                         wrapper.remove();
+                        this.showToast('🗑️ Đã xóa video và tự động lưu vào máy chủ!', 'success');
+                        this.saveFromContent(true);
                     }
                 };
 
@@ -1727,7 +1782,7 @@ function manualApp() {
         });
     },
 
-    saveFromContent() {
+    saveFromContent(isAutoSave = false) {
         const container = document.getElementById('manual-content');
         if (!container) return;
 
@@ -1778,52 +1833,61 @@ function manualApp() {
             });
             markdown = turndown.turndown(clone);
         } else {
-            alert('Đang nạp bộ chuyển đổi, vui lòng thử lại sau 2 giây...');
+            if (!isAutoSave) {
+                alert('Đang nạp bộ chuyển đổi, vui lòng thử lại sau 2 giây...');
+            }
             return;
         }
 
-        this.saveManual(markdown);
+        this.saveManual(markdown, isAutoSave);
     },
 
-        async saveManual(content) {
-            if (this.isSaving) return;
-            this.isSaving = true;
+    async saveManual(content, isAutoSave = false) {
+        if (this.isSaving) return;
+        this.isSaving = true;
 
-            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+        const token = document.querySelector('meta[name="csrf-token"]')?.content;
 
-            try {
-                const response = await fetch('{{ route("manual.save") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': token,
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        content: content,
-                    }),
+        try {
+            const response = await fetch('{{ route("manual.save") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: content,
+                }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                this.htmlContent = data.html;
+                this.updatedAtDisplay = data.updatedAt;
+                this.activeBlockNode = null;
+                this.$nextTick(() => {
+                    this.setupTableOfContents();
+                    this.applyEditModeState();
                 });
-
-                const data = await response.json();
-                if (data.success) {
-                    this.htmlContent = data.html;
-                    this.updatedAtDisplay = data.updatedAt;
-                    this.activeBlockNode = null;
-                    this.$nextTick(() => {
-                        this.setupTableOfContents();
-                        this.applyEditModeState();
-                    });
-                    alert('✅ ĐÃ LƯU THAY ĐỔI CẨM NANG HƯỚNG DẪN THÀNH CÔNG!');
+                if (isAutoSave) {
+                    this.showToast('💾 Đã tự động lưu thay đổi vào máy chủ!', 'success');
                 } else {
-                    alert('❌ Không thể lưu: ' + (data.message || 'Lỗi không xác định'));
+                    alert('✅ ĐÃ LƯU THAY ĐỔI CẨM NANG HƯỚNG DẪN THÀNH CÔNG!');
+                    this.showToast('✅ Đã lưu cẩm nang hướng dẫn thành công!', 'success');
                 }
-            } catch (err) {
-                console.error(err);
-                alert('❌ Lỗi kết nối khi lưu tài liệu!');
-            } finally {
-                this.isSaving = false;
+            } else {
+                alert('❌ Không thể lưu: ' + (data.message || 'Lỗi không xác định'));
             }
+        } catch (err) {
+            console.error(err);
+            if (!isAutoSave) {
+                alert('❌ Lỗi kết nối khi lưu tài liệu!');
+            }
+        } finally {
+            this.isSaving = false;
         }
+    }
     };
 }
 </script>

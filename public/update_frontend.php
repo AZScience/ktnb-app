@@ -122,7 +122,7 @@ if ($content) {
                 }
             }
 
-            // 1.1. Giải nén thư mục screenshots sang public/screenshots & screenshots
+            // 1.1. Giải nén thư mục screenshots sang public/screenshots & screenshots (không ghi đè nếu máy chủ đã có)
             if (strpos($filename, 'ktnb-app-kiemtranoibo/screenshots/') === 0) {
                 $rel = str_replace('ktnb-app-kiemtranoibo/screenshots/', '', $filename);
                 $dest1 = __DIR__ . '/screenshots/' . $rel;
@@ -135,8 +135,12 @@ if ($content) {
                     if (!is_dir($d1)) @mkdir($d1, 0755, true);
                     $d2 = dirname($dest2);
                     if (!is_dir($d2)) @mkdir($d2, 0755, true);
-                    @file_put_contents($dest1, $zip->getFromIndex($i));
-                    @file_put_contents($dest2, $zip->getFromIndex($i));
+                    if (!file_exists($dest1)) {
+                        @file_put_contents($dest1, $zip->getFromIndex($i));
+                    }
+                    if (!file_exists($dest2)) {
+                        @file_put_contents($dest2, $zip->getFromIndex($i));
+                    }
                     $extracted++;
                 }
             }
@@ -186,12 +190,22 @@ if ($content) {
             if (strpos($filename, 'ktnb-app-kiemtranoibo/routes/web.php') === 0) {
                 $writeFile(__DIR__ . '/../routes/web.php', $zip->getFromIndex($i));
             }
+            // Bảo vệ tài liệu hướng dẫn sử dụng: KHÔNG ghi đè nếu máy chủ đã có tệp
             if (strpos($filename, 'ktnb-app-kiemtranoibo/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md') === 0) {
-                $writeFile(__DIR__ . '/../TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md', $zip->getFromIndex($i));
-                $writeFile(__DIR__ . '/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md', $zip->getFromIndex($i));
+                $targetRootDoc = __DIR__ . '/../TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md';
+                $targetPubDoc = __DIR__ . '/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md';
+                if (!file_exists($targetRootDoc)) {
+                    $writeFile($targetRootDoc, $zip->getFromIndex($i), 'TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
+                }
+                if (!file_exists($targetPubDoc)) {
+                    $writeFile($targetPubDoc, $zip->getFromIndex($i), 'TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
+                }
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/public/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md') === 0) {
-                $writeFile(__DIR__ . '/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md', $zip->getFromIndex($i));
+                $targetPubDoc = __DIR__ . '/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md';
+                if (!file_exists($targetPubDoc)) {
+                    $writeFile($targetPubDoc, $zip->getFromIndex($i), 'TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
+                }
             }
         }
         $zip->close();

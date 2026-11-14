@@ -97,8 +97,15 @@ class ManualController extends Controller
         $basePath = base_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
         $publicPath = public_path('TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md');
 
-        @file_put_contents($basePath, $content);
-        @file_put_contents($publicPath, $content);
+        $res1 = @file_put_contents($basePath, $content);
+        $res2 = @file_put_contents($publicPath, $content);
+
+        if ($res1 === false && $res2 === false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi ghi tệp tài liệu: Vui lòng kiểm tra quyền ghi thư mục trên máy chủ!',
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
