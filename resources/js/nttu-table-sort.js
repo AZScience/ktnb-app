@@ -72,8 +72,7 @@ export function normalizeSortRules(config) {
             .map((r) => ({
                 key: String(r.key),
                 direction: r.direction === 'descending' || r.direction === 'desc' ? 'desc' : 'asc',
-            }))
-            .slice(0, 2);
+            }));
     }
     if (typeof config === 'object' && config.key && config.direction) {
         return [{
@@ -82,6 +81,22 @@ export function normalizeSortRules(config) {
         }];
     }
     return [];
+}
+
+export function applySortRule(currentRules, key, direction) {
+    const list = Array.isArray(currentRules) ? [...currentRules] : [];
+    const idx = list.findIndex((r) => r && r.key === key);
+    if (idx >= 0) {
+        list[idx] = { key, direction };
+    } else {
+        list.push({ key, direction });
+    }
+    return list;
+}
+
+export function removeSortRule(currentRules, key) {
+    if (!Array.isArray(currentRules)) return [];
+    return currentRules.filter((r) => r && r.key !== key);
 }
 
 export function multiSortRows(items, sortRules, fallbacks = ['period', 'room', 'id']) {

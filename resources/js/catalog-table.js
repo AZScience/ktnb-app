@@ -16,7 +16,7 @@ import { createNttuMultiSelectMixin } from './nttu-multi-select.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, normalizeRowsPerPage, paginateSlice } from './nttu-pagination.js';
 import { catalogCkeditorKeys, catalogCkeditorMethods, isCkeditorContentEmpty, preloadCatalogCkeditorCompose, resetCatalogCkeditorState } from './catalog-ckeditor.js';
-import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
+import { multiSortRows, normalizeSortRules, applySortRule, removeSortRule } from './nttu-table-sort.js';
 import {
     TABLE_EMPTY_FILTERED,
     TABLE_EMPTY_NO_DATA,
@@ -1547,9 +1547,13 @@ export function catalogTablePage(config) {
         },
 
         sortPriority(key) {
-            if (this.sortConfig.length <= 1) return null;
             const index = this.sortConfig.findIndex((entry) => entry.key === key);
             return index >= 0 ? index + 1 : null;
+        },
+
+        sortPriorityBadge(key) {
+            const prio = this.sortPriority(key);
+            return prio ? `ĐK ${prio}` : '';
         },
 
         isPrimarySort(key) {
@@ -1561,6 +1565,12 @@ export function catalogTablePage(config) {
             if (!rule) return false;
             const dir = direction === 'descending' || direction === 'desc' ? 'descending' : 'ascending';
             return rule.key === key && (rule.direction === direction || rule.direction === dir);
+        },
+
+        isSortActive(key, direction) {
+            const state = this.sortStateFor(key);
+            const dir = direction === 'descending' || direction === 'desc' ? 'descending' : 'ascending';
+            return state === direction || state === dir;
         },
 
         sortIconClass(key) {
@@ -1634,27 +1644,18 @@ export function catalogTablePage(config) {
         },
 
         requestSort(key, direction) {
-            this.sortConfig = [{ key, direction }];
+            this.sortConfig = applySortRule(this.sortConfig, key, direction);
             saveJson('sort', this.sortConfig);
             this.headerPopover = null;
             this.scheduleListFetch();
         },
 
         requestSecondarySort(key, direction) {
-            const current = this.sortConfig;
-            const primary = current[0] || { key, direction };
-            if (primary.key === key) {
-                this.sortConfig = [{ key, direction }];
-            } else {
-                this.sortConfig = [primary, { key, direction }];
-            }
-            saveJson('sort', this.sortConfig);
-            this.headerPopover = null;
-            this.scheduleListFetch();
+            this.requestSort(key, direction);
         },
 
         removeSort(key) {
-            this.sortConfig = this.sortConfig.filter((entry) => entry.key !== key);
+            this.sortConfig = removeSortRule(this.sortConfig, key);
             saveJson('sort', this.sortConfig);
             this.headerPopover = null;
             this.scheduleListFetch();

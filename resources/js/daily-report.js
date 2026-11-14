@@ -3,7 +3,7 @@ import { TABLE_EXPORT_EMPTY } from './nttu-table-messages.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeRowsPerPage } from './nttu-pagination.js';
 import { incidentBadgeClass } from './nttu-incident-colors.js';
-import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
+import { multiSortRows, normalizeSortRules, applySortRule, removeSortRule } from './nttu-table-sort.js';
 
 const DAILY_REPORT_TAB_PALETTE = {
     active: 'bg-red-600 text-white border-red-600 shadow-md',
@@ -352,9 +352,13 @@ export function registerDailyReport(Alpine) {
 
         sortPriority(tabKey, colKey) {
             const state = this.stateFor(tabKey);
-            if (state.sortConfig.length <= 1) return null;
             const index = state.sortConfig.findIndex((entry) => entry.key === colKey);
             return index >= 0 ? index + 1 : null;
+        },
+
+        sortPriorityBadge(tabKey, colKey) {
+            const prio = this.sortPriority(tabKey, colKey);
+            return prio ? `ĐK ${prio}` : '';
         },
 
         isPrimarySort(tabKey, colKey) {
@@ -368,6 +372,12 @@ export function registerDailyReport(Alpine) {
             if (!rule) return false;
             const dir = direction === 'descending' || direction === 'desc' ? 'descending' : 'ascending';
             return rule.key === colKey && (rule.direction === direction || rule.direction === dir);
+        },
+
+        isSortActive(tabKey, colKey, direction) {
+            const state = this.sortStateFor(tabKey, colKey);
+            const dir = direction === 'descending' || direction === 'desc' ? 'descending' : 'ascending';
+            return state === direction || state === dir;
         },
 
         isFiltered(tabKey, colKey) {
@@ -466,27 +476,18 @@ export function registerDailyReport(Alpine) {
 
         requestSort(tabKey, key, direction) {
             const state = this.stateFor(tabKey);
-            state.sortConfig = [{ key, direction }];
+            state.sortConfig = applySortRule(state.sortConfig, key, direction);
             state.openPopover = null;
             this.persistState(tabKey);
         },
 
         requestSecondarySort(tabKey, key, direction) {
-            const state = this.stateFor(tabKey);
-            const current = state.sortConfig;
-            const primary = current[0] || { key, direction };
-            if (primary.key === key) {
-                state.sortConfig = [{ key, direction }];
-            } else {
-                state.sortConfig = [primary, { key, direction }];
-            }
-            state.openPopover = null;
-            this.persistState(tabKey);
+            this.requestSort(tabKey, key, direction);
         },
 
         removeSort(tabKey, key) {
             const state = this.stateFor(tabKey);
-            state.sortConfig = state.sortConfig.filter((entry) => entry.key !== key);
+            state.sortConfig = removeSortRule(state.sortConfig, key);
             state.openPopover = null;
             this.persistState(tabKey);
         },

@@ -4,38 +4,18 @@
         @click="requestSort(tabKey, col.key, 'ascending')">
         <span class="flex items-center gap-2">
             <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-            <span x-text="stateFor(tabKey).sortConfig.length > 0 && !isPrimarySort(tabKey, col.key) ? 'Sắp xếp chính: Tăng dần' : 'Sắp xếp tăng dần'"></span>
+            <span>Tăng dần</span>
         </span>
-        <span x-show="isSortRule(tabKey, col.key, 'ascending', 1)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">ĐK 1</span>
+        <span x-show="isSortActive(tabKey, col.key, 'ascending')" x-text="sortPriorityBadge(tabKey, col.key)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200"></span>
     </button>
     <button type="button" class="flex h-9 w-full items-center justify-between rounded px-2 text-left text-xs font-medium text-gray-700 hover:bg-slate-50"
         @click="requestSort(tabKey, col.key, 'descending')">
         <span class="flex items-center gap-2">
             <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            <span x-text="stateFor(tabKey).sortConfig.length > 0 && !isPrimarySort(tabKey, col.key) ? 'Sắp xếp chính: Giảm dần' : 'Sắp xếp giảm dần'"></span>
+            <span>Giảm dần</span>
         </span>
-        <span x-show="isSortRule(tabKey, col.key, 'descending', 1)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">ĐK 1</span>
+        <span x-show="isSortActive(tabKey, col.key, 'descending')" x-text="sortPriorityBadge(tabKey, col.key)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200"></span>
     </button>
-
-    <template x-if="stateFor(tabKey).sortConfig.length > 0 && !isPrimarySort(tabKey, col.key)">
-        <div class="pt-1 mt-1 border-t border-slate-100">
-            <div class="px-2 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sắp xếp phụ (Điều kiện 2)</div>
-            <button type="button" @click="requestSecondarySort(tabKey, col.key, 'ascending')" class="flex w-full items-center justify-between px-2 py-1.5 hover:bg-blue-50 text-blue-700 rounded text-left text-xs">
-                <span class="flex items-center gap-2">
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    <span>Thêm ĐK 2: Tăng dần</span>
-                </span>
-                <span x-show="isSortRule(tabKey, col.key, 'ascending', 2)" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">ĐK 2</span>
-            </button>
-            <button type="button" @click="requestSecondarySort(tabKey, col.key, 'descending')" class="flex w-full items-center justify-between px-2 py-1.5 hover:bg-blue-50 text-blue-700 rounded text-left text-xs">
-                <span class="flex items-center gap-2">
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    <span>Thêm ĐK 2: Giảm dần</span>
-                </span>
-                <span x-show="isSortRule(tabKey, col.key, 'descending', 2)" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">ĐK 2</span>
-            </button>
-        </div>
-    </template>
 
     <template x-if="sortStateFor(tabKey, col.key)">
         <button type="button" class="nttu-popover-clear-action flex h-9 w-full items-center gap-2 rounded border-t px-2 text-left text-xs font-medium text-rose-600 hover:bg-rose-50 mt-1 pt-2"

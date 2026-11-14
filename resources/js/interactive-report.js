@@ -5,7 +5,7 @@ import { headerIconPathForColumn, iconPathForName } from './nttu-icons.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, ROWS_PER_PAGE_OPTIONS } from './nttu-pagination.js';
 import { incidentBadgeClass } from './nttu-incident-colors.js';
-import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
+import { multiSortRows, normalizeSortRules, applySortRule, removeSortRule } from './nttu-table-sort.js';
 
 function loadJson(key, fallback) {
     try {
@@ -1183,29 +1183,20 @@ export function registerInteractiveReport(Alpine) {
         },
 
         requestSort(key, dir) {
-            this.sortKey = key;
-            this.sortDir = dir;
-            this.sortRules = [{ key, direction: dir }];
-            this.headerPopover = null;
-        },
-
-        requestSecondarySort(key, dir) {
-            const current = this.activeSortRules;
-            const primary = current[0] || { key, direction: dir };
-            if (primary.key === key) {
-                this.sortKey = key;
-                this.sortDir = dir;
-                this.sortRules = [{ key, direction: dir }];
-            } else {
-                this.sortRules = [primary, { key, direction: dir }];
-                this.sortKey = primary.key;
-                this.sortDir = primary.direction;
+            this.sortRules = applySortRule(this.activeSortRules, key, dir);
+            if (this.sortRules.length > 0) {
+                this.sortKey = this.sortRules[0].key;
+                this.sortDir = this.sortRules[0].direction;
             }
             this.headerPopover = null;
         },
 
+        requestSecondarySort(key, dir) {
+            this.requestSort(key, dir);
+        },
+
         removeSort(key) {
-            this.sortRules = this.activeSortRules.filter((r) => r.key !== key);
+            this.sortRules = removeSortRule(this.activeSortRules, key);
             if (this.sortRules.length > 0) {
                 this.sortKey = this.sortRules[0].key;
                 this.sortDir = this.sortRules[0].direction;
@@ -1229,9 +1220,13 @@ export function registerInteractiveReport(Alpine) {
         },
 
         sortPriority(key) {
-            if (this.activeSortRules.length <= 1) return null;
             const index = this.activeSortRules.findIndex((r) => r.key === key);
             return index >= 0 ? index + 1 : null;
+        },
+
+        sortPriorityBadge(key) {
+            const prio = this.sortPriority(key);
+            return prio ? `ĐK ${prio}` : '';
         },
 
         isPrimarySort(key) {
@@ -1241,6 +1236,10 @@ export function registerInteractiveReport(Alpine) {
         isSortRule(key, direction, priority = 1) {
             const rule = this.activeSortRules[priority - 1];
             return rule && rule.key === key && rule.direction === direction;
+        },
+
+        isSortActive(key, direction) {
+            return this.sortDirection(key) === direction;
         },
 
         isColumnFiltered(key) {

@@ -6,7 +6,7 @@ import { createNttuMultiSelectMixin } from './nttu-multi-select.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, normalizeRowsPerPage, paginateSlice } from './nttu-pagination.js';
 import { submitExportPost } from './export-form-helper.js';
-import { multiSortRows, normalizeSortRules, comparePeriods } from './nttu-table-sort.js';
+import { multiSortRows, normalizeSortRules, comparePeriods, applySortRule, removeSortRule } from './nttu-table-sort.js';
 
 /** Đã ghi nhận = có ngày ghi nhận và người ghi nhận (khác rỗng). */
 export function isScheduleRowHandled(item) {
@@ -1106,9 +1106,13 @@ export function monitoringSchedulesPage(config) {
         },
 
         sortPriority(key) {
-            if (this.activeSortRules.length <= 1) return null;
             const index = this.activeSortRules.findIndex((r) => r.key === key);
             return index >= 0 ? index + 1 : null;
+        },
+
+        sortPriorityBadge(key) {
+            const prio = this.sortPriority(key);
+            return prio ? `ĐK ${prio}` : '';
         },
 
         isPrimarySort(key) {
@@ -1118,6 +1122,10 @@ export function monitoringSchedulesPage(config) {
         isSortRule(key, direction, priority = 1) {
             const rule = this.activeSortRules[priority - 1];
             return rule && rule.key === key && rule.direction === direction;
+        },
+
+        isSortActive(key, direction) {
+            return this.sortDirection(key) === direction;
         },
 
         isColumnFiltered(key) {
@@ -1439,26 +1447,18 @@ export function monitoringSchedulesPage(config) {
         },
 
         requestSort(key, direction) {
-            this.sortConfig = [{ key, direction }];
+            this.sortConfig = applySortRule(this.activeSortRules, key, direction);
             localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
             this.headerPopover = null;
         },
 
         requestSecondarySort(key, direction) {
-            const current = this.activeSortRules;
-            const primary = current[0] || { key, direction };
-            if (primary.key === key) {
-                this.sortConfig = [{ key, direction }];
-            } else {
-                this.sortConfig = [primary, { key, direction }];
-            }
-            localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
-            this.headerPopover = null;
+            this.requestSort(key, direction);
         },
 
         removeSort(key) {
-            const filtered = this.activeSortRules.filter((r) => r.key !== key);
-            this.sortConfig = filtered.length > 0 ? filtered : null;
+            const next = removeSortRule(this.activeSortRules, key);
+            this.sortConfig = next.length > 0 ? next : null;
             if (this.sortConfig) {
                 localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
             } else {

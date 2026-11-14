@@ -82,39 +82,19 @@
                 @click="requestSort(col.key, 'asc')">
                 <span class="flex items-center gap-2">
                     <svg class="h-4 w-4 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                    <span x-text="activeSortRules.length > 0 && !isPrimarySort(col.key) ? 'Sắp xếp chính: Tăng dần' : (config.variant === 'incident-reports' ? labelText('Tăng dần') : labelText('Sắp xếp tăng dần'))"></span>
+                    <span x-text="config.variant === 'incident-reports' ? labelText('Tăng dần') : labelText('Sắp xếp tăng dần')"></span>
                 </span>
-                <span x-show="isSortRule(col.key, 'asc', 1)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">ĐK 1</span>
+                <span x-show="isSortActive(col.key, 'asc')" x-text="sortPriorityBadge(col.key)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200"></span>
             </button>
 
             <button type="button" class="flex h-9 w-full items-center justify-between rounded px-2 text-left text-xs font-medium text-gray-900 hover:bg-gray-100"
                 @click="requestSort(col.key, 'desc')">
                 <span class="flex items-center gap-2">
                     <svg class="h-4 w-4 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    <span x-text="activeSortRules.length > 0 && !isPrimarySort(col.key) ? 'Sắp xếp chính: Giảm dần' : (config.variant === 'incident-reports' ? labelText('Giảm dần') : labelText('Sắp xếp giảm dần'))"></span>
+                    <span x-text="config.variant === 'incident-reports' ? labelText('Giảm dần') : labelText('Sắp xếp giảm dần')"></span>
                 </span>
-                <span x-show="isSortRule(col.key, 'desc', 1)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">ĐK 1</span>
+                <span x-show="isSortActive(col.key, 'desc')" x-text="sortPriorityBadge(col.key)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200"></span>
             </button>
-
-            <template x-if="activeSortRules.length > 0 && !isPrimarySort(col.key)">
-                <div class="pt-1 mt-1 border-t border-slate-100">
-                    <div class="px-2 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sắp xếp phụ (Điều kiện 2)</div>
-                    <button type="button" @click="requestSecondarySort(col.key, 'asc')" class="flex w-full items-center justify-between px-2 py-1.5 hover:bg-blue-50 text-blue-700 rounded text-left text-xs">
-                        <span class="flex items-center gap-2">
-                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            <span>Thêm ĐK 2: Tăng dần</span>
-                        </span>
-                        <span x-show="isSortRule(col.key, 'asc', 2)" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">ĐK 2</span>
-                    </button>
-                    <button type="button" @click="requestSecondarySort(col.key, 'desc')" class="flex w-full items-center justify-between px-2 py-1.5 hover:bg-blue-50 text-blue-700 rounded text-left text-xs">
-                        <span class="flex items-center gap-2">
-                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            <span>Thêm ĐK 2: Giảm dần</span>
-                        </span>
-                        <span x-show="isSortRule(col.key, 'desc', 2)" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">ĐK 2</span>
-                    </button>
-                </div>
-            </template>
 
             <button type="button" x-show="sortDirection(col.key)" class="nttu-popover-clear-action flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-rose-600 hover:bg-rose-50 border-t mt-1 pt-2" @click="removeSort(col.key)">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>

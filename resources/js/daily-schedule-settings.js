@@ -5,7 +5,7 @@ import { createNttuMultiSelectMixin } from './nttu-multi-select.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, normalizeRowsPerPage, paginateSlice } from './nttu-pagination.js';
 import { submitExportPost } from './export-form-helper.js';
-import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
+import { multiSortRows, normalizeSortRules, applySortRule, removeSortRule } from './nttu-table-sort.js';
 
 const COLUMNS = {
     date: 'Ngày',
@@ -562,9 +562,13 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             sortPriority(key) {
-                if (this.activeSortRules.length <= 1) return null;
                 const index = this.activeSortRules.findIndex((r) => r.key === key);
                 return index >= 0 ? index + 1 : null;
+            },
+
+            sortPriorityBadge(key) {
+                const prio = this.sortPriority(key);
+                return prio ? `ĐK ${prio}` : '';
             },
 
             isPrimarySort(key) {
@@ -574,6 +578,10 @@ export function registerDailyScheduleSettings(Alpine) {
             isSortRule(key, direction, priority = 1) {
                 const rule = this.activeSortRules[priority - 1];
                 return rule && rule.key === key && rule.direction === direction;
+            },
+
+            isSortActive(key, direction) {
+                return this.sortDirection(key) === direction;
             },
 
             isColumnFiltered(key) {
@@ -860,26 +868,18 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             requestSort(key, direction) {
-                this.sortConfig = [{ key, direction }];
+                this.sortConfig = applySortRule(this.activeSortRules, key, direction);
                 localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
                 this.headerPopover = null;
             },
 
             requestSecondarySort(key, direction) {
-                const current = this.activeSortRules;
-                const primary = current[0] || { key, direction };
-                if (primary.key === key) {
-                    this.sortConfig = [{ key, direction }];
-                } else {
-                    this.sortConfig = [primary, { key, direction }];
-                }
-                localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
-                this.headerPopover = null;
+                this.requestSort(key, direction);
             },
 
             removeSort(key) {
-                const filtered = this.activeSortRules.filter((r) => r.key !== key);
-                this.sortConfig = filtered.length > 0 ? filtered : null;
+                const next = removeSortRule(this.activeSortRules, key);
+                this.sortConfig = next.length > 0 ? next : null;
                 if (this.sortConfig) {
                     localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
                 } else {
