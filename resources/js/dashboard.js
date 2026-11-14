@@ -4,6 +4,7 @@ import { createNttuMultiSelectMixin } from './nttu-multi-select.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, normalizeRowsPerPage, paginateSlice, readStoredRowsPerPage, ROWS_PER_PAGE_OPTIONS, writeStoredRowsPerPage } from './nttu-pagination.js';
 import { submitExportPost } from './export-form-helper.js';
+import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
 
 const COLUMN_DEFS = {
     date: 'Ngày',
@@ -216,19 +217,7 @@ export function dashboardScheduleLookup(config) {
                 return true;
             });
 
-            if (this.sortConfig) {
-                const { key, direction } = this.sortConfig;
-                items = [...items].sort((a, b) => {
-                    const av = a[key];
-                    const bv = b[key];
-                    if (av == null) return 1;
-                    if (bv == null) return -1;
-                    const cmp = String(av).localeCompare(String(bv), 'vi', { numeric: true });
-                    return direction === 'asc' ? cmp : -cmp;
-                });
-            }
-
-            return items;
+            return multiSortRows(items, this.activeSortRules, ['period', 'room', 'id']);
         },
 
         get normalizedRowsPerPage() {
@@ -334,8 +323,31 @@ export function dashboardScheduleLookup(config) {
             this.resetAdvanced();
         },
 
+        get activeSortRules() {
+            return normalizeSortRules(this.sortConfig);
+        },
+
         requestSort(key, direction) {
-            this.sortConfig = { key, direction: direction === 'ascending' ? 'asc' : 'desc' };
+            const dir = direction === 'ascending' || direction === 'asc' ? 'asc' : 'desc';
+            this.sortConfig = [{ key, direction: dir }];
+            this.headerPopover = null;
+        },
+
+        requestSecondarySort(key, direction) {
+            const dir = direction === 'ascending' || direction === 'asc' ? 'asc' : 'desc';
+            const current = this.activeSortRules;
+            const primary = current[0] || { key, direction: dir };
+            if (primary.key === key) {
+                this.sortConfig = [{ key, direction: dir }];
+            } else {
+                this.sortConfig = [primary, { key, direction: dir }];
+            }
+            this.headerPopover = null;
+        },
+
+        removeSort(key) {
+            const filtered = this.activeSortRules.filter((r) => r.key !== key);
+            this.sortConfig = filtered.length > 0 ? filtered : null;
             this.headerPopover = null;
         },
 
@@ -345,8 +357,25 @@ export function dashboardScheduleLookup(config) {
         },
 
         sortState(key) {
-            if (!this.sortConfig || this.sortConfig.key !== key) return 'none';
-            return this.sortConfig.direction;
+            const rule = this.activeSortRules.find((r) => r.key === key);
+            return rule ? rule.direction : 'none';
+        },
+
+        sortPriority(key) {
+            if (this.activeSortRules.length <= 1) return null;
+            const index = this.activeSortRules.findIndex((r) => r.key === key);
+            return index >= 0 ? index + 1 : null;
+        },
+
+        isPrimarySort(key) {
+            return this.activeSortRules[0]?.key === key;
+        },
+
+        isSortRule(key, direction, priority = 1) {
+            const rule = this.activeSortRules[priority - 1];
+            if (!rule) return false;
+            const dir = direction === 'descending' || direction === 'desc' ? 'desc' : 'asc';
+            return rule.key === key && rule.direction === dir;
         },
 
         isColumnFiltered(key) {

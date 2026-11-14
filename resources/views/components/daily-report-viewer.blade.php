@@ -125,22 +125,26 @@
                                                 <svg x-show="columnHeaderIconPath(col)" x-cloak class="mr-0.5 h-3.5 w-3.5 shrink-0 opacity-80" :class="columnHeaderIconClass(col)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="columnHeaderIconPath(col)"></path></svg>
                                                 <span class="nttu-th-label-text flex-1" :class="col.key === 'period' ? 'whitespace-nowrap' : ''" x-text="col.label"></span>
                                                 <template x-if="sortStateFor(tabKey, col.key)?.direction === 'ascending' && !isFiltered(tabKey, col.key)">
-                                                    <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
+                                                    <span class="nttu-header-badge-active" :title="sortPriority(tabKey, col.key) ? `Sắp xếp tăng dần (ĐK ${sortPriority(tabKey, col.key)})` : 'Sắp xếp tăng dần'">
+                                                        <span x-show="sortPriority(tabKey, col.key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(tabKey, col.key)"></span>
                                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
                                                     </span>
                                                 </template>
                                                 <template x-if="sortStateFor(tabKey, col.key)?.direction === 'descending' && !isFiltered(tabKey, col.key)">
-                                                    <span class="nttu-header-badge-active" title="Sắp xếp giảm dần">
+                                                    <span class="nttu-header-badge-active" :title="sortPriority(tabKey, col.key) ? `Sắp xếp giảm dần (ĐK ${sortPriority(tabKey, col.key)})` : 'Sắp xếp giảm dần'">
+                                                        <span x-show="sortPriority(tabKey, col.key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(tabKey, col.key)"></span>
                                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                                     </span>
                                                 </template>
                                                 <template x-if="sortStateFor(tabKey, col.key)?.direction === 'ascending' && isFiltered(tabKey, col.key)">
-                                                    <span class="nttu-header-badge-active" title="Tăng dần có lọc">
+                                                    <span class="nttu-header-badge-active" :title="sortPriority(tabKey, col.key) ? `Tăng dần có lọc (ĐK ${sortPriority(tabKey, col.key)})` : 'Tăng dần có lọc'">
+                                                        <span x-show="sortPriority(tabKey, col.key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(tabKey, col.key)"></span>
                                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l7-7 7 7M5 19h14"/></svg>
                                                     </span>
                                                 </template>
                                                 <template x-if="sortStateFor(tabKey, col.key)?.direction === 'descending' && isFiltered(tabKey, col.key)">
-                                                    <span class="nttu-header-badge-active" title="Giảm dần có lọc">
+                                                    <span class="nttu-header-badge-active" :title="sortPriority(tabKey, col.key) ? `Giảm dần có lọc (ĐK ${sortPriority(tabKey, col.key)})` : 'Giảm dần có lọc'">
+                                                        <span x-show="sortPriority(tabKey, col.key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(tabKey, col.key)"></span>
                                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 5h14M5 11l7 7 7-7"/></svg>
                                                     </span>
                                                 </template>

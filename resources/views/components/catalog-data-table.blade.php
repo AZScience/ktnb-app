@@ -255,22 +255,26 @@
                                     <svg x-show="columnHeaderIconPath(key)" x-cloak class="mr-0.5 h-3.5 w-3.5 shrink-0" :class="columnHeaderIconClass(key)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="columnHeaderIconPath(key)"></path></svg>
                                     <span class="nttu-th-label-text" :class="key === 'period' ? 'whitespace-nowrap' : ''" x-text="columnLabel(key)"></span>
                                     <template x-if="sortStateFor(key)?.direction === 'ascending' && !isFiltered(key)">
-                                        <span class="nttu-header-badge-active" title="Sắp xếp tăng dần">
+                                        <span class="nttu-header-badge-active" :title="sortPriority(key) ? `Sắp xếp tăng dần (ĐK ${sortPriority(key)})` : 'Sắp xếp tăng dần'">
+                                            <span x-show="sortPriority(key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(key)"></span>
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
                                         </span>
                                     </template>
                                     <template x-if="sortStateFor(key)?.direction === 'descending' && !isFiltered(key)">
-                                        <span class="nttu-header-badge-active" title="Sắp xếp giảm dần">
+                                        <span class="nttu-header-badge-active" :title="sortPriority(key) ? `Sắp xếp giảm dần (ĐK ${sortPriority(key)})` : 'Sắp xếp giảm dần'">
+                                            <span x-show="sortPriority(key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(key)"></span>
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                         </span>
                                     </template>
                                     <template x-if="sortStateFor(key)?.direction === 'ascending' && isFiltered(key)">
-                                        <span class="nttu-header-badge-active" title="Tăng dần có lọc">
+                                        <span class="nttu-header-badge-active" :title="sortPriority(key) ? `Tăng dần có lọc (ĐK ${sortPriority(key)})` : 'Tăng dần có lọc'">
+                                            <span x-show="sortPriority(key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(key)"></span>
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l7-7 7 7M5 19h14"/></svg>
                                         </span>
                                     </template>
                                     <template x-if="sortStateFor(key)?.direction === 'descending' && isFiltered(key)">
-                                        <span class="nttu-header-badge-active" title="Giảm dần có lọc">
+                                        <span class="nttu-header-badge-active" :title="sortPriority(key) ? `Giảm dần có lọc (ĐK ${sortPriority(key)})` : 'Giảm dần có lọc'">
+                                            <span x-show="sortPriority(key)" class="text-[9px] font-extrabold mr-0.5 leading-none" x-text="sortPriority(key)"></span>
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 5h14M5 11l7 7 7-7"/></svg>
                                         </span>
                                     </template>
@@ -282,22 +286,53 @@
                                     <svg x-show="!sortStateFor(key) && !isFiltered(key)" x-cloak class="ml-2 h-4 w-4 shrink-0 opacity-50 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                                 </button>
                                 <div x-cloak x-float.start="headerPopover === key" data-float-close="headerPopover = null"
-                                     class="nttu-report-header-popover nttu-floating-panel w-60 rounded-md border bg-white text-gray-800 shadow-lg">
+                                     class="nttu-report-header-popover nttu-floating-panel w-64 rounded-md border bg-white text-gray-800 shadow-lg">
                                     <div class="space-y-1 p-1">
-                                        <button type="button" class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-gray-100" @click="requestSort(key, 'ascending')">
-                                            <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                                            <span x-text="text('Tăng dần')"></span>
+                                        <button type="button" class="flex w-full items-center justify-between rounded px-2 py-1.5 text-xs hover:bg-gray-100" @click="requestSort(key, 'ascending')">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                                <span x-text="sortConfig.length > 0 && !isPrimarySort(key) ? 'Sắp xếp chính: Tăng dần' : text('Tăng dần')"></span>
+                                            </span>
+                                            <span x-show="isSortRule(key, 'ascending', 1)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">ĐK 1</span>
                                         </button>
-                                        <button type="button" class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-gray-100" @click="requestSort(key, 'descending')">
-                                            <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                            <span x-text="text('Giảm dần')"></span>
+                                        <button type="button" class="flex w-full items-center justify-between rounded px-2 py-1.5 text-xs hover:bg-gray-100" @click="requestSort(key, 'descending')">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                <span x-text="sortConfig.length > 0 && !isPrimarySort(key) ? 'Sắp xếp chính: Giảm dần' : text('Giảm dần')"></span>
+                                            </span>
+                                            <span x-show="isSortRule(key, 'descending', 1)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">ĐK 1</span>
                                         </button>
+
+                                        <template x-if="sortConfig.length > 0 && !isPrimarySort(key)">
+                                            <div class="pt-1 mt-1 border-t border-slate-100">
+                                                <div class="px-2 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sắp xếp phụ (Điều kiện 2)</div>
+                                                <button type="button" @click="requestSecondarySort(key, 'ascending')" class="flex w-full items-center justify-between px-2 py-1.5 hover:bg-blue-50 text-blue-700 rounded text-left text-xs">
+                                                    <span class="flex items-center gap-2">
+                                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                        <span>Thêm ĐK 2: Tăng dần</span>
+                                                    </span>
+                                                    <span x-show="isSortRule(key, 'ascending', 2)" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">ĐK 2</span>
+                                                </button>
+                                                <button type="button" @click="requestSecondarySort(key, 'descending')" class="flex w-full items-center justify-between px-2 py-1.5 hover:bg-blue-50 text-blue-700 rounded text-left text-xs">
+                                                    <span class="flex items-center gap-2">
+                                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                        <span>Thêm ĐK 2: Giảm dần</span>
+                                                    </span>
+                                                    <span x-show="isSortRule(key, 'descending', 2)" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">ĐK 2</span>
+                                                </button>
+                                            </div>
+                                        </template>
+
                                         <template x-if="sortStateFor(key)">
-                                            <button type="button" class="nttu-popover-clear-action flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs" @click="clearSort()">
-                                                <svg class="h-4 w-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                <span x-text="text('Xoá sắp xếp')"></span>
+                                            <button type="button" class="nttu-popover-clear-action flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-rose-600 hover:bg-rose-50 border-t mt-1 pt-2" @click="removeSort(key)">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                <span>Xóa sắp xếp cột này</span>
                                             </button>
                                         </template>
+                                        <button type="button" x-show="sortConfig.length > 1" @click="clearSort()" class="nttu-popover-clear-action flex w-full items-center gap-2 px-2 py-1 rounded text-left text-[11px] text-gray-500 hover:bg-gray-100">
+                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            <span>Xóa tất cả sắp xếp</span>
+                                        </button>
                                     </div>
                                     <div class="border-t p-2">
                                         <div class="relative">

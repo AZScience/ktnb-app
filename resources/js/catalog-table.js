@@ -16,6 +16,7 @@ import { createNttuMultiSelectMixin } from './nttu-multi-select.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, normalizeRowsPerPage, paginateSlice } from './nttu-pagination.js';
 import { catalogCkeditorKeys, catalogCkeditorMethods, isCkeditorContentEmpty, preloadCatalogCkeditorCompose, resetCatalogCkeditorState } from './catalog-ckeditor.js';
+import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
 import {
     TABLE_EMPTY_FILTERED,
     TABLE_EMPTY_NO_DATA,
@@ -1045,17 +1046,7 @@ export function catalogTablePage(config) {
                 return true;
             });
 
-            if (this.sortConfig.length > 0) {
-                const { key, direction } = this.sortConfig[0];
-                result = [...result].sort((a, b) => {
-                    const av = String(a[key] ?? '');
-                    const bv = String(b[key] ?? '');
-                    const cmp = av.localeCompare(bv, 'vi', { numeric: true });
-                    return direction === 'ascending' ? cmp : -cmp;
-                });
-            }
-
-            return result;
+            return multiSortRows(result, this.sortConfig, ['period', 'room', 'id']);
         },
 
         get normalizedRowsPerPage() {
@@ -1555,6 +1546,23 @@ export function catalogTablePage(config) {
             return this.sortConfig.find((entry) => entry.key === key) || null;
         },
 
+        sortPriority(key) {
+            if (this.sortConfig.length <= 1) return null;
+            const index = this.sortConfig.findIndex((entry) => entry.key === key);
+            return index >= 0 ? index + 1 : null;
+        },
+
+        isPrimarySort(key) {
+            return this.sortConfig[0]?.key === key;
+        },
+
+        isSortRule(key, direction, priority = 1) {
+            const rule = this.sortConfig[priority - 1];
+            if (!rule) return false;
+            const dir = direction === 'descending' || direction === 'desc' ? 'descending' : 'ascending';
+            return rule.key === key && (rule.direction === direction || rule.direction === dir);
+        },
+
         sortIconClass(key) {
             const hasSort = !!this.sortStateFor(key);
             const hasFilter = this.isFiltered(key);
@@ -1627,6 +1635,26 @@ export function catalogTablePage(config) {
 
         requestSort(key, direction) {
             this.sortConfig = [{ key, direction }];
+            saveJson('sort', this.sortConfig);
+            this.headerPopover = null;
+            this.scheduleListFetch();
+        },
+
+        requestSecondarySort(key, direction) {
+            const current = this.sortConfig;
+            const primary = current[0] || { key, direction };
+            if (primary.key === key) {
+                this.sortConfig = [{ key, direction }];
+            } else {
+                this.sortConfig = [primary, { key, direction }];
+            }
+            saveJson('sort', this.sortConfig);
+            this.headerPopover = null;
+            this.scheduleListFetch();
+        },
+
+        removeSort(key) {
+            this.sortConfig = this.sortConfig.filter((entry) => entry.key !== key);
             saveJson('sort', this.sortConfig);
             this.headerPopover = null;
             this.scheduleListFetch();

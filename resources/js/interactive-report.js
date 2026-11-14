@@ -5,6 +5,7 @@ import { headerIconPathForColumn, iconPathForName } from './nttu-icons.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, ROWS_PER_PAGE_OPTIONS } from './nttu-pagination.js';
 import { incidentBadgeClass } from './nttu-incident-colors.js';
+import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
 
 function loadJson(key, fallback) {
     try {
@@ -295,6 +296,7 @@ export function registerInteractiveReport(Alpine) {
         columnFilters: { ...(initialTabPrefs.columnFilters || {}) },
         sortKey: initialTabPrefs.sortKey || '',
         sortDir: initialTabPrefs.sortDir || 'asc',
+        sortRules: initialTabPrefs.sortRules || [],
         headerPopover: null,
         settingsOpen: false,
         savingPresets: false,
@@ -1014,16 +1016,7 @@ export function registerInteractiveReport(Alpine) {
                 });
             }
 
-            if (this.sortKey) {
-                const dir = this.sortDir === 'asc' ? 1 : -1;
-                result.sort((a, b) => {
-                    const av = String(a[this.sortKey] ?? '');
-                    const bv = String(b[this.sortKey] ?? '');
-                    if (av < bv) return -1 * dir;
-                    if (av > bv) return 1 * dir;
-                    return 0;
-                });
-            }
+            return multiSortRows(result, this.activeSortRules, ['period', 'room', 'id']);
 
             return result;
         },
@@ -1179,21 +1172,75 @@ export function registerInteractiveReport(Alpine) {
             this.headerPopover = null;
         },
 
+        get activeSortRules() {
+            if (this.sortRules && this.sortRules.length > 0) {
+                return normalizeSortRules(this.sortRules);
+            }
+            if (this.sortKey) {
+                return [{ key: this.sortKey, direction: this.sortDir || 'asc' }];
+            }
+            return [];
+        },
+
         requestSort(key, dir) {
             this.sortKey = key;
             this.sortDir = dir;
+            this.sortRules = [{ key, direction: dir }];
+            this.headerPopover = null;
+        },
+
+        requestSecondarySort(key, dir) {
+            const current = this.activeSortRules;
+            const primary = current[0] || { key, direction: dir };
+            if (primary.key === key) {
+                this.sortKey = key;
+                this.sortDir = dir;
+                this.sortRules = [{ key, direction: dir }];
+            } else {
+                this.sortRules = [primary, { key, direction: dir }];
+                this.sortKey = primary.key;
+                this.sortDir = primary.direction;
+            }
+            this.headerPopover = null;
+        },
+
+        removeSort(key) {
+            this.sortRules = this.activeSortRules.filter((r) => r.key !== key);
+            if (this.sortRules.length > 0) {
+                this.sortKey = this.sortRules[0].key;
+                this.sortDir = this.sortRules[0].direction;
+            } else {
+                this.sortKey = '';
+                this.sortDir = 'asc';
+            }
             this.headerPopover = null;
         },
 
         clearSort() {
             this.sortKey = '';
             this.sortDir = 'asc';
+            this.sortRules = [];
             this.headerPopover = null;
         },
 
         sortDirection(key) {
-            if (this.sortKey !== key) return null;
-            return this.sortDir;
+            const rule = this.activeSortRules.find((r) => r.key === key);
+            return rule ? rule.direction : null;
+        },
+
+        sortPriority(key) {
+            if (this.activeSortRules.length <= 1) return null;
+            const index = this.activeSortRules.findIndex((r) => r.key === key);
+            return index >= 0 ? index + 1 : null;
+        },
+
+        isPrimarySort(key) {
+            return this.activeSortRules[0]?.key === key;
+        },
+
+        isSortRule(key, direction, priority = 1) {
+            const rule = this.activeSortRules[priority - 1];
+            return rule && rule.key === key && rule.direction === direction;
         },
 
         isColumnFiltered(key) {

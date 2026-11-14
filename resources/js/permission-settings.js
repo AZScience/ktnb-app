@@ -1,6 +1,7 @@
 import { columnKeyIconPaths, iconNamePaths } from './nttu-icons.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, normalizeRowsPerPage, paginateSlice, ROWS_PER_PAGE_OPTIONS } from './nttu-pagination.js';
+import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
 
 const PERMISSION_KEYS = ['access', 'view', 'add', 'edit', 'delete', 'import', 'export'];
 
@@ -201,20 +202,7 @@ export function registerPermissionSettings(Alpine) {
         },
 
         get sortedItems() {
-            const items = [...this.filteredItems];
-            if (this.sortConfig.length === 0) return items;
-
-            const { key, direction } = this.sortConfig[0];
-            items.sort((a, b) => {
-                const aVal = a[key];
-                const bVal = b[key];
-                if (aVal === null || aVal === undefined) return 1;
-                if (bVal === null || bVal === undefined) return -1;
-                if (String(aVal) < String(bVal)) return direction === 'ascending' ? -1 : 1;
-                if (String(aVal) > String(bVal)) return direction === 'ascending' ? 1 : -1;
-                return 0;
-            });
-            return items;
+            return multiSortRows(this.filteredItems, this.sortConfig, ['id']);
         },
 
         get normalizedRowsPerPage() {
@@ -252,8 +240,43 @@ export function registerPermissionSettings(Alpine) {
             saveJson('nttu_permissions_filters_v1', this.filters);
         },
 
+        sortPriority(key) {
+            if (this.sortConfig.length <= 1) return null;
+            const index = this.sortConfig.findIndex((entry) => entry.key === key);
+            return index >= 0 ? index + 1 : null;
+        },
+
+        isPrimarySort(key) {
+            return this.sortConfig[0]?.key === key;
+        },
+
+        isSortRule(key, direction, priority = 1) {
+            const rule = this.sortConfig[priority - 1];
+            if (!rule) return false;
+            const dir = direction === 'descending' || direction === 'desc' ? 'descending' : 'ascending';
+            return rule.key === key && (rule.direction === direction || rule.direction === dir);
+        },
+
         requestSort(key, direction) {
             this.sortConfig = [{ key, direction }];
+            saveJson('nttu_permissions_sort_v1', this.sortConfig);
+            this.headerPopover = null;
+        },
+
+        requestSecondarySort(key, direction) {
+            const current = this.sortConfig;
+            const primary = current[0] || { key, direction };
+            if (primary.key === key) {
+                this.sortConfig = [{ key, direction }];
+            } else {
+                this.sortConfig = [primary, { key, direction }];
+            }
+            saveJson('nttu_permissions_sort_v1', this.sortConfig);
+            this.headerPopover = null;
+        },
+
+        removeSort(key) {
+            this.sortConfig = this.sortConfig.filter((entry) => entry.key !== key);
             saveJson('nttu_permissions_sort_v1', this.sortConfig);
             this.headerPopover = null;
         },

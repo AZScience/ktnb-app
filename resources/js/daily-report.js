@@ -3,6 +3,7 @@ import { TABLE_EXPORT_EMPTY } from './nttu-table-messages.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeRowsPerPage } from './nttu-pagination.js';
 import { incidentBadgeClass } from './nttu-incident-colors.js';
+import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
 
 const DAILY_REPORT_TAB_PALETTE = {
     active: 'bg-red-600 text-white border-red-600 shadow-md',
@@ -349,6 +350,26 @@ export function registerDailyReport(Alpine) {
             return state.sortConfig.find((entry) => entry.key === colKey) || null;
         },
 
+        sortPriority(tabKey, colKey) {
+            const state = this.stateFor(tabKey);
+            if (state.sortConfig.length <= 1) return null;
+            const index = state.sortConfig.findIndex((entry) => entry.key === colKey);
+            return index >= 0 ? index + 1 : null;
+        },
+
+        isPrimarySort(tabKey, colKey) {
+            const state = this.stateFor(tabKey);
+            return state.sortConfig[0]?.key === colKey;
+        },
+
+        isSortRule(tabKey, colKey, direction, priority = 1) {
+            const state = this.stateFor(tabKey);
+            const rule = state.sortConfig[priority - 1];
+            if (!rule) return false;
+            const dir = direction === 'descending' || direction === 'desc' ? 'descending' : 'ascending';
+            return rule.key === colKey && (rule.direction === direction || rule.direction === dir);
+        },
+
         isFiltered(tabKey, colKey) {
             return !!this.stateFor(tabKey).filters[colKey];
         },
@@ -383,21 +404,7 @@ export function registerDailyReport(Alpine) {
                 items = items.filter((item) => !ids.has(item.id));
             }
 
-            if (state.sortConfig.length > 0) {
-                const { key, direction } = state.sortConfig[0];
-                const colDef = columns.find((col) => col.key === key);
-                items.sort((a, b) => {
-                    if (colDef?.type === 'count') {
-                        const cmp = (Number(a[key]) || 0) - (Number(b[key]) || 0);
-                        return direction === 'ascending' ? cmp : -cmp;
-                    }
-
-                    const av = String(a[key] ?? '');
-                    const bv = String(b[key] ?? '');
-                    const cmp = av.localeCompare(bv, 'vi', { numeric: true });
-                    return direction === 'ascending' ? cmp : -cmp;
-                });
-            }
+            items = multiSortRows(items, state.sortConfig, ['period', 'room', 'id']);
 
             Object.entries(state.filters).forEach(([key, value]) => {
                 if (!value) return;
@@ -460,6 +467,26 @@ export function registerDailyReport(Alpine) {
         requestSort(tabKey, key, direction) {
             const state = this.stateFor(tabKey);
             state.sortConfig = [{ key, direction }];
+            state.openPopover = null;
+            this.persistState(tabKey);
+        },
+
+        requestSecondarySort(tabKey, key, direction) {
+            const state = this.stateFor(tabKey);
+            const current = state.sortConfig;
+            const primary = current[0] || { key, direction };
+            if (primary.key === key) {
+                state.sortConfig = [{ key, direction }];
+            } else {
+                state.sortConfig = [primary, { key, direction }];
+            }
+            state.openPopover = null;
+            this.persistState(tabKey);
+        },
+
+        removeSort(tabKey, key) {
+            const state = this.stateFor(tabKey);
+            state.sortConfig = state.sortConfig.filter((entry) => entry.key !== key);
             state.openPopover = null;
             this.persistState(tabKey);
         },

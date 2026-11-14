@@ -1,22 +1,53 @@
 {{-- Shared sort/filter popover for daily report column headers. Expects Alpine scope: tabKey, col --}}
 <div class="space-y-1 p-1.5">
-    <button type="button" class="flex h-9 w-full items-center gap-2 rounded px-2 text-left text-xs font-medium text-gray-700 hover:bg-slate-50"
+    <button type="button" class="flex h-9 w-full items-center justify-between rounded px-2 text-left text-xs font-medium text-gray-700 hover:bg-slate-50"
         @click="requestSort(tabKey, col.key, 'ascending')">
-        <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-        Sắp xếp tăng dần
+        <span class="flex items-center gap-2">
+            <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+            <span x-text="stateFor(tabKey).sortConfig.length > 0 && !isPrimarySort(tabKey, col.key) ? 'Sắp xếp chính: Tăng dần' : 'Sắp xếp tăng dần'"></span>
+        </span>
+        <span x-show="isSortRule(tabKey, col.key, 'ascending', 1)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">ĐK 1</span>
     </button>
-    <button type="button" class="flex h-9 w-full items-center gap-2 rounded px-2 text-left text-xs font-medium text-gray-700 hover:bg-slate-50"
+    <button type="button" class="flex h-9 w-full items-center justify-between rounded px-2 text-left text-xs font-medium text-gray-700 hover:bg-slate-50"
         @click="requestSort(tabKey, col.key, 'descending')">
-        <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        Sắp xếp giảm dần
+        <span class="flex items-center gap-2">
+            <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <span x-text="stateFor(tabKey).sortConfig.length > 0 && !isPrimarySort(tabKey, col.key) ? 'Sắp xếp chính: Giảm dần' : 'Sắp xếp giảm dần'"></span>
+        </span>
+        <span x-show="isSortRule(tabKey, col.key, 'descending', 1)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">ĐK 1</span>
     </button>
+
+    <template x-if="stateFor(tabKey).sortConfig.length > 0 && !isPrimarySort(tabKey, col.key)">
+        <div class="pt-1 mt-1 border-t border-slate-100">
+            <div class="px-2 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sắp xếp phụ (Điều kiện 2)</div>
+            <button type="button" @click="requestSecondarySort(tabKey, col.key, 'ascending')" class="flex w-full items-center justify-between px-2 py-1.5 hover:bg-blue-50 text-blue-700 rounded text-left text-xs">
+                <span class="flex items-center gap-2">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span>Thêm ĐK 2: Tăng dần</span>
+                </span>
+                <span x-show="isSortRule(tabKey, col.key, 'ascending', 2)" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">ĐK 2</span>
+            </button>
+            <button type="button" @click="requestSecondarySort(tabKey, col.key, 'descending')" class="flex w-full items-center justify-between px-2 py-1.5 hover:bg-blue-50 text-blue-700 rounded text-left text-xs">
+                <span class="flex items-center gap-2">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span>Thêm ĐK 2: Giảm dần</span>
+                </span>
+                <span x-show="isSortRule(tabKey, col.key, 'descending', 2)" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">ĐK 2</span>
+            </button>
+        </div>
+    </template>
+
     <template x-if="sortStateFor(tabKey, col.key)">
-        <button type="button" class="nttu-popover-clear-action flex h-9 w-full items-center gap-2 rounded border-t px-2 text-left text-xs font-medium"
-            @click="clearSort(tabKey)">
+        <button type="button" class="nttu-popover-clear-action flex h-9 w-full items-center gap-2 rounded border-t px-2 text-left text-xs font-medium text-rose-600 hover:bg-rose-50 mt-1 pt-2"
+            @click="removeSort(tabKey, col.key)">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            Xóa sắp xếp
+            Xóa sắp xếp cột này
         </button>
     </template>
+    <button type="button" x-show="stateFor(tabKey).sortConfig.length > 1" @click="clearSort(tabKey)" class="nttu-popover-clear-action flex w-full items-center gap-2 px-2 py-1 rounded text-left text-[11px] text-gray-500 hover:bg-gray-100">
+        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <span>Xóa tất cả sắp xếp</span>
+    </button>
 </div>
 <div class="space-y-2 border-t bg-gray-50/50 p-3">
     <div class="relative">

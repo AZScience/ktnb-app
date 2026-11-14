@@ -5,6 +5,7 @@ import { createNttuMultiSelectMixin } from './nttu-multi-select.js';
 import { allColumnsVisibleMap } from './nttu-column-visibility.js';
 import { normalizeCurrentPage, normalizeRowsPerPage, paginateSlice } from './nttu-pagination.js';
 import { submitExportPost } from './export-form-helper.js';
+import { multiSortRows, normalizeSortRules } from './nttu-table-sort.js';
 
 const COLUMNS = {
     date: 'Ngày',
@@ -155,7 +156,7 @@ export function registerDailyScheduleSettings(Alpine) {
             savedSelectionFilter = localStorage.getItem(selFilterKey) || 'all';
             savedAdvanced = JSON.parse(localStorage.getItem(advKey) || 'null');
             savedPresets = JSON.parse(localStorage.getItem(presetKey) || '[]');
-            savedSort = JSON.parse(localStorage.getItem(sortKey) || 'null');
+            savedSort = normalizeSortRules(JSON.parse(localStorage.getItem(sortKey) || 'null'));
             savedColumnFilters = JSON.parse(localStorage.getItem(colFiltersKey) || '{}');
         } catch (_) {}
 
@@ -389,23 +390,7 @@ export function registerDailyScheduleSettings(Alpine) {
                     }
                     return this.matchesAdvanced(item) && this.matchesColumnFilters(item);
                 });
-                if (this.sortConfig) {
-                    const { key, direction } = this.sortConfig;
-                    result = [...result].sort((a, b) => {
-                        const av = a[key] ?? '';
-                        const bv = b[key] ?? '';
-                        if (av === null || av === undefined || av === '') return 1;
-                        if (bv === null || bv === undefined || bv === '') return -1;
-                        if (key === 'date') {
-                            const an = dateToNumber(av);
-                            const bn = dateToNumber(bv);
-                            return direction === 'asc' ? an - bn : bn - an;
-                        }
-                        const cmp = String(av).localeCompare(String(bv), 'vi', { numeric: true });
-                        return direction === 'asc' ? cmp : -cmp;
-                    });
-                }
-                return result;
+                return multiSortRows(result, this.activeSortRules, ['period', 'room', 'id']);
             },
 
             get normalizedRowsPerPage() {
@@ -567,9 +552,28 @@ export function registerDailyScheduleSettings(Alpine) {
                 return headerIconClassForKey(key);
             },
 
+            get activeSortRules() {
+                return normalizeSortRules(this.sortConfig);
+            },
+
             sortDirection(key) {
-                if (this.sortConfig?.key !== key) return null;
-                return this.sortConfig.direction;
+                const rule = this.activeSortRules.find((r) => r.key === key);
+                return rule ? rule.direction : null;
+            },
+
+            sortPriority(key) {
+                if (this.activeSortRules.length <= 1) return null;
+                const index = this.activeSortRules.findIndex((r) => r.key === key);
+                return index >= 0 ? index + 1 : null;
+            },
+
+            isPrimarySort(key) {
+                return this.activeSortRules[0]?.key === key;
+            },
+
+            isSortRule(key, direction, priority = 1) {
+                const rule = this.activeSortRules[priority - 1];
+                return rule && rule.key === key && rule.direction === direction;
             },
 
             isColumnFiltered(key) {
@@ -856,8 +860,31 @@ export function registerDailyScheduleSettings(Alpine) {
             },
 
             requestSort(key, direction) {
-                this.sortConfig = { key, direction };
+                this.sortConfig = [{ key, direction }];
                 localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
+                this.headerPopover = null;
+            },
+
+            requestSecondarySort(key, direction) {
+                const current = this.activeSortRules;
+                const primary = current[0] || { key, direction };
+                if (primary.key === key) {
+                    this.sortConfig = [{ key, direction }];
+                } else {
+                    this.sortConfig = [primary, { key, direction }];
+                }
+                localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
+                this.headerPopover = null;
+            },
+
+            removeSort(key) {
+                const filtered = this.activeSortRules.filter((r) => r.key !== key);
+                this.sortConfig = filtered.length > 0 ? filtered : null;
+                if (this.sortConfig) {
+                    localStorage.setItem(sortKey, JSON.stringify(this.sortConfig));
+                } else {
+                    localStorage.removeItem(sortKey);
+                }
                 this.headerPopover = null;
             },
 
