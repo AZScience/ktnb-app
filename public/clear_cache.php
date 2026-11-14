@@ -55,6 +55,31 @@ if (is_dir($viewsDir)) {
     }
 }
 
+// Kiểm tra thư mục manual backups, screenshots, videos
+$bDir = __DIR__ . '/../storage/app/manual_backups';
+if (is_dir($bDir)) {
+    $bFiles = glob($bDir . '/*.md');
+    echo "<b>Manual backups:</b> " . count($bFiles) . " file (";
+    if ($bFiles) {
+        usort($bFiles, function($a, $b) { return filemtime($b) - filemtime($a); });
+        foreach (array_slice($bFiles, 0, 5) as $bf) {
+            echo basename($bf) . ' [' . date('Y-m-d H:i:s', filemtime($bf)) . '], ';
+        }
+    }
+    echo ")<br>";
+}
+
+$vDir = __DIR__ . '/videos/manual';
+if (is_dir($vDir)) {
+    $vFiles = glob($vDir . '/*');
+    echo "<b>Manual videos:</b> " . count($vFiles) . " file: " . implode(', ', array_map('basename', $vFiles)) . "<br>";
+}
+
+$mdBase = __DIR__ . '/../TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md';
+$mdPub = __DIR__ . '/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md';
+echo "<b>MD Base writable:</b> " . (is_writable($mdBase) ? 'YES' : 'NO') . " (mtime: " . (file_exists($mdBase) ? date('Y-m-d H:i:s', filemtime($mdBase)) : 'N/A') . ")<br>";
+echo "<b>MD Pub writable:</b> " . (is_writable($mdPub) ? 'YES' : 'NO') . " (mtime: " . (file_exists($mdPub) ? date('Y-m-d H:i:s', filemtime($mdPub)) : 'N/A') . ")<br>";
+
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 \Illuminate\Support\Facades\Artisan::call('optimize:clear');
