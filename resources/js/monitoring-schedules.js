@@ -262,6 +262,14 @@ function isOnlineSchedule(item) {
     return onlineKeywords.some((kw) => b.includes(kw) || r.includes(kw));
 }
 
+function formatProctorLecturer(item) {
+    if (!item) return '';
+    const proctors = [item.proctor1, item.proctor2, item.proctor3]
+        .map((p) => String(p || '').trim())
+        .filter(Boolean);
+    return proctors.join(' - ');
+}
+
 export function monitoringSchedulesPage(config) {
     const storageKey = `nttu_monitoring_${config.module}_colvis`;
     const pageKey = `nttu_monitoring_${config.module}_page`;
@@ -542,7 +550,7 @@ export function monitoringSchedulesPage(config) {
             this.loading = true;
             try {
                 let url = `${this.dataUrl}?date=${encodeURIComponent(d)}`;
-                if (this.module === 'in-person') {
+                if (this.module === 'in-person' || this.module === 'online') {
                     if (this.includeExams) url += '&include_exams=1';
                     if (this.includeHomeroom) url += '&include_homeroom=1';
                 }
@@ -593,6 +601,13 @@ export function monitoringSchedulesPage(config) {
                         }
                     });
                 }
+
+                combinedItems.forEach((item) => {
+                    if (!item.lecturer || item.status === 'Phòng thi' || item.status === 'Thi cuối kỳ') {
+                        const proctors = formatProctorLecturer(item);
+                        if (proctors) item.lecturer = proctors;
+                    }
+                });
 
                 combinedItems = multiSortRows(combinedItems, [], ['period', 'room', 'id']);
 
@@ -1370,6 +1385,13 @@ export function monitoringSchedulesPage(config) {
                         .filter(Boolean)
                         .some((candidate) => String(candidate).toLowerCase().includes(String(value).toLowerCase()));
                 }
+                if (key === 'lecturer') {
+                    const proctors = [item.proctor1, item.proctor2, item.proctor3]
+                        .map((p) => String(p || '').trim())
+                        .filter(Boolean);
+                    const candidates = [item.lecturer, ...proctors].filter(Boolean);
+                    return candidates.some((candidate) => String(candidate).toLowerCase().includes(String(value).toLowerCase()));
+                }
                 return String(item[key] ?? '').toLowerCase().includes(String(value).toLowerCase());
             });
         },
@@ -1386,12 +1408,11 @@ export function monitoringSchedulesPage(config) {
                 return false;
             }
             if (lecturers.length) {
-                if (this.module === 'exams') {
-                    const proctors = [item.proctor1, item.proctor2, item.proctor3].filter(Boolean);
-                    if (!lecturers.some((l) => proctors.includes(l))) return false;
-                } else if (!lecturers.includes(item.lecturer)) {
-                    return false;
-                }
+                const proctors = [item.proctor1, item.proctor2, item.proctor3]
+                    .map((p) => String(p || '').trim())
+                    .filter(Boolean);
+                const candidates = [item.lecturer, ...proctors].filter(Boolean);
+                if (!lecturers.some((l) => candidates.includes(l))) return false;
             }
             if (f.periodSession !== 'all') {
                 const parts = String(item.period || '').split(/→|->/).map((p) => parseInt(p.trim(), 10));
@@ -1839,7 +1860,9 @@ export function monitoringSchedulesPage(config) {
                 department: item?.department || '',
                 class: item?.class || '',
                 student_count: item?.student_count ?? '',
-                lecturer: item?.lecturer || '',
+                lecturer: ((item?.status === 'Phòng thi' || item?.status === 'Thi cuối kỳ')
+                    ? (formatProctorLecturer(item) || item?.lecturer || '')
+                    : (item?.lecturer || formatProctorLecturer(item) || '')),
                 proctor1: item?.proctor1 || '',
                 proctor2: item?.proctor2 || '',
                 proctor3: item?.proctor3 || '',
@@ -1902,6 +1925,10 @@ export function monitoringSchedulesPage(config) {
                     if (res.ok) {
                         const payload = await res.json();
                         source = { ...item, ...(payload.item || {}) };
+                        if (!source.lecturer || source.status === 'Phòng thi' || source.status === 'Thi cuối kỳ') {
+                            const proctors = formatProctorLecturer(source);
+                            if (proctors) source.lecturer = proctors;
+                        }
                         const idx = this.items.findIndex((row) => row.id === item.id);
                         if (idx >= 0) {
                             this.items[idx] = { ...this.items[idx], ...source };

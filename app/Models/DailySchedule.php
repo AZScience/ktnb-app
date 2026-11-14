@@ -80,6 +80,16 @@ class DailySchedule extends Model
         $row['building_label'] = $locations->buildingDisplayLabel($row['building'] ?? null);
         $row['room_label'] = $locations->roomDisplayLabel($row['room'] ?? null);
 
+        $proctors = array_values(array_filter([
+            trim((string) ($row['proctor1'] ?? '')),
+            trim((string) ($row['proctor2'] ?? '')),
+            trim((string) ($row['proctor3'] ?? '')),
+        ], fn ($p) => $p !== ''));
+
+        if (! empty($proctors) && (empty($row['lecturer']) || in_array($row['status'] ?? '', ['Phòng thi', 'Thi cuối kỳ'], true))) {
+            $row['lecturer'] = implode(' - ', $proctors);
+        }
+
         return $row;
     }
 
@@ -101,7 +111,19 @@ class DailySchedule extends Model
 
     public function toDetailArray(): array
     {
-        return $this->only(array_merge(self::LIST_TABLE_COLUMNS, self::DETAIL_EXTRA_COLUMNS));
+        $row = $this->only(array_merge(self::LIST_TABLE_COLUMNS, self::DETAIL_EXTRA_COLUMNS));
+
+        $proctors = array_values(array_filter([
+            trim((string) ($row['proctor1'] ?? '')),
+            trim((string) ($row['proctor2'] ?? '')),
+            trim((string) ($row['proctor3'] ?? '')),
+        ], fn ($p) => $p !== ''));
+
+        if (! empty($proctors) && (empty($row['lecturer']) || in_array($row['status'] ?? '', ['Phòng thi', 'Thi cuối kỳ'], true))) {
+            $row['lecturer'] = implode(' - ', $proctors);
+        }
+
+        return $row;
     }
 
     public static function itemMatchesModule(self $item, string $module): bool

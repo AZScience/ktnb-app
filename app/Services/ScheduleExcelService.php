@@ -587,11 +587,14 @@ class ScheduleExcelService
 
     private function resolveExportLecturer(DailySchedule $item): string
     {
-        if (($item->status ?? '') === 'Phòng thi') {
-            return collect([$item->proctor1, $item->proctor2, $item->proctor3])
+        if (in_array(($item->status ?? ''), ['Phòng thi', 'Thi cuối kỳ'], true) || empty($item->lecturer)) {
+            $proctors = collect([$item->proctor1, $item->proctor2, $item->proctor3])
                 ->map(fn ($value) => trim((string) ($value ?? '')))
                 ->filter()
-                ->implode(', ');
+                ->values();
+            if ($proctors->isNotEmpty()) {
+                return $proctors->implode(' - ');
+            }
         }
 
         return trim((string) ($item->lecturer ?? ''));

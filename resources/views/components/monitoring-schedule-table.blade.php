@@ -680,7 +680,7 @@
                                     readonly-class="font-bold text-[var(--nttu-primary)]"
                                 >
                                     <x-slot:label>
-                                        <label class="text-gray-500 flex items-center gap-1.5">Giảng viên</label>
+                                        <label class="text-gray-500 flex items-center gap-1.5" x-text="(form.status === 'Phòng thi' || form.status === 'Thi cuối kỳ') ? 'CBCT / Giảng viên' : 'Giảng viên'">Giảng viên</label>
                                     </x-slot:label>
                                 </x-monitoring-creatable-input>
                                 @endif
