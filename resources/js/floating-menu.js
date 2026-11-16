@@ -153,6 +153,11 @@ function restoreFromTeleport(panel) {
 }
 
 function positionPanel(panel, trigger, align = 'end', Alpine = null) {
+    if (!trigger || trigger.getClientRects().length === 0) {
+        hideFloatedPanel(panel);
+        return;
+    }
+
     ensureTeleportedToBody(panel, Alpine);
     const triggerRect = trigger.getBoundingClientRect();
     const { width: panelWidth, height: panelHeight } = measurePanel(panel);
@@ -331,7 +336,7 @@ export function registerFloatingMenu(Alpine) {
 
         const reposition = () => {
             const trigger = findTrigger(el);
-            if (!trigger) {
+            if (!trigger || trigger.getClientRects().length === 0) {
                 hideFloatedPanel(el);
                 return;
             }

@@ -110,7 +110,8 @@
                     </div>
                 </div>
 
-                <div class="overflow-x-auto overflow-y-visible" x-show="!isCrosstabTab(tabKey)">
+                <template x-if="!isCrosstabTab(tabKey)">
+                <div class="overflow-x-auto overflow-y-visible">
                     <table class="daily-report-table nttu-table nttu-catalog-table w-full min-w-full table-fixed"
                         x-bind:data-col-resize="'daily_report_' + tabKey">
                         <thead>
@@ -197,7 +198,7 @@
                                             @click="stateFor(tabKey).colMenuOpen = !stateFor(tabKey).colMenuOpen">
                                         <svg class="h-5 w-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                     </button>
-                                    <div x-cloak x-float="stateFor(tabKey).colMenuOpen" data-float-close="stateFor(tabKey).colMenuOpen = false"
+                                    <div x-cloak x-float="tab === tabKey && !isCrosstabTab(tabKey) && stateFor(tabKey).colMenuOpen" data-float-close="stateFor(tabKey).colMenuOpen = false"
                                         class="nttu-report-settings-panel nttu-floating-panel w-56 max-h-[min(20rem,calc(100vh-1rem))] overflow-y-auto rounded-md border border-gray-200 bg-white py-2 shadow-xl">
                                         <p class="report-settings-title border-b border-gray-100 px-3 py-2">Hiển thị cột</p>
                                         @include('components.partials.column-settings-bulk-actions', [
@@ -268,10 +269,13 @@
                         </tbody>
                     </table>
                 </div>
+                </template>
 
-                <div x-show="isCrosstabTab(tabKey)" x-cloak>
-                    <x-daily-report-violations-crosstab />
-                </div>
+                <template x-if="isCrosstabTab(tabKey)">
+                    <div>
+                        <x-daily-report-violations-crosstab />
+                    </div>
+                </template>
 
                 <div class="flex flex-col items-center justify-between gap-4 border-t bg-slate-50/80 px-4 py-3 text-sm text-gray-600 md:flex-row md:px-6">
                     <div>
