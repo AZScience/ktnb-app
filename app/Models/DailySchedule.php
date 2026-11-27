@@ -152,6 +152,11 @@ class DailySchedule extends Model
                 fn (string $kw) => str_contains($contentLower, $kw) || str_contains($status, $kw)
             ),
             'in-person' => ! in_array($statusRaw, ['Phòng thi', 'Thi cuối kỳ'], true)
+                && ! str_contains($content, 'SHCN')
+                && ! str_contains($content, 'SINH HOẠT')
+                && ! str_contains($content, 'CỐ VẤN')
+                && ! str_contains($content, 'CVHT')
+                && ! str_contains($content, 'CHỦ NHIỆM')
                 && ! str_contains($building, 'trực tuyến')
                 && ! str_contains($building, 'online')
                 && ! str_contains($room, 'trực tuyến')
@@ -234,6 +239,14 @@ class DailySchedule extends Model
             }),
             'in-person' => $query
                 ->when(! $includeExams, fn (Builder $q) => $q->whereNotIn('status', ['Phòng thi', 'Thi cuối kỳ']))
+                ->when(! $includeHomeroom, function (Builder $q) {
+                    $q->where(function (Builder $sub) {
+                        foreach (['cvht', 'shcn', 'cố vấn', 'sinh hoạt', 'chủ nhiệm'] as $kw) {
+                            $sub->whereRaw('LOWER(COALESCE(content, "")) NOT LIKE ?', ["%{$kw}%"])
+                                ->whereRaw('LOWER(COALESCE(status, "")) NOT LIKE ?', ["%{$kw}%"]);
+                        }
+                    });
+                })
                 ->whereRaw('LOWER(COALESCE(building, "")) NOT LIKE ?', ['%trực tuyến%'])
                 ->whereRaw('LOWER(COALESCE(building, "")) NOT LIKE ?', ['%online%'])
                 ->whereRaw('LOWER(COALESCE(room, "")) NOT LIKE ?', ['%trực tuyến%'])
