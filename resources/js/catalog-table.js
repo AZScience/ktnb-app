@@ -811,6 +811,8 @@ export function catalogTablePage(config) {
         initialForm: {},
         selectedItem: null,
         importPreview: [],
+        importFileToken: null,
+        importTotalValid: 0,
 
         currentPage: normalizeCurrentPage(loadJson('page', 1), 1),
         rowsPerPage: normalizeRowsPerPage(loadJson('rows', 10), 10),
@@ -2190,10 +2192,13 @@ export function catalogTablePage(config) {
                 const data = await readJsonResponse(res);
                 if (!res.ok) throw new Error(data.message || 'Không đọc được file');
                 this.importPreview = data.rows || [];
+                this.importFileToken = data.file_token || null;
+                this.importTotalValid = data.total_valid || this.importPreview.length;
                 this.importOpen = true;
-                if (data.total_parsed && data.total_parsed > this.importPreview.length) {
-                    const diff = data.total_parsed - this.importPreview.length;
-                    this.showToast(`Đã nhận diện ${this.importPreview.length} dòng hợp lệ (loại trừ ${diff} dòng tiêu đề/trống).`, 'info');
+                const totalToShow = this.importTotalValid || this.importPreview.length;
+                if (data.total_parsed && data.total_parsed > totalToShow) {
+                    const diff = data.total_parsed - totalToShow;
+                    this.showToast(`Đã nhận diện ${totalToShow} dòng hợp lệ (loại trừ ${diff} dòng tiêu đề/trống).`, 'info');
                 }
             } catch (e) {
                 this.showToast(e.message, 'error');
@@ -2231,20 +2236,16 @@ export function catalogTablePage(config) {
         async processImport() {
             if (!this.importPreview || this.importPreview.length === 0) return;
             this.importing = true;
-            const total = this.importPreview.length;
+            const total = this.importTotalValid || this.importPreview.length;
             this.importProgress = {
                 status: 'running',
                 total: total,
                 processed: 0,
-                message: `Đang lưu dữ liệu (0/${total})...`,
+                message: `Đang lưu dữ liệu (${total} dòng)...`,
             };
 
-            const chunkSize = 100;
-            let processed = 0;
-
             try {
-                for (let i = 0; i < total; i += chunkSize) {
-                    const chunk = this.importPreview.slice(i, i + chunkSize);
+                if (this.importFileToken) {
                     const res = await fetch(this.routes.import, {
                         method: 'POST',
                         headers: {
@@ -2253,20 +2254,40 @@ export function catalogTablePage(config) {
                             'X-Requested-With': 'XMLHttpRequest',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                         },
-                        body: JSON.stringify({ rows: chunk, async: false }),
+                        body: JSON.stringify({ file_token: this.importFileToken, async: false }),
                     });
                     const data = await readJsonResponse(res);
                     if (!res.ok) {
-                        throw new Error(data.message || `Lỗi khi lưu từ dòng ${i + 1} đến ${Math.min(i + chunkSize, total)}`);
+                        throw new Error(data.message || 'Lỗi khi nhập dữ liệu từ máy chủ');
                     }
+                } else {
+                    const chunkSize = 100;
+                    let processed = 0;
+                    for (let i = 0; i < total; i += chunkSize) {
+                        const chunk = this.importPreview.slice(i, i + chunkSize);
+                        const res = await fetch(this.routes.import, {
+                            method: 'POST',
+                            headers: {
+                                Accept: 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            },
+                            body: JSON.stringify({ rows: chunk, async: false }),
+                        });
+                        const data = await readJsonResponse(res);
+                        if (!res.ok) {
+                            throw new Error(data.message || `Lỗi khi lưu từ dòng ${i + 1} đến ${Math.min(i + chunkSize, total)}`);
+                        }
 
-                    processed += chunk.length;
-                    this.importProgress = {
-                        status: 'running',
-                        total: total,
-                        processed: processed,
-                        message: `Đang lưu dữ liệu (${processed}/${total})...`,
-                    };
+                        processed += chunk.length;
+                        this.importProgress = {
+                            status: 'running',
+                            total: total,
+                            processed: processed,
+                            message: `Đang lưu dữ liệu (${processed}/${total})...`,
+                        };
+                    }
                 }
 
                 if (this.serverPaginated) {
@@ -2276,6 +2297,8 @@ export function catalogTablePage(config) {
                 }
                 this.importOpen = false;
                 this.importPreview = [];
+                this.importFileToken = null;
+                this.importTotalValid = 0;
                 this.showToast(`Import thành công ${total} dòng.`);
             } catch (e) {
                 this.showToast(e.message, 'error');

@@ -237,11 +237,32 @@ class StudentController extends Controller
         @ini_set('memory_limit', '512M');
         $request->validate(['file' => 'required|file|mimes:xlsx,xls']);
 
-        $parsedRows = $this->parseSpreadsheet($request->file('file')->getPathname());
+        $uploadedFile = $request->file('file');
+        $tempDir = storage_path('app/temp_imports');
+        if (! is_dir($tempDir)) {
+            @mkdir($tempDir, 0777, true);
+        }
+
+        // Dọn dẹp file tạm cũ hơn 2 giờ
+        foreach (glob($tempDir.'/student_import_*') as $old) {
+            if (time() - filemtime($old) > 7200) {
+                @unlink($old);
+            }
+        }
+
+        $token = bin2hex(random_bytes(16));
+        $ext = $uploadedFile->getClientOriginalExtension() ?: 'xlsx';
+        $tempFileName = 'student_import_'.$token.'.'.$ext;
+        $uploadedFile->move($tempDir, $tempFileName);
+        $tempPath = $tempDir.'/'.$tempFileName;
+
+        $parsedRows = $this->parseSpreadsheet($tempPath);
         $validRows = $this->normalizeImportRows($parsedRows);
 
         return response()->json([
-            'rows' => $validRows,
+            'file_token' => $token,
+            'rows' => array_slice($validRows, 0, 100),
+            'total_valid' => count($validRows),
             'total_parsed' => count($parsedRows),
             'valid_count' => count($validRows),
         ]);
@@ -250,6 +271,49 @@ class StudentController extends Controller
     public function import(Request $request): JsonResponse
     {
         @ini_set('memory_limit', '512M');
+
+        if ($request->filled('file_token')) {
+            $token = $request->input('file_token');
+            if (! preg_match('/^[a-zA-Z0-9_-]+$/', $token)) {
+                return response()->json(['message' => 'Mã file tạm không hợp lệ.'], 400);
+            }
+            $tempDir = storage_path('app/temp_imports');
+            $files = glob($tempDir.'/student_import_'.$token.'.*');
+            if (empty($files) || ! file_exists($files[0])) {
+                return response()->json(['message' => 'File tạm đã hết hạn hoặc không tồn tại. Vui lòng chọn file lại.'], 404);
+            }
+
+            $filePath = $files[0];
+            @ini_set('max_execution_time', '600');
+            @ini_set('memory_limit', '1024M');
+
+            $parsedRows = $this->parseSpreadsheet($filePath);
+            $validRows = $this->normalizeImportRows($parsedRows);
+
+            $count = 0;
+            DB::transaction(function () use ($validRows, &$count) {
+                foreach ($validRows as $row) {
+                    $id = trim((string) ($row['id'] ?? ''));
+                    $name = trim((string) ($row['name'] ?? ''));
+                    if ($id === '' || $name === '') {
+                        continue;
+                    }
+
+                    $payload = $this->studentRowPayload($row);
+                    Student::updateOrCreate(['id' => $id], $payload);
+                    $count++;
+                }
+            });
+
+            @unlink($filePath);
+
+            return response()->json([
+                'message' => "Import thành công {$count} sinh viên.",
+                'async' => false,
+                'imported_count' => $count,
+            ]);
+        }
+
         $request->merge([
             'rows' => $this->normalizeImportRows($request->input('rows', [])),
         ]);

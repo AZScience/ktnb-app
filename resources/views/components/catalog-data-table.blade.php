@@ -1090,7 +1090,7 @@
             <div class="border-b px-4 py-3 pr-12 font-bold flex items-center justify-between">
                 <span>
                     <span x-text="text('Xem trước Import')"></span>
-                    <span class="ml-2 text-xs font-normal text-slate-500" x-show="importPreview.length" x-text="'(' + importPreview.length + ' dòng hợp lệ)'"></span>
+                    <span class="ml-2 text-xs font-normal text-slate-500" x-show="importPreview.length" x-text="'(' + (importTotalValid || importPreview.length).toLocaleString('vi-VN') + ' dòng hợp lệ)'"></span>
                 </span>
             </div>
             <button type="button"
@@ -1099,8 +1099,8 @@
                     aria-label="Đóng">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-            <div x-show="importPreview.length > 100" class="px-4 py-2 bg-blue-50 text-blue-700 text-xs border-b flex justify-between items-center">
-                <span>ℹ️ Đang hiển thị xem trước 100 dòng đầu tiên (tổng cộng <strong x-text="importPreview.length.toLocaleString('vi-VN')"></strong> dòng dữ liệu hợp lệ sẽ được lưu khi bấm Nhập dữ liệu).</span>
+            <div x-show="(importTotalValid || importPreview.length) > 100" class="px-4 py-2 bg-blue-50 text-blue-700 text-xs border-b flex justify-between items-center">
+                <span>ℹ️ Đang hiển thị xem trước 100 dòng đầu tiên (tổng cộng <strong x-text="(importTotalValid || importPreview.length).toLocaleString('vi-VN')"></strong> dòng dữ liệu hợp lệ sẽ được lưu khi bấm Nhập dữ liệu).</span>
             </div>
             <div class="max-h-[60vh] overflow-auto">
                 <table class="min-w-full text-sm">
