@@ -83,3 +83,40 @@ if (Schema::hasTable('daily_schedules') && Schema::hasColumn('daily_schedules', 
         echo "<p style='color:orange;'>Đồng bộ ngày: " . htmlspecialchars($e->getMessage()) . "</p>";
     }
 }
+
+// 4. Bỏ address và temporary_address khỏi students nếu còn tồn tại
+if (Schema::hasTable('students')) {
+    if (Schema::hasColumn('students', 'address') && Schema::hasColumn('students', 'permanent_address')) {
+        \Illuminate\Support\Facades\DB::table('students')
+            ->where(function ($q) {
+                $q->whereNull('permanent_address')->orWhere('permanent_address', '');
+            })
+            ->whereNotNull('address')
+            ->where('address', '!=', '')
+            ->update(['permanent_address' => \Illuminate\Support\Facades\DB::raw('address')]);
+    }
+    if (Schema::hasColumn('students', 'temporary_address') && Schema::hasColumn('students', 'contact_address')) {
+        \Illuminate\Support\Facades\DB::table('students')
+            ->where(function ($q) {
+                $q->whereNull('contact_address')->orWhere('contact_address', '');
+            })
+            ->whereNotNull('temporary_address')
+            ->where('temporary_address', '!=', '')
+            ->update(['contact_address' => \Illuminate\Support\Facades\DB::raw('temporary_address')]);
+    }
+    Schema::table('students', function (Blueprint $table) {
+        $cols = [];
+        if (Schema::hasColumn('students', 'address')) {
+            $cols[] = 'address';
+        }
+        if (Schema::hasColumn('students', 'temporary_address')) {
+            $cols[] = 'temporary_address';
+        }
+        if (!empty($cols)) {
+            $table->dropColumn($cols);
+            echo "<p style='color:green;'>🗑️ Đã loại bỏ cột: " . implode(', ', $cols) . " khỏi bảng students.</p>";
+        } else {
+            echo "<p style='color:blue;'>ℹ️ Bảng students đã tinh gọn (không còn address, temporary_address).</p>";
+        }
+    });
+}

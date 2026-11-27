@@ -12,8 +12,8 @@ class Student extends Model
 
     protected $fillable = [
         'id', 'name', 'avatar_url', 'gender', 'birth_date', 'birth_place', 'hometown',
-        'ethnicity', 'religion', 'class', 'permanent_address', 'temporary_address',
-        'contact_address', 'region', 'address', 'major', 'department',
+        'ethnicity', 'religion', 'class', 'permanent_address',
+        'contact_address', 'region', 'major', 'department',
         'father_name', 'father_occupation', 'mother_name', 'mother_occupation', 'parent_phone',
         'phone', 'email', 'citizen_id', 'note',
     ];
