@@ -109,7 +109,7 @@ class DailyReportService
         }
 
         $query = DailySchedule::query()
-            ->forListTable()
+            ->select(array_merge(DailySchedule::LIST_TABLE_COLUMNS, ['evidence']))
             ->where('date', $displayDate)
             ->whereNotNull('recognition_date')
             ->where('recognition_date', '!=', '')
@@ -465,6 +465,7 @@ class DailyReportService
             'is_notification' => (bool) $row->is_notification,
             'incident_detail' => $row->incident_detail,
             'recognition_date' => $row->recognition_date,
+            'evidence' => $row->evidence,
         ];
     }
 
