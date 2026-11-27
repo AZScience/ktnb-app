@@ -68,6 +68,9 @@ if ($content) {
         $ensureDirWritable(__DIR__ . '/../resources/views');
         $ensureDirWritable(__DIR__ . '/../app');
         $ensureDirWritable(__DIR__ . '/../database');
+        @mkdir(__DIR__ . '/../app/Services', 0777, true);
+        @chmod(__DIR__ . '/../app/Services', 0777);
+        $ensureDirWritable(__DIR__ . '/../app/Services');
 
         @mkdir(__DIR__ . '/videos/manual', 0777, true);
         @chmod(__DIR__ . '/videos/manual', 0777);

@@ -7,9 +7,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CatalogExcelService
 {
-    private const MAX_ROWS = 100000;
+    private const MAX_ROWS = 150000;
 
-    private const MAX_COLUMNS = 50;
+    private const MAX_COLUMNS = 150;
 
     /**
      * @param  array<string, string>  $fieldLabels  key => Vietnamese header label
@@ -86,14 +86,14 @@ class CatalogExcelService
     {
         $requiredKey = $options['requiredKey'] ?? null;
 
-        // Dynamic header row detection: scan candidate rows to find the row matching the most field labels
+        // Dynamic header row detection: scan candidate rows to find the first matching header
         $scanLimit = min(50, count($matrix) - 1);
         $candidateIndices = isset($options['headerRowIndices'])
             ? array_unique(array_merge($options['headerRowIndices'], range(0, $scanLimit)))
             : range(0, $scanLimit);
 
-        $bestHeaderIndex = null;
-        $bestMappedKeys = [];
+        $currentMappedKeys = [];
+        $firstHeaderIndex = null;
         $maxScore = 0;
 
         foreach ($candidateIndices as $idx) {
@@ -114,50 +114,95 @@ class CatalogExcelService
 
             if ($score > $maxScore) {
                 $maxScore = $score;
-                $bestHeaderIndex = $idx;
-                $bestMappedKeys = $mappedKeys;
+                $firstHeaderIndex = $idx;
+                $currentMappedKeys = $mappedKeys;
             }
         }
 
-        if ($bestHeaderIndex !== null && ! empty($bestMappedKeys)) {
-            $rows = [];
-            for ($r = $bestHeaderIndex + 1, $count = count($matrix); $r < $count; $r++) {
-                $line = $matrix[$r];
-                if ($this->isEmptyDataRow($line, $bestMappedKeys)) {
-                    continue;
-                }
-
-                // Loại trừ ngay dòng header lặp lại giữa các khối/trang dữ liệu
-                if ($this->isRepeatedHeaderRow($line, $labelToKey)) {
-                    continue;
-                }
-
-                $row = [];
-                foreach ($bestMappedKeys as $i => $key) {
-                    $row[$key] = trim((string) ($line[$i] ?? ''));
-                }
-
-                // If 'name' is missing but separate 'last_name' / 'first_name' columns exist, merge them
-                if ((! isset($row['name']) || trim($row['name']) === '') && (isset($row['last_name']) || isset($row['first_name']))) {
-                    $row['name'] = trim(($row['last_name'] ?? '').' '.($row['first_name'] ?? ''));
-                }
-                unset($row['last_name'], $row['first_name']);
-
-                if (! $this->isDataRow($row, $fieldLabels)) {
-                    continue;
-                }
-
-                if ($requiredKey && trim((string) ($row[$requiredKey] ?? '')) === '') {
-                    continue;
-                }
-
-                $rows[] = $row;
-            }
-
-            return $rows;
+        if ($firstHeaderIndex === null || empty($currentMappedKeys)) {
+            return [];
         }
 
-        return [];
+        $rows = [];
+        for ($r = $firstHeaderIndex + 1, $count = count($matrix); $r < $count; $r++) {
+            $line = $matrix[$r];
+            if ($this->isEmptyRow($line)) {
+                continue;
+            }
+
+            // Loại trừ dòng ký tên / footer ngày tháng
+            if ($this->isSignatureOrFooterRow($line)) {
+                continue;
+            }
+
+            // Kiểm tra xem dòng này có phải là Header mới của bảng/khối dữ liệu tiếp theo không
+            $newMappedKeys = $this->mapHeaderRow($line, $labelToKey);
+            if (count($newMappedKeys) >= 3) {
+                $currentMappedKeys = $newMappedKeys;
+                continue;
+            }
+
+            // Loại trừ dòng header lặp lại
+            if ($this->isRepeatedHeaderRow($line, $labelToKey)) {
+                continue;
+            }
+
+            $row = [];
+            foreach ($currentMappedKeys as $i => $key) {
+                $row[$key] = trim((string) ($line[$i] ?? ''));
+            }
+
+            // If 'name' is missing but separate 'last_name' / 'first_name' columns exist, merge them
+            if ((! isset($row['name']) || trim($row['name']) === '') && (isset($row['last_name']) || isset($row['first_name']))) {
+                $row['name'] = trim(($row['last_name'] ?? '').' '.($row['first_name'] ?? ''));
+            }
+            unset($row['last_name'], $row['first_name']);
+
+            if (! $this->isDataRow($row, $fieldLabels)) {
+                continue;
+            }
+
+            if ($requiredKey && trim((string) ($row[$requiredKey] ?? '')) === '') {
+                continue;
+            }
+
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Kiểm tra xem dòng hiện tại có phải là dòng ký tên hoặc ngày tháng chân trang không
+     */
+    private function isSignatureOrFooterRow(array $line): bool
+    {
+        $nonEmptyCells = array_filter($line, fn ($c) => trim((string) $c) !== '');
+        $filledCount = count($nonEmptyCells);
+        if ($filledCount === 0) {
+            return false;
+        }
+
+        // Dòng chữ ký/ngày tháng thường là Merged Cell (tất cả các ô cùng 1 giá trị) hoặc chỉ có rất ít ô (<= 5)
+        $uniqueValues = array_unique(array_map('trim', $nonEmptyCells));
+        $isMergedOrFewCells = (count($uniqueValues) <= 2) || ($filledCount <= 5);
+
+        if ($isMergedOrFewCells) {
+            foreach ($uniqueValues as $text) {
+                $lower = mb_strtolower($text);
+                if (str_contains($lower, 'ngày') && str_contains($lower, 'tháng') && str_contains($lower, 'năm')) {
+                    return true;
+                }
+                if (in_array($lower, ['người lập biểu', 'người lập', 'trưởng phòng', 'trưởng khoa', 'ban giám hiệu', 'hiệu trưởng'], true)
+                    || str_contains($lower, 'ký và ghi rõ')
+                    || str_contains($lower, 'ký, ghi rõ họ tên')
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

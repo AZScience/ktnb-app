@@ -208,23 +208,23 @@ class StudentController extends Controller
             'gender' => 'Giới tính',
             'birth_date' => 'Ngày sinh',
             'birth_place' => 'Nơi sinh',
+            'father_name' => 'Họ tên cha',
+            'father_occupation' => 'Nghề nghiệp cha',
+            'mother_name' => 'Họ tên mẹ',
+            'mother_occupation' => 'Nghề nghiệp mẹ',
+            'class' => 'Lớp',
             'hometown' => 'Nguyên quán',
             'ethnicity' => 'Dân tộc',
             'religion' => 'Tôn giáo',
-            'class' => 'Lớp',
-            'major' => 'Ngành',
-            'department' => 'Khoa',
             'permanent_address' => 'Thường trú',
             'contact_address' => 'Liên lạc',
-            'region' => 'Khu vực',
             'phone' => 'Điện thoại',
+            'parent_phone' => 'ĐT Phụ huynh',
             'email' => 'Email',
-            'citizen_id' => 'Số CMND/CCCD',
-            'father_name' => 'Tên cha',
-            'father_occupation' => 'Nghề nghiệp cha',
-            'mother_name' => 'Tên mẹ',
-            'mother_occupation' => 'Nghề nghiệp mẹ',
-            'parent_phone' => 'ĐT phụ huynh',
+            'citizen_id' => 'Số CMND',
+            'region' => 'Khu vực',
+            'department' => 'Khoa',
+            'major' => 'Ngành',
             'note' => 'Ghi chú',
         ], 'DS_SinhVien_'.now()->format('Ymd').'.xlsx');
 
@@ -585,6 +585,22 @@ class StudentController extends Controller
                 'so dien thoai phu huynh' => 'parent_phone',
                 'đt cha mẹ' => 'parent_phone',
                 'sđt liên hệ gia đình' => 'parent_phone',
+                'số điện thoại cha' => 'father_phone',
+                'so dien thoai cha' => 'father_phone',
+                'sđt cha' => 'father_phone',
+                'sdt cha' => 'father_phone',
+                'số điện thoại mẹ' => 'mother_phone',
+                'so dien thoai me' => 'mother_phone',
+                'sđt mẹ' => 'mother_phone',
+                'sdt me' => 'mother_phone',
+                'điện thoại 2' => 'secondary_phone',
+                'điện thoại 3' => 'tertiary_phone',
+
+                // Lớp & Nơi sinh
+                'mã lớp' => 'class_code',
+                'ma lop' => 'class_code',
+                'nơi sinh phường xã' => 'birth_place_ward',
+                'noi sinh phuong xa' => 'birth_place_ward',
 
                 // Email
                 'email' => 'email',
@@ -594,6 +610,10 @@ class StudentController extends Controller
                 'mail' => 'email',
                 'thư điện tử' => 'email',
                 'email sinh viên' => 'email',
+                'email trường' => 'school_email',
+                'email truong' => 'school_email',
+                'mail trường' => 'school_email',
+                'mail truong' => 'school_email',
 
                 // CCCD / CMND
                 'số cmnd' => 'citizen_id',
@@ -622,18 +642,25 @@ class StudentController extends Controller
                 'đơn vị' => 'department',
                 'ngành' => 'major',
                 'nganh' => 'major',
-                'chuyên ngành' => 'major',
-                'chuyen nganh' => 'major',
+                'chuyên ngành' => 'specialization',
+                'chuyen nganh' => 'specialization',
                 'ngành học' => 'major',
                 'nganh hoc' => 'major',
 
                 // Địa chỉ
+                'đc thường trú' => 'permanent_address',
+                'dc thuong tru' => 'permanent_address',
+                'đc thường tru' => 'permanent_address',
                 'thường trú' => 'permanent_address',
                 'thuong tru' => 'permanent_address',
                 'hộ khẩu thường trú' => 'permanent_address',
                 'địa chỉ thường trú' => 'permanent_address',
                 'địa chỉ' => 'permanent_address',
                 'dia chi' => 'permanent_address',
+                'hktt' => 'permanent_address',
+                'hộ khẩu' => 'permanent_address',
+                'đc liên lạc' => 'contact_address',
+                'dc lien lac' => 'contact_address',
                 'liên lạc' => 'contact_address',
                 'lien lac' => 'contact_address',
                 'địa chỉ liên lạc' => 'contact_address',
@@ -641,6 +668,8 @@ class StudentController extends Controller
                 'tạm trú' => 'contact_address',
                 'tam tru' => 'contact_address',
                 'địa chỉ tạm trú' => 'contact_address',
+                'nơi ở hiện nay' => 'contact_address',
+                'chỗ ở hiện nay' => 'contact_address',
 
                 // Dân tộc / Tôn giáo
                 'dân tộc' => 'ethnicity',
@@ -713,6 +742,17 @@ class StudentController extends Controller
             return false;
         }
 
+        // Bỏ qua dòng ký tên / footer ngày tháng
+        if (str_contains($id, 'tp.hcm') || str_contains($name, 'tp.hcm')
+            || (str_contains($id, 'ngày') && str_contains($id, 'năm'))
+            || (str_contains($name, 'ngày') && str_contains($name, 'năm'))
+            || str_contains($id, 'người lập') || str_contains($name, 'người lập')
+            || str_contains($id, 'trưởng phòng') || str_contains($name, 'trưởng phòng')
+            || str_contains($id, 'trưởng khoa') || str_contains($name, 'trưởng khoa')
+        ) {
+            return false;
+        }
+
         // Bỏ qua các dòng header / tổng cộng / số thứ tự
         $headerWords = [
             'mã sinh viên', 'ma sinh vien', 'mã sv', 'ma sv', 'mssv', 'stt', 'tổng cộng', 'tong cong',
@@ -741,6 +781,11 @@ class StudentController extends Controller
             return false;
         }
 
+        // Mã sinh viên hợp lệ phải chứa ít nhất một chữ số và độ dài không quá 30 ký tự
+        if (! preg_match('/\d/', $id) || mb_strlen($id) > 30) {
+            return false;
+        }
+
         return true;
     }
 
@@ -749,6 +794,46 @@ class StudentController extends Controller
      */
     private function normalizeImportRow(array $row): array
     {
+        // Ghép Họ và Tên nếu cột name đang trống
+        if ((! isset($row['name']) || trim((string) $row['name']) === '') && (isset($row['last_name']) || isset($row['first_name']))) {
+            $row['name'] = trim(($row['last_name'] ?? '').' '.($row['first_name'] ?? ''));
+        }
+
+        // Fallback Email: nếu email trống thì lấy Email trường
+        if (empty($row['email']) && ! empty($row['school_email'])) {
+            $row['email'] = $row['school_email'];
+        }
+
+        // Fallback Địa chỉ thường trú
+        if (empty($row['permanent_address']) && ! empty($row['address'])) {
+            $row['permanent_address'] = $row['address'];
+        }
+
+        // Fallback Địa chỉ liên lạc
+        if (empty($row['contact_address']) && ! empty($row['temporary_address'])) {
+            $row['contact_address'] = $row['temporary_address'];
+        }
+
+        // Fallback Điện thoại phụ huynh: lấy từ cha hoặc mẹ nếu trống
+        if (empty($row['parent_phone'])) {
+            $row['parent_phone'] = $row['father_phone'] ?? ($row['mother_phone'] ?? ($row['secondary_phone'] ?? ''));
+        }
+
+        // Fallback Nơi sinh
+        if (empty($row['birth_place']) && ! empty($row['birth_place_ward'])) {
+            $row['birth_place'] = $row['birth_place_ward'];
+        }
+
+        // Fallback Lớp
+        if (empty($row['class']) && ! empty($row['class_code'])) {
+            $row['class'] = $row['class_code'];
+        }
+
+        // Fallback Ngành / Khoa
+        if (empty($row['major']) && ! empty($row['specialization'])) {
+            $row['major'] = $row['specialization'];
+        }
+
         $row['gender'] = $this->normalizeStudentGender($row['gender'] ?? '');
         $row['birth_date'] = $this->normalizeStudentBirthDate($row['birth_date'] ?? '');
         $row['phone'] = $this->normalizeStudentPhone($row['phone'] ?? '');
