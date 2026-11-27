@@ -1099,6 +1099,9 @@
                     aria-label="Đóng">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
+            <div x-show="importPreview.length > 100" class="px-4 py-2 bg-blue-50 text-blue-700 text-xs border-b flex justify-between items-center">
+                <span>ℹ️ Đang hiển thị xem trước 100 dòng đầu tiên (tổng cộng <strong x-text="importPreview.length.toLocaleString('vi-VN')"></strong> dòng dữ liệu hợp lệ sẽ được lưu khi bấm Nhập dữ liệu).</span>
+            </div>
             <div class="max-h-[60vh] overflow-auto">
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-50"><tr>
@@ -1108,7 +1111,7 @@
                         @endforeach
                     </tr></thead>
                     <tbody>
-                        <template x-for="(row, i) in importPreview" :key="i">
+                        <template x-for="(row, i) in importPreview.slice(0, 100)" :key="i">
                             <tr class="border-t">
                                 <td class="px-3 py-2 text-center" x-text="i + 1"></td>
                                 @foreach ($importColumnList as $col)

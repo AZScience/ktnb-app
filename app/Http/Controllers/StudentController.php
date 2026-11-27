@@ -653,18 +653,31 @@ class StudentController extends Controller
                 'ten cha' => 'father_name',
                 'họ tên cha' => 'father_name',
                 'ho ten cha' => 'father_name',
+                'họ và tên cha' => 'father_name',
+                'ho va ten cha' => 'father_name',
                 'cha' => 'father_name',
+                'bố' => 'father_name',
+                'bo' => 'father_name',
+                'họ tên bố' => 'father_name',
+                'ho ten bo' => 'father_name',
                 'nghề nghiệp cha' => 'father_occupation',
                 'nghe nghiep cha' => 'father_occupation',
                 'nghề cha' => 'father_occupation',
+                'nghề nghiệp bố' => 'father_occupation',
+                'công việc cha' => 'father_occupation',
                 'tên mẹ' => 'mother_name',
                 'ten me' => 'mother_name',
                 'họ tên mẹ' => 'mother_name',
                 'ho ten me' => 'mother_name',
+                'họ và tên mẹ' => 'mother_name',
+                'ho va ten me' => 'mother_name',
                 'mẹ' => 'mother_name',
+                'má' => 'mother_name',
+                'ma' => 'mother_name',
                 'nghề nghiệp mẹ' => 'mother_occupation',
                 'nghe nghiep me' => 'mother_occupation',
                 'nghề mẹ' => 'mother_occupation',
+                'công việc mẹ' => 'mother_occupation',
 
                 // Khu vực
                 'khu vực' => 'region',
@@ -700,15 +713,31 @@ class StudentController extends Controller
             return false;
         }
 
-        if (in_array($id, ['mã sinh viên', 'mssv', 'stt', 'tổng cộng', 'tổng số'], true)) {
+        // Bỏ qua các dòng header / tổng cộng / số thứ tự
+        $headerWords = [
+            'mã sinh viên', 'ma sinh vien', 'mã sv', 'ma sv', 'mssv', 'stt', 'tổng cộng', 'tong cong',
+            'tổng số', 'tong so', 'số cmnd', 'so cmnd', 'số cmnd/cccd', 'cccd', 'cmnd', 'id',
+            'họ và tên', 'ho va ten', 'họ tên', 'ho ten', 'họ và tên sinh viên', 'tên sinh viên',
+            'giới tính', 'ngày sinh', 'nơi sinh', 'lớp', 'khoa', 'ngành',
+        ];
+
+        if (in_array($id, $headerWords, true) || in_array($name, $headerWords, true)) {
             return false;
         }
 
-        if (str_starts_with($id, 'tổng') || str_starts_with($name, 'tổng')) {
+        if (str_starts_with($id, 'tổng') || str_starts_with($name, 'tổng') || str_starts_with($id, 'tong') || str_starts_with($name, 'tong')) {
             return false;
         }
 
-        if (in_array($name, ['họ và tên', 'họ tên', 'họ và tên sinh viên'], true)) {
+        if (str_starts_with($id, 'lớp:') || str_starts_with($name, 'lớp:') || str_starts_with($id, 'lop:') || str_starts_with($name, 'lop:')) {
+            return false;
+        }
+
+        if (str_starts_with($id, 'khoa:') || str_starts_with($name, 'khoa:')) {
+            return false;
+        }
+
+        if (str_contains($id, 'sinh viên') || str_contains($id, 'mã số') || $id === 'mã' || $id === 'ma') {
             return false;
         }
 
