@@ -2174,12 +2174,37 @@ export function catalogTablePage(config) {
 
         async onImportFile(event) {
             if (!this.routes.importPreview) return;
-            const file = event.target.files?.[0];
+            let file = event.target.files?.[0];
             if (!file) return;
             this.importLoading = true;
-            const formData = new FormData();
-            formData.append('file', file);
+
             try {
+                // Tự động tối ưu dung lượng: Nếu là file .xls cũ hoặc file > 4MB,
+                // chuyển đổi sang .xlsx chuẩn ngay tại trình duyệt để giảm dung lượng xuống 5-10 lần,
+                // hoàn toàn tránh lỗi vượt giới hạn máy chủ post_max_size (8MB).
+                if (file.name.match(/\.xls$/i) || file.size > 4 * 1024 * 1024) {
+                    try {
+                        const XLSX = await import('xlsx');
+                        const buffer = await file.arrayBuffer();
+                        const wb = XLSX.read(buffer, { type: 'array' });
+                        const outBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                        file = new File(
+                            [outBuffer],
+                            file.name.replace(/\.xls$/i, '.xlsx'),
+                            { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+                        );
+                    } catch (convErr) {
+                        console.warn('Không thể tự động chuyển đổi sang .xlsx:', convErr);
+                    }
+                }
+
+                if (file.size > 7.5 * 1024 * 1024) {
+                    throw new Error(`Dung lượng file (${(file.size / (1024 * 1024)).toFixed(1)}MB) vượt quá giới hạn 8MB của máy chủ. Vui lòng chia nhỏ file.`);
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+
                 const res = await fetch(this.routes.importPreview, {
                     method: 'POST',
                     headers: {

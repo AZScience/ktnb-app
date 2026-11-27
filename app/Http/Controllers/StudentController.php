@@ -291,19 +291,39 @@ class StudentController extends Controller
             $validRows = $this->normalizeImportRows($parsedRows);
 
             $count = 0;
-            DB::transaction(function () use ($validRows, &$count) {
-                foreach ($validRows as $row) {
-                    $id = trim((string) ($row['id'] ?? ''));
-                    $name = trim((string) ($row['name'] ?? ''));
-                    if ($id === '' || $name === '') {
-                        continue;
-                    }
+            $batch = [];
+            $updateColumns = [
+                'name', 'class', 'gender', 'birth_date', 'birth_place', 'hometown',
+                'ethnicity', 'religion', 'permanent_address', 'contact_address',
+                'region', 'phone', 'email', 'citizen_id', 'department', 'major',
+                'father_name', 'father_occupation', 'mother_name', 'mother_occupation',
+                'parent_phone', 'note', 'updated_at'
+            ];
+            $now = now();
 
-                    $payload = $this->studentRowPayload($row);
-                    Student::updateOrCreate(['id' => $id], $payload);
-                    $count++;
+            foreach ($validRows as $row) {
+                $id = trim((string) ($row['id'] ?? ''));
+                $name = trim((string) ($row['name'] ?? ''));
+                if ($id === '' || $name === '') {
+                    continue;
                 }
-            });
+
+                $item = $this->studentRowPayload($row);
+                $item['id'] = $id;
+                $item['created_at'] = $now;
+                $item['updated_at'] = $now;
+                $batch[] = $item;
+                $count++;
+
+                if (count($batch) >= 500) {
+                    Student::upsert($batch, ['id'], $updateColumns);
+                    $batch = [];
+                }
+            }
+
+            if (! empty($batch)) {
+                Student::upsert($batch, ['id'], $updateColumns);
+            }
 
             @unlink($filePath);
 
