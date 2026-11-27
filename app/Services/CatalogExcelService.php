@@ -7,7 +7,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CatalogExcelService
 {
-    private const MAX_ROWS = 10000;
+    private const MAX_ROWS = 100000;
 
     private const MAX_COLUMNS = 50;
 

@@ -314,7 +314,7 @@ class StudentController extends Controller
 
         ]);
 
-        if ($request->boolean('async') || count($data['rows']) > 50) {
+        if ($request->boolean('async')) {
             $progress = $this->importProgress->start(count($data['rows']), 'Import sinh viên');
             ProcessCatalogImportJob::dispatch($progress['id'], 'students', $data['rows'])->afterResponse();
 
@@ -326,52 +326,25 @@ class StudentController extends Controller
             ]);
         }
 
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
 
+        DB::transaction(function () use ($data) {
+            foreach ($data['rows'] as $row) {
+                $id = trim($row['id']);
+                $name = trim($row['name']);
+                if ($id === '' || $name === '') {
+                    continue;
+                }
 
-        foreach ($data['rows'] as $row) {
-
-            $id = trim($row['id']);
-
-            $name = trim($row['name']);
-
-            if ($id === '' || $name === '') {
-
-                continue;
-
+                $payload = $this->studentRowPayload($row);
+                Student::updateOrCreate(['id' => $id], $payload);
             }
-
-
-
-            $payload = $this->studentRowPayload($row);
-
-            $existing = Student::find($id);
-
-            if ($existing) {
-
-                $existing->update($payload);
-
-            } else {
-
-                Student::create(array_merge($payload, [
-
-                    'id' => $id,
-
-                    'avatar_url' => '',
-
-                ]));
-
-            }
-
-        }
-
-
+        });
 
         return response()->json([
-
             'message' => 'Import thành công.',
-
             'async' => false,
-
         ]);
 
     }

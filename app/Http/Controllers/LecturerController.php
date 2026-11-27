@@ -198,7 +198,7 @@ class LecturerController extends Controller
             'rows.*.note' => 'nullable|string',
         ]);
 
-        if ($request->boolean('async') || count($data['rows']) > 50) {
+        if ($request->boolean('async')) {
             $progress = $this->importProgress->start(count($data['rows']), 'Import giảng viên');
             ProcessCatalogImportJob::dispatch($progress['id'], 'lecturers', $data['rows'])->afterResponse();
 
@@ -210,34 +210,31 @@ class LecturerController extends Controller
             ]);
         }
 
-        foreach ($data['rows'] as $row) {
-            $id = trim($row['id']);
-            $name = trim($row['name']);
-            if ($id === '' || $name === '') {
-                continue;
-            }
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
 
-            $payload = [
-                'name' => $name,
-                'department' => $this->resolveDepartment($row['department'] ?? ''),
-                'position' => $this->resolvePosition($row['position'] ?? ''),
-                'birth_date' => trim((string) ($row['birth_date'] ?? '')),
-                'address' => trim((string) ($row['address'] ?? '')),
-                'phone' => trim((string) ($row['phone'] ?? '')),
-                'email' => trim((string) ($row['email'] ?? '')),
-                'note' => trim((string) ($row['note'] ?? '')),
-            ];
+        DB::transaction(function () use ($data) {
+            foreach ($data['rows'] as $row) {
+                $id = trim($row['id']);
+                $name = trim($row['name']);
+                if ($id === '' || $name === '') {
+                    continue;
+                }
 
-            $existing = Lecturer::find($id);
-            if ($existing) {
-                $existing->update($payload);
-            } else {
-                Lecturer::create(array_merge($payload, [
-                    'id' => $id,
-                    'avatar_url' => '',
-                ]));
+                $payload = [
+                    'name' => $name,
+                    'department' => $this->resolveDepartment($row['department'] ?? ''),
+                    'position' => $this->resolvePosition($row['position'] ?? ''),
+                    'birth_date' => trim((string) ($row['birth_date'] ?? '')),
+                    'address' => trim((string) ($row['address'] ?? '')),
+                    'phone' => trim((string) ($row['phone'] ?? '')),
+                    'email' => trim((string) ($row['email'] ?? '')),
+                    'note' => trim((string) ($row['note'] ?? '')),
+                ];
+
+                Lecturer::updateOrCreate(['id' => $id], $payload);
             }
-        }
+        });
 
         return response()->json([
             'message' => 'Import thành công.',

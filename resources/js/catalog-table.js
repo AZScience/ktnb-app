@@ -2229,43 +2229,54 @@ export function catalogTablePage(config) {
         },
 
         async processImport() {
+            if (!this.importPreview || this.importPreview.length === 0) return;
             this.importing = true;
-            this.importProgress = null;
-            try {
-                const res = await fetch(this.routes.import, {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                    },
-                    body: JSON.stringify({ rows: this.importPreview, async: true }),
-                });
-                const data = await readJsonResponse(res);
-                if (!res.ok) throw new Error(data.message || 'Import thất bại');
+            const total = this.importPreview.length;
+            this.importProgress = {
+                status: 'running',
+                total: total,
+                processed: 0,
+                message: `Đang lưu dữ liệu (0/${total})...`,
+            };
 
-                if (data.async && data.progress_url) {
-                    const result = await this.pollImportProgress(data.progress_url);
-                    if (this.serverPaginated) {
-                        await this.fetchList();
-                    } else if (data.items) {
-                        this.items = data.items;
+            const chunkSize = 500;
+            let processed = 0;
+
+            try {
+                for (let i = 0; i < total; i += chunkSize) {
+                    const chunk = this.importPreview.slice(i, i + chunkSize);
+                    const res = await fetch(this.routes.import, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        },
+                        body: JSON.stringify({ rows: chunk, async: false }),
+                    });
+                    const data = await readJsonResponse(res);
+                    if (!res.ok) {
+                        throw new Error(data.message || `Lỗi khi lưu từ dòng ${i + 1} đến ${Math.min(i + chunkSize, total)}`);
                     }
-                    this.importOpen = false;
-                    this.importPreview = [];
-                    this.showToast(result.message || 'Import thành công.');
-                    return;
+
+                    processed += chunk.length;
+                    this.importProgress = {
+                        status: 'running',
+                        total: total,
+                        processed: processed,
+                        message: `Đang lưu dữ liệu (${processed}/${total})...`,
+                    };
                 }
 
                 if (this.serverPaginated) {
                     await this.fetchList();
-                } else if (data.items) {
-                    this.items = data.items;
+                } else if (typeof this.fetchList === 'function') {
+                    await this.fetchList();
                 }
                 this.importOpen = false;
                 this.importPreview = [];
-                this.showToast(data.message || 'Import thành công.');
+                this.showToast(`Import thành công ${total} dòng.`);
             } catch (e) {
                 this.showToast(e.message, 'error');
             } finally {
