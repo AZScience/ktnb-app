@@ -19,18 +19,29 @@ if (!$authorized && $token !== 'ktnb_secret_deploy_2026') {
 $url = 'https://github.com/AZScience/ktnb-app/archive/refs/heads/kiemtranoibo.zip';
 $zipFile = __DIR__.'/kiemtranoibo.zip';
 
+$ghToken = $_GET['gh_token'] ?? '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';
+$headers = "User-Agent: PHP\r\n";
+if ($ghToken !== '') {
+    $headers .= "Authorization: token " . $ghToken . "\r\n";
+}
 $options = [
     "http" => [
-        "header" => "User-Agent: PHP\r\n"
+        "header" => $headers
     ]
 ];
 $context = stream_context_create($options);
 
-echo "Đang tải mã nguồn giao diện & báo cáo...\n";
-$content = file_get_contents($url, false, $context);
+if (isset($_FILES['zip_file']) && is_uploaded_file($_FILES['zip_file']['tmp_name'])) {
+    move_uploaded_file($_FILES['zip_file']['tmp_name'], $zipFile);
+    $content = true;
+} else {
+    echo "Đang tải mã nguồn giao diện & báo cáo...\n";
+    $content = file_get_contents($url, false, $context);
+    if ($content) {
+        file_put_contents($zipFile, $content);
+    }
+}
 if ($content) {
-    file_put_contents($zipFile, $content);
-    
     $zip = new ZipArchive;
     if ($zip->open($zipFile) === TRUE) {
         $extracted = 0;

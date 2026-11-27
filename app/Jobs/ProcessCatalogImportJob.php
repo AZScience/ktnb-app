@@ -172,10 +172,11 @@ class ProcessCatalogImportJob implements ShouldQueue
         return "Import thành công {$imported} sinh viên.";
     }
 
-    private function importLecturers(ImportProgressService $progress): void
+    private function importLecturers(ImportProgressService $progress): string
     {
         $total = count($this->rows);
         $processed = 0;
+        $imported = 0;
 
         foreach ($this->rows as $row) {
             $id = trim((string) ($row['id'] ?? ''));
@@ -198,8 +199,17 @@ class ProcessCatalogImportJob implements ShouldQueue
                 'avatar_url' => '',
             ]);
 
+            $imported++;
             $this->tick($progress, $processed, $total, 'Đang import giảng viên');
         }
+
+        if ($imported < $total) {
+            $skipped = $total - $imported;
+
+            return "Import thành công {$imported}/{$total} giảng viên (bỏ qua {$skipped} dòng thiếu Mã GV hoặc Tên).";
+        }
+
+        return "Import thành công {$imported} giảng viên.";
     }
 
     private function importClassrooms(ImportProgressService $progress): void

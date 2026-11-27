@@ -165,15 +165,26 @@ class LecturerController extends Controller
 
     public function importPreview(Request $request): JsonResponse
     {
+        @ini_set('memory_limit', '512M');
         $request->validate(['file' => 'required|file|mimes:xlsx,xls']);
 
+        $parsedRows = $this->parseSpreadsheet($request->file('file')->getPathname());
+        $validRows = $this->normalizeImportRows($parsedRows);
+
         return response()->json([
-            'rows' => $this->parseSpreadsheet($request->file('file')->getPathname()),
+            'rows' => $validRows,
+            'total_parsed' => count($parsedRows),
+            'valid_count' => count($validRows),
         ]);
     }
 
     public function import(Request $request): JsonResponse
     {
+        @ini_set('memory_limit', '512M');
+        $request->merge([
+            'rows' => $this->normalizeImportRows($request->input('rows', [])),
+        ]);
+
         $data = $request->validate([
             'rows' => 'required|array|min:1',
             'rows.*.id' => 'required|string|max:50',
@@ -252,18 +263,164 @@ class LecturerController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
+        @ini_set('memory_limit', '512M');
+
         return $this->catalogExcel->parseRows($path, $this->lecturerImportFieldLabels(), [
             'aliases' => [
+                // Mã giảng viên
                 'mã giảng viên' => 'id',
+                'ma giang vien' => 'id',
+                'mã gv' => 'id',
+                'ma gv' => 'id',
+                'magv' => 'id',
+                'mã số gv' => 'id',
+                'ma so gv' => 'id',
+                'mã số giảng viên' => 'id',
+                'ma so giang vien' => 'id',
+                'mã cán bộ' => 'id',
+                'ma can bo' => 'id',
+                'mã cb' => 'id',
+                'ma cb' => 'id',
+                'mã nhân viên' => 'id',
+                'ma nhan vien' => 'id',
+                'mã nv' => 'id',
+                'ma nv' => 'id',
+                'mã số' => 'id',
+                'msgv' => 'id',
+                'code' => 'id',
+                'lecturer id' => 'id',
+
+                // Họ và tên
+                'họ và tên' => 'name',
+                'ho va ten' => 'name',
                 'họ tên' => 'name',
+                'ho ten' => 'name',
+                'họ và tên giảng viên' => 'name',
+                'tên giảng viên' => 'name',
+                'họ tên giảng viên' => 'name',
+                'full name' => 'name',
+                'fullname' => 'name',
+
+                // Cột họ lót + tên riêng biệt
+                'họ lót' => 'last_name',
+                'ho lot' => 'last_name',
+                'họ và đệm' => 'last_name',
+                'ho va dem' => 'last_name',
+                'họ và tên đệm' => 'last_name',
+                'ho va ten dem' => 'last_name',
+                'họ đệm' => 'last_name',
+                'ho dem' => 'last_name',
+                'họ' => 'last_name',
+                'ho' => 'last_name',
+                'tên' => 'first_name',
+                'ten' => 'first_name',
+
+                // Khoa / Đơn vị
                 'khoa' => 'department',
+                'viện' => 'department',
+                'khoa/viện' => 'department',
+                'khoa / viện' => 'department',
+                'đơn vị' => 'department',
+                'don vi' => 'department',
                 'đơn vị công tác' => 'department',
-                'số điện thoại' => 'phone',
+                'don vi cong tac' => 'department',
+                'bộ môn' => 'department',
+                'bo mon' => 'department',
+                'tổ bộ môn' => 'department',
+                'phòng ban' => 'department',
+                'faculty' => 'department',
+
+                // Chức vụ / Học hàm / Học vị
+                'chức vụ' => 'position',
+                'chuc vu' => 'position',
+                'chức danh' => 'position',
+                'chuc danh' => 'position',
+                'vị trí' => 'position',
+                'học vị' => 'position',
+                'học hàm' => 'position',
+                'học hàm/học vị' => 'position',
+                'học hàm - học vị' => 'position',
+                'position' => 'position',
+
+                // Ngày sinh
+                'ngày sinh' => 'birth_date',
+                'ngay sinh' => 'birth_date',
+                'ngaysinh' => 'birth_date',
+                'ngày tháng năm sinh' => 'birth_date',
+                'ngay thang nam sinh' => 'birth_date',
+                'năm sinh' => 'birth_date',
+                'nam sinh' => 'birth_date',
+                'dob' => 'birth_date',
+
+                // Địa chỉ
+                'địa chỉ' => 'address',
+                'dia chi' => 'address',
+                'quê quán' => 'address',
+                'hộ khẩu' => 'address',
+                'nơi ở' => 'address',
+
+                // Điện thoại
+                'điện thoại' => 'phone',
+                'dien thoai' => 'phone',
+                'sđt' => 'phone',
                 'sdt' => 'phone',
+                'số điện thoại' => 'phone',
+                'so dien thoai' => 'phone',
+                'phone' => 'phone',
+                'mobile' => 'phone',
+                'di động' => 'phone',
+                'di dong' => 'phone',
+
+                // Email
+                'email' => 'email',
+                'e-mail' => 'email',
+                'hộp thư' => 'email',
+                'hop thu' => 'email',
+                'mail' => 'email',
+
+                // Ghi chú
+                'ghi chú' => 'note',
+                'ghi chu' => 'note',
+                'note' => 'note',
             ],
-            'headerRowIndices' => [0, 7],
+            'headerRowIndices' => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             'requiredKey' => 'id',
         ]);
+    }
+
+    /** @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    private function normalizeImportRows(array $rows): array
+    {
+        return array_values(array_filter(
+            $rows,
+            fn (array $row) => $this->isImportableLecturerRow($row),
+        ));
+    }
+
+    private function isImportableLecturerRow(array $row): bool
+    {
+        $id = mb_strtolower(trim((string) ($row['id'] ?? '')));
+        $name = mb_strtolower(trim((string) ($row['name'] ?? '')));
+
+        if ($id === '' || $name === '') {
+            return false;
+        }
+
+        if (in_array($id, ['mã gv', 'magv', 'mã giảng viên', 'stt', 'tổng cộng', 'tổng số'], true)) {
+            return false;
+        }
+
+        if (str_starts_with($id, 'tổng') || str_starts_with($name, 'tổng')) {
+            return false;
+        }
+
+        if (in_array($name, ['họ và tên', 'họ tên', 'họ và tên giảng viên'], true)) {
+            return false;
+        }
+
+        return true;
     }
 
     private function resolveDepartment(string $value): string
