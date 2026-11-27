@@ -1087,7 +1087,12 @@
     {{-- Import preview --}}
     <div x-show="importOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" @keydown.escape.window="importOpen = false">
         <div class="relative max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
-            <div class="border-b px-4 py-3 pr-12 font-bold" x-text="text('Xem trước Import')"></div>
+            <div class="border-b px-4 py-3 pr-12 font-bold flex items-center justify-between">
+                <span>
+                    <span x-text="text('Xem trước Import')"></span>
+                    <span class="ml-2 text-xs font-normal text-slate-500" x-show="importPreview.length" x-text="'(' + importPreview.length + ' dòng hợp lệ)'"></span>
+                </span>
+            </div>
             <button type="button"
                     class="absolute right-4 top-3 rounded-sm text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
                     @click="importOpen = false"

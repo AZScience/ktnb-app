@@ -31,8 +31,10 @@ class ProcessCatalogImportJob implements ShouldQueue
 
     public function handle(ImportProgressService $progress, AuthLoginService $authLogin): void
     {
+        @ini_set('memory_limit', '512M');
+
         try {
-            match ($this->catalog) {
+            $summary = match ($this->catalog) {
                 'classrooms' => $this->importClassrooms($progress),
                 'document-records' => $this->importDocumentRecords($progress),
                 'employees' => $this->importEmployees($progress, $authLogin),
@@ -41,7 +43,11 @@ class ProcessCatalogImportJob implements ShouldQueue
                 default => throw new \InvalidArgumentException('Catalog không hỗ trợ import nền: '.$this->catalog),
             };
 
-            $progress->finish($this->progressId, 'Import thành công '.count($this->rows).' dòng.');
+            $message = is_string($summary) && $summary !== ''
+                ? $summary
+                : 'Import thành công '.count($this->rows).' dòng.';
+
+            $progress->finish($this->progressId, $message);
         } catch (\Throwable $e) {
             Log::error('Catalog import failed', ['catalog' => $this->catalog, 'error' => $e->getMessage()]);
             $progress->fail($this->progressId, $e->getMessage() ?: 'Import thất bại.');
@@ -102,10 +108,11 @@ class ProcessCatalogImportJob implements ShouldQueue
         }
     }
 
-    private function importStudents(ImportProgressService $progress): void
+    private function importStudents(ImportProgressService $progress): string
     {
         $total = count($this->rows);
         $processed = 0;
+        $imported = 0;
 
         foreach ($this->rows as $row) {
             $id = trim((string) ($row['id'] ?? ''));
@@ -145,6 +152,7 @@ class ProcessCatalogImportJob implements ShouldQueue
             ];
 
             Student::updateOrCreate(['id' => $id], $payload);
+            $imported++;
 
             $processed++;
             if ($processed % 25 === 0 || $processed === $total) {
@@ -154,6 +162,14 @@ class ProcessCatalogImportJob implements ShouldQueue
                 ]);
             }
         }
+
+        if ($imported < $total) {
+            $skipped = $total - $imported;
+
+            return "Import thành công {$imported}/{$total} sinh viên (bỏ qua {$skipped} dòng thiếu MSSV hoặc Tên).";
+        }
+
+        return "Import thành công {$imported} sinh viên.";
     }
 
     private function importLecturers(ImportProgressService $progress): void

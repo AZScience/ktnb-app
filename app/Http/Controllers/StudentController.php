@@ -235,27 +235,23 @@ class StudentController extends Controller
 
 
     public function importPreview(Request $request): JsonResponse
-
     {
-
+        @ini_set('memory_limit', '512M');
         $request->validate(['file' => 'required|file|mimes:xlsx,xls']);
 
-
+        $parsedRows = $this->parseSpreadsheet($request->file('file')->getPathname());
+        $validRows = $this->normalizeImportRows($parsedRows);
 
         return response()->json([
-
-            'rows' => $this->normalizeImportRows($this->parseSpreadsheet($request->file('file')->getPathname())),
-
+            'rows' => $validRows,
+            'total_parsed' => count($parsedRows),
+            'valid_count' => count($validRows),
         ]);
-
     }
 
-
-
     public function import(Request $request): JsonResponse
-
     {
-
+        @ini_set('memory_limit', '512M');
         $request->merge([
             'rows' => $this->normalizeImportRows($request->input('rows', [])),
         ]);
@@ -500,14 +496,184 @@ class StudentController extends Controller
 
     private function parseSpreadsheet(string $path): array
     {
+        @ini_set('memory_limit', '512M');
+
         return $this->catalogExcel->parseRows($path, $this->studentImportFieldLabels(), [
             'aliases' => [
+                // Mã sinh viên
                 'mssv' => 'id',
+                'mã sv' => 'id',
+                'ma sv' => 'id',
+                'mã số sv' => 'id',
+                'ma so sv' => 'id',
+                'mã số sinh viên' => 'id',
+                'ma so sinh vien' => 'id',
+                'mã sinh viên' => 'id',
+                'ma sinh vien' => 'id',
+                'mã học viên' => 'id',
+                'ma hoc vien' => 'id',
+                'mã định danh' => 'id',
+                'student id' => 'id',
+                'student_id' => 'id',
+                'student code' => 'id',
+                'code' => 'id',
+
+                // Họ và tên
+                'họ và tên' => 'name',
+                'ho va ten' => 'name',
+                'họ tên' => 'name',
+                'ho ten' => 'name',
+                'họ và tên sinh viên' => 'name',
+                'tên sinh viên' => 'name',
+                'họ tên sinh viên' => 'name',
+                'full name' => 'name',
+                'fullname' => 'name',
+
+                // Cột họ lót + tên riêng biệt
+                'họ lót' => 'last_name',
+                'ho lot' => 'last_name',
+                'họ và đệm' => 'last_name',
+                'ho va dem' => 'last_name',
+                'họ và tên đệm' => 'last_name',
+                'ho va ten dem' => 'last_name',
+                'họ đệm' => 'last_name',
+                'ho dem' => 'last_name',
+                'họ' => 'last_name',
+                'ho' => 'last_name',
+                'tên' => 'first_name',
+                'ten' => 'first_name',
+                'tên sv' => 'first_name',
+                'ten sv' => 'first_name',
+
+                // Lớp
+                'lớp' => 'class',
+                'lop' => 'class',
+                'lớp học' => 'class',
+                'lop hoc' => 'class',
+                'mã lớp' => 'class',
+                'ma lop' => 'class',
+                'tên lớp' => 'class',
+                'ten lop' => 'class',
+                'lớp sinh hoạt' => 'class',
+                'lop sinh hoat' => 'class',
+                'lớp danh nghĩa' => 'class',
+                'lớp học phần' => 'class',
+                'khóa/lớp' => 'class',
+                'class' => 'class',
+
+                // Giới tính
+                'giới tính' => 'gender',
+                'gioi tinh' => 'gender',
+                'phái' => 'gender',
+                'phai' => 'gender',
+                'gender' => 'gender',
+                'sex' => 'gender',
+
+                // Ngày sinh
+                'ngày sinh' => 'birth_date',
+                'ngay sinh' => 'birth_date',
+                'ngaysinh' => 'birth_date',
+                'ngày tháng năm sinh' => 'birth_date',
+                'ngay thang nam sinh' => 'birth_date',
+                'năm sinh' => 'birth_date',
+                'nam sinh' => 'birth_date',
+                'dob' => 'birth_date',
+                'birth date' => 'birth_date',
+                'birthday' => 'birth_date',
+
+                // Nơi sinh / Quê quán
+                'nơi sinh' => 'birth_place',
+                'noi sinh' => 'birth_place',
+                'noisinh' => 'birth_place',
+                'quê quán' => 'hometown',
+                'que quan' => 'hometown',
+                'nguyên quán' => 'hometown',
+                'nguyen quan' => 'hometown',
+
+                // Điện thoại
+                'điện thoại' => 'phone',
+                'dien thoai' => 'phone',
+                'sđt' => 'phone',
+                'sdt' => 'phone',
+                'số điện thoại' => 'phone',
+                'so dien thoai' => 'phone',
+                'phone' => 'phone',
+                'mobile' => 'phone',
+                'di động' => 'phone',
+                'di dong' => 'phone',
+                'dđ' => 'phone',
+
+                // Điện thoại phụ huynh
+                'đt phụ huynh' => 'parent_phone',
+                'sđt phụ huynh' => 'parent_phone',
+                'số điện thoại phụ huynh' => 'parent_phone',
+                'đt cha mẹ' => 'parent_phone',
+                'sđt liên hệ gia đình' => 'parent_phone',
+
+                // Email
+                'email' => 'email',
+                'hộp thư' => 'email',
+                'hop thu' => 'email',
+                'e-mail' => 'email',
+                'mail' => 'email',
+                'thư điện tử' => 'email',
+                'email sinh viên' => 'email',
+
+                // CCCD / CMND
                 'số cmnd' => 'citizen_id',
+                'so cmnd' => 'citizen_id',
+                'số cccd' => 'citizen_id',
+                'so cccd' => 'citizen_id',
                 'cccd' => 'citizen_id',
+                'cmnd' => 'citizen_id',
                 'số cmnd/cccd' => 'citizen_id',
+                'so cmnd/cccd' => 'citizen_id',
+                'số cmnd / cccd' => 'citizen_id',
+                'căn cước công dân' => 'citizen_id',
+                'can cuoc cong dan' => 'citizen_id',
+                'căn cước' => 'citizen_id',
+                'can cuoc' => 'citizen_id',
+                'số định danh' => 'citizen_id',
+                'so dinh danh' => 'citizen_id',
+                'số cmt' => 'citizen_id',
+                'cmt' => 'citizen_id',
+
+                // Khoa / Viện / Ngành
+                'khoa' => 'department',
+                'viện' => 'department',
+                'khoa/viện' => 'department',
+                'khoa / viện' => 'department',
+                'đơn vị' => 'department',
+                'ngành' => 'major',
+                'nganh' => 'major',
+                'chuyên ngành' => 'major',
+                'chuyen nganh' => 'major',
+                'ngành học' => 'major',
+                'nganh hoc' => 'major',
+
+                // Địa chỉ
+                'thường trú' => 'permanent_address',
+                'thuong tru' => 'permanent_address',
+                'hộ khẩu thường trú' => 'permanent_address',
+                'tạm trú' => 'temporary_address',
+                'tam tru' => 'temporary_address',
+                'địa chỉ liên lạc' => 'contact_address',
+                'dia chi lien lac' => 'contact_address',
+                'địa chỉ' => 'address',
+                'dia chi' => 'address',
+
+                // Dân tộc / Tôn giáo
+                'dân tộc' => 'ethnicity',
+                'dan toc' => 'ethnicity',
+                'tôn giáo' => 'religion',
+                'ton giao' => 'religion',
+
+                // Ghi chú
+                'ghi chú' => 'note',
+                'ghi chu' => 'note',
+                'note' => 'note',
             ],
-            'headerRowIndices' => [0, 7],
+            'headerRowIndices' => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             'requiredKey' => 'id',
         ]);
     }
@@ -532,11 +698,15 @@ class StudentController extends Controller
             return false;
         }
 
-        if (in_array($id, ['mã sinh viên', 'mssv', 'stt'], true)) {
+        if (in_array($id, ['mã sinh viên', 'mssv', 'stt', 'tổng cộng', 'tổng số'], true)) {
             return false;
         }
 
-        if (in_array($name, ['họ và tên', 'họ tên'], true)) {
+        if (str_starts_with($id, 'tổng') || str_starts_with($name, 'tổng')) {
+            return false;
+        }
+
+        if (in_array($name, ['họ và tên', 'họ tên', 'họ và tên sinh viên'], true)) {
             return false;
         }
 

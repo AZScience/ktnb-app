@@ -2191,6 +2191,10 @@ export function catalogTablePage(config) {
                 if (!res.ok) throw new Error(data.message || 'Không đọc được file');
                 this.importPreview = data.rows || [];
                 this.importOpen = true;
+                if (data.total_parsed && data.total_parsed > this.importPreview.length) {
+                    const diff = data.total_parsed - this.importPreview.length;
+                    this.showToast(`Đã nhận diện ${this.importPreview.length} dòng hợp lệ (loại trừ ${diff} dòng tiêu đề/trống).`, 'info');
+                }
             } catch (e) {
                 this.showToast(e.message, 'error');
             } finally {

@@ -7,9 +7,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CatalogExcelService
 {
-    private const MAX_ROWS = 5000;
+    private const MAX_ROWS = 10000;
 
-    private const MAX_COLUMNS = 40;
+    private const MAX_COLUMNS = 50;
 
     /**
      * @param  array<string, string>  $fieldLabels  key => Vietnamese header label
@@ -22,6 +22,8 @@ class CatalogExcelService
      */
     public function parseRows(string $path, array $fieldLabels, array $options = []): array
     {
+        @ini_set('memory_limit', '512M');
+
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
         $reader->setReadEmptyCells(false);
@@ -35,48 +37,73 @@ class CatalogExcelService
             self::MAX_COLUMNS
         );
 
-        $matrix = [];
-        for ($row = 1; $row <= $highestRow; $row++) {
-            $line = [];
-            for ($col = 1; $col <= $highestColumnIndex; $col++) {
-                $address = Coordinate::stringFromColumnIndex($col).$row;
-                $line[] = $sheet->getCell($address)->getFormattedValue();
-            }
-            $matrix[] = $line;
-        }
+        $endAddress = Coordinate::stringFromColumnIndex($highestColumnIndex).$highestRow;
+        $matrix = $sheet->rangeToArray('A1:'.$endAddress, '', false, true, false);
 
         $spreadsheet->disconnectWorksheets();
-        unset($spreadsheet);
+        unset($spreadsheet, $sheet, $reader);
+        if (function_exists('gc_collect_cycles')) {
+            gc_collect_cycles();
+        }
 
-        if ($matrix === []) {
+        if (empty($matrix)) {
             return [];
         }
 
         $labelToKey = $this->buildLabelToKeyMap($fieldLabels, $options['aliases'] ?? []);
-        $headerRowIndices = $options['headerRowIndices'] ?? [0, 7];
         $requiredKey = $options['requiredKey'] ?? null;
 
-        foreach ($headerRowIndices as $headerRowIndex) {
-            if (! isset($matrix[$headerRowIndex])) {
+        // Dynamic header row detection: scan candidate rows to find the row matching the most field labels
+        $scanLimit = min(35, count($matrix) - 1);
+        $candidateIndices = isset($options['headerRowIndices'])
+            ? array_unique(array_merge($options['headerRowIndices'], range(0, $scanLimit)))
+            : range(0, $scanLimit);
+
+        $bestHeaderIndex = null;
+        $bestMappedKeys = [];
+        $maxScore = 0;
+
+        foreach ($candidateIndices as $idx) {
+            if (! isset($matrix[$idx])) {
                 continue;
             }
 
-            $mappedKeys = $this->mapHeaderRow($matrix[$headerRowIndex], $labelToKey);
-            if ($mappedKeys === []) {
+            $mappedKeys = $this->mapHeaderRow($matrix[$idx], $labelToKey);
+            $matchesCount = count($mappedKeys);
+
+            if ($matchesCount === 0) {
                 continue;
             }
 
+            // Priority score: rows with requiredKey get large bonus, plus number of mapped columns
+            $hasRequiredKey = ! $requiredKey || in_array($requiredKey, $mappedKeys, true);
+            $score = $matchesCount + ($hasRequiredKey ? 100 : 0);
+
+            if ($score > $maxScore) {
+                $maxScore = $score;
+                $bestHeaderIndex = $idx;
+                $bestMappedKeys = $mappedKeys;
+            }
+        }
+
+        if ($bestHeaderIndex !== null && ! empty($bestMappedKeys)) {
             $rows = [];
-            for ($r = $headerRowIndex + 1, $count = count($matrix); $r < $count; $r++) {
+            for ($r = $bestHeaderIndex + 1, $count = count($matrix); $r < $count; $r++) {
                 $line = $matrix[$r];
-                if ($this->isEmptyDataRow($line, $mappedKeys)) {
+                if ($this->isEmptyDataRow($line, $bestMappedKeys)) {
                     continue;
                 }
 
                 $row = [];
-                foreach ($mappedKeys as $i => $key) {
+                foreach ($bestMappedKeys as $i => $key) {
                     $row[$key] = trim((string) ($line[$i] ?? ''));
                 }
+
+                // If 'name' is missing but separate 'last_name' / 'first_name' columns exist, merge them
+                if ((! isset($row['name']) || trim($row['name']) === '') && (isset($row['last_name']) || isset($row['first_name']))) {
+                    $row['name'] = trim(($row['last_name'] ?? '').' '.($row['first_name'] ?? ''));
+                }
+                unset($row['last_name'], $row['first_name']);
 
                 if (! $this->isDataRow($row, $fieldLabels)) {
                     continue;
@@ -105,6 +132,11 @@ class CatalogExcelService
             foreach ($keys as $i => $key) {
                 $row[$key] = trim((string) ($line[$i] ?? ''));
             }
+
+            if ((! isset($row['name']) || trim($row['name']) === '') && (isset($row['last_name']) || isset($row['first_name']))) {
+                $row['name'] = trim(($row['last_name'] ?? '').' '.($row['first_name'] ?? ''));
+            }
+            unset($row['last_name'], $row['first_name']);
 
             if (! $this->isDataRow($row, $fieldLabels)) {
                 continue;
