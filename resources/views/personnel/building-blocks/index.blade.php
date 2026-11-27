@@ -22,7 +22,19 @@
     :import-columns="[
         ['key' => 'code', 'label' => 'Mã phòng'],
         ['key' => 'name', 'label' => 'Dãy nhà'],
+        ['key' => 'is_inactive', 'label' => 'Ngưng sử dụng'],
         ['key' => 'note', 'label' => 'Ghi chú'],
+    ]"
+    :import-template-options="[
+        'startColumn' => 1,
+        'indexColumnLabel' => 'STT',
+        'sheetName' => 'Day_nha',
+        'sampleRow' => [
+            'code' => 'A',
+            'name' => 'Dãy nhà A',
+            'is_inactive' => 'Không',
+            'note' => '',
+        ],
     ]"
     :filter-fields="[
         ['key' => 'code', 'label' => 'Mã phòng'],

@@ -5,6 +5,24 @@
 @php
     $docTypeFilterOptions = collect($docTypeOptions)->prepend(['value' => '', 'label' => 'Tất cả'])->values()->all();
     $statusFilterOptions = collect($statusOptions)->map(fn ($s) => ['value' => $s, 'label' => $s])->prepend(['value' => '', 'label' => 'Tất cả'])->values()->all();
+    $documentImportColumns = [
+        ['key' => 'doc_code', 'label' => 'Mã hồ sơ'],
+        ['key' => 'doc_number', 'label' => 'Số / Ký hiệu'],
+        ['key' => 'title', 'label' => 'Tiêu đề'],
+        ['key' => 'abstract', 'label' => 'Trích yếu'],
+        ['key' => 'doc_type', 'label' => 'Loại văn bản'],
+        ['key' => 'issue_date', 'label' => 'Ngày ban hành'],
+        ['key' => 'received_date', 'label' => 'Ngày đến'],
+        ['key' => 'issuing_body', 'label' => 'Cơ quan ban hành'],
+        ['key' => 'signer', 'label' => 'Người ký'],
+        ['key' => 'department', 'label' => 'Đơn vị'],
+        ['key' => 'assignee', 'label' => 'Phụ trách'],
+        ['key' => 'urgency', 'label' => 'Độ khẩn'],
+        ['key' => 'confidentiality', 'label' => 'Độ mật'],
+        ['key' => 'status', 'label' => 'Trạng thái'],
+        ['key' => 'original_file', 'label' => 'Đường dẫn file'],
+        ['key' => 'note', 'label' => 'Ghi chú'],
+    ];
 @endphp
 <x-catalog-data-table
     title="Quản lý hồ sơ"
@@ -74,7 +92,31 @@
         'importPreview' => route('document-records.import-preview'),
         'import' => route('document-records.import'),
         'extract' => route('document-records.extract'),
-            'list' => route('document-records.index'),
+        'list' => route('document-records.index'),
+    ]"
+    :import-columns="$documentImportColumns"
+    :import-template-options="[
+        'startColumn' => 1,
+        'indexColumnLabel' => 'STT',
+        'sheetName' => 'Ho_so_van_ban',
+        'sampleRow' => [
+            'doc_code' => 'HS-2026-001',
+            'doc_number' => '123/QĐ-NTTU',
+            'title' => 'Quyết định ban hành quy chế đào tạo',
+            'abstract' => 'Ban hành quy chế đào tạo năm học mới',
+            'doc_type' => 'Quyết định',
+            'issue_date' => '01/09/2026',
+            'received_date' => '02/09/2026',
+            'issuing_body' => 'Ban Giám hiệu',
+            'signer' => 'GS.TS Nguyễn Văn A',
+            'department' => 'Phòng Đào tạo',
+            'assignee' => 'Nguyễn Văn B',
+            'urgency' => 'Thường',
+            'confidentiality' => 'Thường',
+            'status' => 'Mới',
+            'original_file' => '',
+            'note' => '',
+        ],
     ]"
 />
 @endsection

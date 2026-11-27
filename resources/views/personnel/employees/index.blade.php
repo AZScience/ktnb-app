@@ -46,8 +46,31 @@
     :import-columns="[
         ['key' => 'employee_id', 'label' => 'Mã số'],
         ['key' => 'name', 'label' => 'Họ và tên'],
+        ['key' => 'nickname', 'label' => 'Biệt danh'],
+        ['key' => 'position', 'label' => 'Chức vụ'],
+        ['key' => 'role_id', 'label' => 'Vai trò'],
         ['key' => 'email', 'label' => 'Email'],
+        ['key' => 'birth_date', 'label' => 'Ngày sinh'],
+        ['key' => 'phone', 'label' => 'Số điện thoại'],
+        ['key' => 'address', 'label' => 'Địa chỉ'],
         ['key' => 'note', 'label' => 'Ghi chú'],
+    ]"
+    :import-template-options="[
+        'startColumn' => 1,
+        'indexColumnLabel' => 'STT',
+        'sheetName' => 'Nhan_vien',
+        'sampleRow' => [
+            'employee_id' => 'NV001',
+            'name' => 'Nguyễn Văn A',
+            'nickname' => 'Anh A',
+            'position' => 'Chuyên viên',
+            'role_id' => 'Nhân viên',
+            'email' => 'nv001@ntt.edu.vn',
+            'birth_date' => '01/01/1990',
+            'phone' => '0901234567',
+            'address' => '300A Nguyễn Tất Thành, Q.4',
+            'note' => '',
+        ],
     ]"
     :filter-fields="[
         ['key' => 'name', 'label' => 'Họ và tên'],

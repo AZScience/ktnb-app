@@ -34,9 +34,28 @@
         ['key' => 'department_id', 'label' => 'Mã đơn vị'],
         ['key' => 'name', 'label' => 'Tên đơn vị'],
         ['key' => 'head', 'label' => 'Trưởng đơn vị'],
+        ['key' => 'deputy_head', 'label' => 'Phó đơn vị'],
+        ['key' => 'secretary', 'label' => 'Thư ký / Giáo vụ'],
+        ['key' => 'spokesperson', 'label' => 'Người phát ngôn'],
         ['key' => 'phone', 'label' => 'Điện thoại'],
         ['key' => 'email', 'label' => 'Email'],
         ['key' => 'note', 'label' => 'Ghi chú'],
+    ]"
+    :import-template-options="[
+        'startColumn' => 1,
+        'indexColumnLabel' => 'STT',
+        'sheetName' => 'Don_vi',
+        'sampleRow' => [
+            'department_id' => 'CNTT',
+            'name' => 'Khoa Công nghệ thông tin',
+            'head' => 'TS. Nguyễn Văn A',
+            'deputy_head' => 'ThS. Trần Thị B',
+            'secretary' => 'Nguyễn Thị C',
+            'spokesperson' => 'TS. Nguyễn Văn A',
+            'phone' => '02839404272',
+            'email' => 'cntt@ntt.edu.vn',
+            'note' => '',
+        ],
     ]"
     :filter-fields="[
         ['key' => 'department_id', 'label' => 'Mã đơn vị'],

@@ -195,6 +195,12 @@ class EmployeeController extends Controller
             'rows' => 'required|array|min:1',
             'rows.*.employee_id' => 'required|string|max:50',
             'rows.*.name' => 'required|string|max:255',
+            'rows.*.nickname' => 'nullable|string|max:100',
+            'rows.*.position' => 'nullable|string|max:100',
+            'rows.*.role_id' => 'nullable|string|max:50',
+            'rows.*.birth_date' => 'nullable|string|max:20',
+            'rows.*.phone' => 'nullable|string|max:20',
+            'rows.*.address' => 'nullable|string',
             'rows.*.email' => 'nullable|string|max:255',
             'rows.*.note' => 'nullable|string',
             'async' => 'sometimes|boolean',
@@ -221,11 +227,27 @@ class EmployeeController extends Controller
                 continue;
             }
 
+            $roleValue = trim((string) ($row['role_id'] ?? ''));
+            $resolvedRoleId = $defaultRoleId;
+            if ($roleValue !== '') {
+                $roleObj = Role::where('id', $roleValue)->orWhere('name', $roleValue)->first();
+                if ($roleObj) {
+                    $resolvedRoleId = $roleObj->id;
+                }
+            }
+
+            $positionValue = $this->resolvePosition((string) ($row['position'] ?? ''));
+
             $payload = [
                 'name' => $name,
+                'nickname' => $row['nickname'] ?? '',
+                'position' => $positionValue,
+                'role_id' => $resolvedRoleId,
+                'birth_date' => $row['birth_date'] ?? '',
+                'phone' => $row['phone'] ?? '',
+                'address' => $row['address'] ?? '',
                 'email' => strtolower(trim((string) ($row['email'] ?? $this->fallbackEmail($employeeId)))),
                 'note' => $row['note'] ?? '',
-                'role_id' => $defaultRoleId,
             ];
 
             $existing = Employee::where('employee_id', $employeeId)->first();
@@ -240,11 +262,6 @@ class EmployeeController extends Controller
                 $employee = Employee::create(array_merge($payload, [
                     'id' => (string) Str::uuid(),
                     'employee_id' => $employeeId,
-                    'nickname' => '',
-                    'position' => '',
-                    'birth_date' => '',
-                    'address' => '',
-                    'phone' => '',
                     'avatar_url' => '',
                 ]));
                 $this->syncLoginAccount($employee);
@@ -287,14 +304,55 @@ class EmployeeController extends Controller
         return $this->catalogExcel->parseRows($path, [
             'employee_id' => 'Mã số',
             'name' => 'Họ và tên',
+            'nickname' => 'Biệt danh',
+            'position' => 'Chức vụ',
+            'role_id' => 'Vai trò',
             'email' => 'Email',
+            'birth_date' => 'Ngày sinh',
+            'phone' => 'Số điện thoại',
+            'address' => 'Địa chỉ',
             'note' => 'Ghi chú',
         ], [
             'requiredKey' => 'employee_id',
             'aliases' => [
                 'mã số' => 'employee_id',
+                'ma so' => 'employee_id',
+                'mã nv' => 'employee_id',
+                'ma nv' => 'employee_id',
+                'mã cán bộ' => 'employee_id',
+                'ma can bo' => 'employee_id',
+                'mã số nv' => 'employee_id',
+                'manv' => 'employee_id',
+                'họ và tên' => 'name',
+                'ho va ten' => 'name',
                 'họ tên' => 'name',
+                'ho ten' => 'name',
+                'họ lót' => 'last_name',
+                'ho lot' => 'last_name',
+                'tên' => 'first_name',
+                'ten' => 'first_name',
+                'biệt danh' => 'nickname',
+                'biet danh' => 'nickname',
+                'chức vụ' => 'position',
+                'chuc vu' => 'position',
+                'chức danh' => 'position',
+                'vai trò' => 'role_id',
+                'vai tro' => 'role_id',
+                'quền' => 'role_id',
+                'phân quyền' => 'role_id',
+                'ngày sinh' => 'birth_date',
+                'ngay sinh' => 'birth_date',
+                'năm sinh' => 'birth_date',
+                'số điện thoại' => 'phone',
+                'so dien thoai' => 'phone',
+                'điện thoại' => 'phone',
+                'dien thoai' => 'phone',
+                'sđt' => 'phone',
+                'sdt' => 'phone',
+                'địa chỉ' => 'address',
+                'dia chi' => 'address',
                 'ghi chú' => 'note',
+                'ghi chu' => 'note',
             ],
         ]);
     }

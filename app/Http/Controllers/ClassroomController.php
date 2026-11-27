@@ -161,6 +161,9 @@ class ClassroomController extends Controller
             'rows.*.seating_capacity' => 'nullable|integer|min:0',
             'rows.*.table_count' => 'nullable|integer|min:0',
             'rows.*.exam_capacity' => 'nullable|integer|min:0',
+            'rows.*.subject_nature' => 'nullable|string|max:255',
+            'rows.*.has_projector' => 'nullable',
+            'rows.*.is_inactive' => 'nullable',
             'rows.*.note' => 'nullable|string',
         ]);
 
@@ -191,14 +194,23 @@ class ClassroomController extends Controller
                 }
             }
 
+            $hasProjector = isset($row['has_projector']) && $row['has_projector'] !== ''
+                ? $this->parseBoolean($row['has_projector'], true)
+                : true;
+            $isInactive = isset($row['is_inactive']) && $row['is_inactive'] !== ''
+                ? $this->parseBoolean($row['is_inactive'], false)
+                : false;
+
             $payload = [
                 'name' => $name,
                 'room_type' => $row['room_type'] ?? 'Lý thuyết',
                 'seating_capacity' => $row['seating_capacity'] ?? null,
                 'table_count' => $row['table_count'] ?? null,
                 'exam_capacity' => $row['exam_capacity'] ?? null,
+                'subject_nature' => $row['subject_nature'] ?? '',
+                'has_projector' => $hasProjector,
+                'is_inactive' => $isInactive,
                 'note' => $row['note'] ?? '',
-                'is_inactive' => false,
             ];
 
             if ($buildingBlockId) {
@@ -211,8 +223,6 @@ class ClassroomController extends Controller
                 Classroom::create(array_merge($payload, [
                     'id' => $this->makeUniqueId($name),
                     'building_block_id' => $buildingBlockId,
-                    'subject_nature' => '',
-                    'has_projector' => true,
                 ]));
             }
         }
@@ -248,16 +258,34 @@ class ClassroomController extends Controller
             'seating_capacity' => 'Số chỗ ngồi',
             'table_count' => 'Số bàn',
             'exam_capacity' => 'Số chỗ thi',
+            'subject_nature' => 'Tính chất môn học',
+            'has_projector' => 'Máy chiếu',
+            'is_inactive' => 'Ngưng sử dụng',
             'note' => 'Ghi chú',
         ], [
             'requiredKey' => 'name',
             'aliases' => [
                 'tên phòng' => 'name',
+                'phòng' => 'name',
+                'phòng học' => 'name',
                 'dãy nhà' => 'building_block',
+                'khu nhà' => 'building_block',
+                'dãy' => 'building_block',
+                'khu' => 'building_block',
                 'loại phòng' => 'room_type',
                 'số chỗ ngồi' => 'seating_capacity',
+                'sức chứa' => 'seating_capacity',
+                'chỗ ngồi' => 'seating_capacity',
                 'số bàn' => 'table_count',
+                'bàn' => 'table_count',
                 'số chỗ thi' => 'exam_capacity',
+                'chỗ thi' => 'exam_capacity',
+                'tính chất môn' => 'subject_nature',
+                'tính chất môn học' => 'subject_nature',
+                'máy chiếu' => 'has_projector',
+                'ngưng sử dụng' => 'is_inactive',
+                'tạm khóa' => 'is_inactive',
+                'trạng thái' => 'is_inactive',
                 'ghi chú' => 'note',
             ],
         ]);
@@ -274,6 +302,22 @@ class ClassroomController extends Controller
 
             return $row;
         }, $rows);
+    }
+
+    private function parseBoolean(mixed $val, bool $default = false): bool
+    {
+        if ($val === null || $val === '') {
+            return $default;
+        }
+        $str = mb_strtolower(trim((string) $val));
+        if (in_array($str, ['1', 'có', 'co', 'yes', 'true', 'x', 'v'], true)) {
+            return true;
+        }
+        if (in_array($str, ['0', 'không', 'khong', 'no', 'false'], true)) {
+            return false;
+        }
+
+        return $default;
     }
 
     private function resolveBuildingBlockId(string $value): ?string

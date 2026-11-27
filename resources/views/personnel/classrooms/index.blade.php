@@ -51,7 +51,27 @@
         ['key' => 'seating_capacity', 'label' => 'Số chỗ ngồi'],
         ['key' => 'table_count', 'label' => 'Số bàn'],
         ['key' => 'exam_capacity', 'label' => 'Số chỗ thi'],
+        ['key' => 'subject_nature', 'label' => 'Tính chất môn học'],
+        ['key' => 'has_projector', 'label' => 'Máy chiếu'],
+        ['key' => 'is_inactive', 'label' => 'Ngưng sử dụng'],
         ['key' => 'note', 'label' => 'Ghi chú'],
+    ]"
+    :import-template-options="[
+        'startColumn' => 1,
+        'indexColumnLabel' => 'STT',
+        'sheetName' => 'Phong_hoc',
+        'sampleRow' => [
+            'name' => 'A101',
+            'building_block' => 'Dãy A',
+            'room_type' => 'Lý thuyết',
+            'seating_capacity' => 60,
+            'table_count' => 30,
+            'exam_capacity' => 30,
+            'subject_nature' => 'Đại cương',
+            'has_projector' => 'Có',
+            'is_inactive' => 'Không',
+            'note' => '',
+        ],
     ]"
     :filter-fields="[
         ['key' => 'name', 'label' => 'Tên phòng'],

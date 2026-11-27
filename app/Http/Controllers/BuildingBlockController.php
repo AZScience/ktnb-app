@@ -132,6 +132,7 @@ class BuildingBlockController extends Controller
             'rows' => 'required|array|min:1',
             'rows.*.code' => 'required|string|max:20',
             'rows.*.name' => 'required|string|max:255',
+            'rows.*.is_inactive' => 'nullable',
             'rows.*.note' => 'nullable|string',
         ]);
 
@@ -142,10 +143,15 @@ class BuildingBlockController extends Controller
                 continue;
             }
 
+            $isInactive = isset($row['is_inactive']) && $row['is_inactive'] !== ''
+                ? $this->parseBoolean($row['is_inactive'], false)
+                : false;
+
             $existing = BuildingBlock::where('code', $code)->first();
             if ($existing) {
                 $existing->update([
                     'name' => $name,
+                    'is_inactive' => $isInactive,
                     'note' => $row['note'] ?? '',
                 ]);
             } else {
@@ -154,7 +160,7 @@ class BuildingBlockController extends Controller
                     'code' => $code,
                     'name' => $name,
                     'note' => $row['note'] ?? '',
-                    'is_inactive' => false,
+                    'is_inactive' => $isInactive,
                 ]);
             }
         }
@@ -170,16 +176,39 @@ class BuildingBlockController extends Controller
         return $this->catalogExcel->parseRows($path, [
             'code' => 'Mã phòng',
             'name' => 'Dãy nhà',
+            'is_inactive' => 'Ngưng sử dụng',
             'note' => 'Ghi chú',
         ], [
             'requiredKey' => 'code',
             'aliases' => [
                 'mã phòng' => 'code',
+                'mã dãy' => 'code',
+                'mã dãy nhà' => 'code',
                 'dãy nhà' => 'name',
+                'tên dãy nhà' => 'name',
                 'tên' => 'name',
+                'ngưng sử dụng' => 'is_inactive',
+                'tạm khóa' => 'is_inactive',
+                'trạng thái' => 'is_inactive',
                 'ghi chú' => 'note',
             ],
         ]);
+    }
+
+    private function parseBoolean(mixed $val, bool $default = false): bool
+    {
+        if ($val === null || $val === '') {
+            return $default;
+        }
+        $str = mb_strtolower(trim((string) $val));
+        if (in_array($str, ['1', 'có', 'co', 'yes', 'true', 'x', 'v'], true)) {
+            return true;
+        }
+        if (in_array($str, ['0', 'không', 'khong', 'no', 'false'], true)) {
+            return false;
+        }
+
+        return $default;
     }
 
     private function makeUniqueId(string $code): string
