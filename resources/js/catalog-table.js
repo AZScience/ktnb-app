@@ -2239,7 +2239,7 @@ export function catalogTablePage(config) {
                 message: `Đang lưu dữ liệu (0/${total})...`,
             };
 
-            const chunkSize = 500;
+            const chunkSize = 100;
             let processed = 0;
 
             try {

@@ -80,6 +80,11 @@ $mdPub = __DIR__ . '/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md';
 echo "<b>MD Base writable:</b> " . (is_writable($mdBase) ? 'YES' : 'NO') . " (mtime: " . (file_exists($mdBase) ? date('Y-m-d H:i:s', filemtime($mdBase)) : 'N/A') . ")<br>";
 echo "<b>MD Pub writable:</b> " . (is_writable($mdPub) ? 'YES' : 'NO') . " (mtime: " . (file_exists($mdPub) ? date('Y-m-d H:i:s', filemtime($mdPub)) : 'N/A') . ")<br>";
 
+echo "<b>PHP Version:</b> " . phpversion() . "<br>";
+echo "<b>post_max_size:</b> " . ini_get('post_max_size') . "<br>";
+echo "<b>upload_max_filesize:</b> " . ini_get('upload_max_filesize') . "<br>";
+echo "<b>memory_limit:</b> " . ini_get('memory_limit') . "<br>";
+
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 \Illuminate\Support\Facades\Artisan::call('optimize:clear');

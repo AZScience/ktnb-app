@@ -25,6 +25,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $e, Request $request) {
+            $msg = 'Dung lượng file hoặc dữ liệu gửi lên quá lớn (vượt quá giới hạn của máy chủ).';
+            if ($request->expectsJson() || $request->ajax() || $request->is('api/*')) {
+                return response()->json(['message' => $msg], 413);
+            }
+            return back()->with('error', $msg);
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*')
                 || $request->expectsJson()

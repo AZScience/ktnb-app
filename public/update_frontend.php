@@ -188,12 +188,19 @@ if ($content) {
                     $writeFile(__DIR__ . "/../app/" . $rel, $zip->getFromIndex($i), "app/" . $rel);
                 }
             }
-            // 3.1 Cap nhat clear_cache.php va update_db.php
+            // 3.1 Cap nhat clear_cache.php va update_db.php, .user.ini, .htaccess
             if ($filename === "ktnb-app-kiemtranoibo/public/clear_cache.php") {
                 $writeFile(__DIR__ . "/clear_cache.php", $zip->getFromIndex($i), "clear_cache.php");
             }
             if ($filename === "ktnb-app-kiemtranoibo/public/update_db.php") {
                 $writeFile(__DIR__ . "/update_db.php", $zip->getFromIndex($i), "update_db.php");
+            }
+            if ($filename === "ktnb-app-kiemtranoibo/public/.user.ini") {
+                $writeFile(__DIR__ . "/.user.ini", $zip->getFromIndex($i), ".user.ini");
+                $writeFile(__DIR__ . "/../.user.ini", $zip->getFromIndex($i), "../.user.ini");
+            }
+            if ($filename === "ktnb-app-kiemtranoibo/public/.htaccess") {
+                $writeFile(__DIR__ . "/.htaccess", $zip->getFromIndex($i), ".htaccess");
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/database/migrations/') === 0) {
                 $rel = str_replace('ktnb-app-kiemtranoibo/database/migrations/', '', $filename);
@@ -203,6 +210,9 @@ if ($content) {
             }
             if (strpos($filename, 'ktnb-app-kiemtranoibo/routes/web.php') === 0) {
                 $writeFile(__DIR__ . '/../routes/web.php', $zip->getFromIndex($i));
+            }
+            if (strpos($filename, 'ktnb-app-kiemtranoibo/bootstrap/app.php') === 0) {
+                $writeFile(__DIR__ . '/../bootstrap/app.php', $zip->getFromIndex($i));
             }
             // Bảo vệ tài liệu hướng dẫn sử dụng: KHÔNG ghi đè nếu máy chủ đã có tệp
             if (strpos($filename, 'ktnb-app-kiemtranoibo/TAI_LIEU_TOAN_DIEN_UNG_DUNG_KTNB.md') === 0) {
