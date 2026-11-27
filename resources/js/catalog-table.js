@@ -2187,7 +2187,7 @@ export function catalogTablePage(config) {
                         const XLSX = await import('xlsx');
                         const buffer = await file.arrayBuffer();
                         const wb = XLSX.read(buffer, { type: 'array' });
-                        const outBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                        const outBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array', compression: true });
                         file = new File(
                             [outBuffer],
                             file.name.replace(/\.xls$/i, '.xlsx'),
